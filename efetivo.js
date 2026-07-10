@@ -14,6 +14,16 @@ const GROUP_LABEL = {
   Maj: "Maj PM", Cap: "Cap PM", Ten: "Tenentes (QOPM+QOAPM+QETA)",
   Subten: "Subten PM", Sgt: "1º Sgt PM", Cb: "Cb PM (+ Al Cb)", Sd: "Sd PM",
 };
+// Rótulos curtos, sem ambiguidade, para caber em barras/legendas
+const SHORT_LABEL = {
+  Maj: "MAJ", Cap: "CAP", Ten: "TEN", Subten: "SUBTEN",
+  Sgt: "1º SGT", Cb: "CB", Sd: "SD",
+};
+// Nome para a legenda da rosca (mais curto que GROUP_LABEL, sem sigla QOPM/QOAPM)
+const LEGEND_LABEL = {
+  Maj: "Maj PM", Cap: "Cap PM", Ten: "Tenentes", Subten: "Subten PM",
+  Sgt: "1º Sgt PM", Cb: "Cb PM", Sd: "Sd PM",
+};
 
 function groupOf(posto) {
   const p = (posto || "").toUpperCase();
@@ -173,7 +183,7 @@ function buildFillBarsHTML(groupData) {
     if (pct < 100) cls = pct >= 70 ? "mid" : "bad";
     return `
     <div class="fillbar-row">
-      <div class="fillbar-label">${GROUP_LABEL[g].split(" ")[0]}</div>
+      <div class="fillbar-label">${SHORT_LABEL[g]}</div>
       <div class="fillbar-track"><div class="fillbar-fill ${cls}" style="width:${pctClamped}%"></div></div>
       <div class="fillbar-pct">${pct}%</div>
     </div>`;
@@ -222,7 +232,7 @@ function buildDeficitDonutHTML(groupData) {
     .map((g) => {
       const val = Math.abs(groupData[g].dif);
       const pct = Math.round((val / total) * 100);
-      return `<div class="donut-legend-item"><span class="donut-swatch" style="background:${DEFICIT_COLORS[g]}"></span>${GROUP_LABEL[g]} <b>${val}</b> (${pct}%)</div>`;
+      return `<div class="donut-legend-item"><span class="donut-swatch" style="background:${DEFICIT_COLORS[g]}"></span><span class="donut-legend-name">${LEGEND_LABEL[g]}</span><b>${val}</b><span class="donut-legend-pct">${pct}%</span></div>`;
     }).join("");
 
   return `<div class="donut-wrap">${svg}<div class="donut-legend">${legend}</div></div>`;

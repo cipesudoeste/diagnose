@@ -118,24 +118,31 @@ select.ef-field option{background:var(--bg-panel);color:var(--ink);}
 }
 
 /* --- barras de percentual de preenchimento --- */
-.fillbars-card{padding:16px 18px;display:flex;flex-direction:column;gap:12px;}
-.fillbar-row{display:flex;align-items:center;gap:10px;}
-.fillbar-label{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-muted);width:64px;flex:none;text-transform:uppercase;letter-spacing:.03em;}
-.fillbar-track{flex:1;height:9px;background:var(--bg-panel-2);border-radius:5px;overflow:hidden;position:relative;}
+.fillbars-card{padding:18px 20px;display:flex;flex-direction:column;justify-content:center;gap:13px;}
+.fillbar-row{display:flex;align-items:center;gap:12px;}
+.fillbar-label{font-family:var(--font-mono);font-size:10px;color:var(--ink-muted);width:52px;flex:none;text-transform:uppercase;letter-spacing:.02em;white-space:nowrap;}
+.fillbar-track{flex:1;height:8px;background:var(--bg-panel-2);border-radius:5px;overflow:hidden;position:relative;}
 .fillbar-fill{height:100%;border-radius:5px;transition:width .3s ease;}
 .fillbar-fill.ok{background:var(--t-sertao);}
 .fillbar-fill.mid{background:var(--t-paramirim);}
 .fillbar-fill.bad{background:#b0553f;}
-.fillbar-pct{font-family:var(--font-mono);font-size:11px;color:var(--ink);width:38px;flex:none;text-align:right;}
+.fillbar-pct{font-family:var(--font-mono);font-size:11px;color:var(--ink);width:34px;flex:none;text-align:right;}
 
 /* --- rosca de participação no déficit --- */
-.donut-card{padding:16px 18px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;justify-content:center;}
-.donut-wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap;justify-content:center;width:100%;}
-.donut-legend{display:flex;flex-direction:column;gap:7px;flex:1;min-width:140px;}
-.donut-legend-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-muted);}
-.donut-legend-item b{color:var(--ink);font-family:var(--font-mono);font-weight:600;}
+.donut-card{padding:20px;display:flex;align-items:center;justify-content:center;}
+.donut-wrap{display:flex;align-items:center;gap:20px;width:100%;}
+.donut-legend{display:flex;flex-direction:column;gap:11px;flex:1;min-width:0;}
+.donut-legend-item{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--ink-muted);white-space:nowrap;}
+.donut-legend-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.donut-legend-item b{color:var(--ink);font-family:var(--font-mono);font-weight:600;flex:none;}
+.donut-legend-pct{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint);flex:none;width:32px;text-align:right;}
 .donut-swatch{width:10px;height:10px;border-radius:3px;flex:none;}
-.donut-empty{font-size:12.5px;color:var(--ink-faint);text-align:center;padding:30px 10px;line-height:1.6;}
+.donut-empty{font-size:12.5px;color:var(--ink-faint);text-align:center;padding:34px 10px;line-height:1.6;}
+
+@media (max-width:479px){
+  .donut-wrap{flex-direction:column;}
+  .donut-legend{width:100%;}
+}
 
 @media print{
   #ef-print .fillbar-label{color:#5a5748;}
