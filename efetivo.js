@@ -300,6 +300,7 @@ function renderDiagnose() {
 
   // --- impressão ---
   document.getElementById("print-date").textContent = todayStr;
+  document.getElementById("print-footer-date").textContent = todayStr;
   document.getElementById("p-stat-qdl").textContent = totals.qdl;
   document.getElementById("p-stat-real").textContent = totals.real;
   document.getElementById("p-stat-dif").textContent = totals.dif > 0 ? "+" + totals.dif : totals.dif;

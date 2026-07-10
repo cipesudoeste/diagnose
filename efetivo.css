@@ -159,12 +159,51 @@ select.ef-field option{background:var(--bg-panel);color:var(--ink);}
    IMPRESSÃO — versão clara e independente da aba ativa
    ========================================================= */
 @media print{
+  @page{margin:14mm 12mm 18mm;}
+
   body *{visibility:hidden;}
   #ef-print, #ef-print *{visibility:visible;}
-  #ef-print{display:block;position:absolute;left:0;top:0;width:100%;padding:24px;
+  #ef-print{display:block;position:absolute;left:0;top:0;width:100%;padding:0;
     background:#fff;color:#26261f;font-family:var(--font-body);}
+
+  /* --- cabeçalho institucional --- */
+  #ef-print .print-header{
+    display:flex;align-items:center;gap:14px;
+    border-bottom:2px solid #2b2f1e;padding-bottom:10px;margin-bottom:2px;
+  }
+  #ef-print .print-logo-pmba{height:38px;width:38px;border-radius:50%;background:#fff;
+    box-shadow:0 0 0 1px #dcd6c2;object-fit:contain;padding:2px;flex:none;}
+  #ef-print .print-logo-cipe{height:42px;width:auto;flex:none;}
+  #ef-print .print-header-text{flex:1;}
+  #ef-print .print-header-text .eyebrow{color:#8a5a35;}
+  #ef-print .print-org-title{font-family:var(--font-display);font-size:15px;font-weight:700;color:#2b2f1e;margin-top:2px;}
+
+  #ef-print .print-title{font-family:var(--font-display);font-size:19px;font-weight:700;color:#2b2f1e;margin:2px 0 4px;}
+
+  /* --- rodapé fixo, repete em toda página --- */
+  #ef-print .print-footer{
+    position:fixed;left:0;right:0;bottom:-10mm;
+    display:flex;justify-content:space-between;
+    font-family:var(--font-mono);font-size:8px;color:#8a8770;
+    border-top:1px solid #dcd6c2;padding-top:6px;
+  }
+
+  /* --- evita cortes feios entre páginas --- */
+  #ef-print .hero-stats,
+  #ef-print .chart-card,
+  #ef-print .fillbars-card,
+  #ef-print .donut-card,
+  #ef-print .callout,
+  #ef-print .ef-signature,
+  #ef-print table.ef tr{
+    break-inside:avoid;
+    page-break-inside:avoid;
+  }
+  #ef-print .section-label{
+    break-after:avoid-page;
+  }
+
   #ef-print .eyebrow{color:#8a5a35;}
-  #ef-print .print-title{font-family:var(--font-display);font-size:19px;font-weight:700;color:#2b2f1e;margin-bottom:4px;}
   #ef-print .hero-stats{display:flex;gap:10px;margin:14px 0;}
   #ef-print .hstat{flex:1;border:1px solid #dcd6c2;background:#fbfaf5;border-radius:8px;padding:12px 16px;}
   #ef-print .hstat .n{font-family:var(--font-mono);font-size:24px;color:#8a5a35;}
@@ -180,6 +219,13 @@ select.ef-field option{background:var(--bg-panel);color:var(--ink);}
   #ef-print .callout b{color:#2b2f1e;}
   #ef-print ul.obs{color:#26261f;}
   #ef-print ul.obs b{color:#2b2f1e;}
+  #ef-print .fillbar-label{color:#5a5748;}
+  #ef-print .fillbar-track{background:#e6e1d0;}
+  #ef-print .fillbar-pct{color:#26261f;}
+  #ef-print .fillbars-card, #ef-print .donut-card{background:#fbfaf5;border-color:#dcd6c2;}
+  #ef-print .donut-legend-item{color:#5a5748;}
+  #ef-print .donut-legend-item b{color:#26261f;}
+  #ef-print .donut-empty{color:#8a8770;}
 }
 
 @media (min-width:760px){
