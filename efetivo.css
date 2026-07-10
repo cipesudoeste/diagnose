@@ -2,47 +2,126 @@
    EFETIVO — estilos complementares ao styles.css do site
    (paleta, tipografia e componentes .card/.stat/.row/.legend
    já vêm de styles.css; aqui só o que é específico desta página)
+
+   MOBILE-FIRST: todo bloco abaixo começa pelo estilo de tela
+   pequena; @media (min-width) acrescenta telas maiores.
    ========================================================= */
 
-/* --- navegação por seções (Diagnose / Efetivo / Metas) --- */
-.ef-tabs{display:flex;gap:4px;padding:0 22px 14px;flex-wrap:wrap;}
+/* --- cabeçalho da página (mobile-first) --- */
+.ef-header{display:flex;align-items:center;gap:8px;}
+.ef-logo-cipe{height:26px;}
+.ef-brand-extra{display:none;} /* divisor + selo PMBA só aparecem a partir do tablet */
+.ef-titles{flex:1;min-width:0;}
+.ef-eyebrow{font-size:8.5px;}
+.ef-title{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+.saved-flash{
+  display:none;align-items:center;gap:4px;flex:none;
+  font-family:var(--font-mono);font-size:10px;color:var(--t-sertao);white-space:nowrap;
+}
+.saved-flash .btn-label{display:none;}
+
+.export-btn{
+  display:flex;align-items:center;justify-content:center;gap:6px;flex:none;
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.03em;text-transform:uppercase;
+  background:var(--accent);color:var(--camo-black);border:none;border-radius:7px;
+  width:34px;height:34px;padding:0;cursor:pointer;font-weight:600;transition:background .15s ease;
+}
+.export-btn .btn-label{display:none;}
+.export-btn:hover{background:var(--cipe-brown-l);}
+
+@media (min-width:420px){
+  .saved-flash{display:flex;}
+}
+@media (min-width:560px){
+  .export-btn{width:auto;padding:8px 14px;border-radius:7px;}
+  .export-btn .btn-label{display:inline;}
+}
+@media (min-width:640px){
+  .ef-brand-extra{display:block;}
+  .logo-pmba-chip.ef-brand-extra{display:flex;}
+  .ef-logo-cipe{height:34px;}
+  .ef-eyebrow{font-size:9px;}
+  .ef-title{font-size:16px;}
+}
+
+/* --- navegação por seções (Diagnose / Efetivo / Metas), mobile-first --- */
+.ef-tabs{
+  display:flex;gap:4px;padding:0 16px 12px;
+  overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;
+  scrollbar-width:none;
+}
+.ef-tabs::-webkit-scrollbar{display:none;}
 .ef-tab{
-  display:flex;align-items:center;gap:7px;
-  font-family:var(--font-mono);font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;
-  padding:9px 14px;border-radius:6px;border:1px solid var(--line);background:transparent;color:var(--ink-muted);
-  cursor:pointer;transition:all .15s ease;
+  display:flex;align-items:center;gap:6px;flex:none;
+  font-family:var(--font-mono);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;
+  padding:9px 12px;border-radius:6px;border:1px solid var(--line);background:transparent;color:var(--ink-muted);
+  cursor:pointer;transition:all .15s ease;white-space:nowrap;
 }
 .ef-tab:hover{color:var(--ink);}
 .ef-tab.active{background:var(--bg-panel-2);color:var(--accent);border-color:var(--cipe-brown-l);}
-.ef-tab svg{width:14px;height:14px;flex:none;}
+.ef-tab svg{width:13px;height:13px;flex:none;}
 
-.ef-section{display:none;padding:0 22px 40px;}
+.ef-section{display:none;padding:0 16px 40px;}
 .ef-section.active{display:block;}
 
-/* --- botão exportar PDF na topbar / page-head --- */
-.export-btn{
-  display:flex;align-items:center;gap:7px;
-  font-family:var(--font-mono);font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;
-  background:var(--accent);color:var(--camo-black);border:none;border-radius:7px;
-  padding:8px 14px;cursor:pointer;font-weight:600;transition:background .15s ease;
-  margin-left:auto;
+@media (min-width:640px){
+  .ef-tabs{padding:0 22px 14px;}
+  .ef-tab{font-size:11.5px;padding:9px 14px;}
+  .ef-tab svg{width:14px;height:14px;}
+  .ef-section{padding:0 22px 40px;}
 }
-.export-btn:hover{background:var(--cipe-brown-l);}
-.saved-flash{font-family:var(--font-mono);font-size:10.5px;color:var(--t-sertao);margin-right:10px;white-space:nowrap;}
 
-/* --- tabela genérica (diagnose e efetivo) --- */
+
+/* --- tabela genérica (diagnose e efetivo), mobile-first ---
+   No celular vira uma pilha de "cards" (cada <tr> é um cartão,
+   cada <td> mostra um rótulo via data-label). Em telas maiores
+   (a partir de 660px) volta a ser uma tabela normal.
+   Fica de fora de telas de impressão (@media screen), onde a
+   tabela sempre é renderizada no formato tradicional. */
 .table-wrap{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--bg-panel);margin-bottom:4px;}
 table.ef{width:100%;border-collapse:collapse;font-size:13px;}
-table.ef th{
-  font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;
-  background:var(--bg-panel-2);color:var(--ink-muted);padding:9px 12px;text-align:left;font-weight:500;
-  border-bottom:1px solid var(--line);
+
+@media screen and (max-width:659.98px){
+  table.ef thead{display:none;}
+  table.ef, table.ef tbody{display:block;width:100%;}
+  table.ef tr{
+    display:block;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  table.ef tr:last-child{border-bottom:none;}
+  table.ef tr.total{background:var(--bg-panel-2);}
+  table.ef td{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:5px 0;border:none;color:var(--ink);text-align:right;
+  }
+  table.ef td::before{
+    content:attr(data-label);
+    font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.05em;
+    color:var(--ink-faint);flex:none;text-align:left;
+  }
+  table.ef td.cell-actions{justify-content:flex-end;}
+  table.ef td.cell-actions::before{content:none;}
+  table.ef td:has(select), table.ef td:has(input){text-align:left;}
+  table.ef td > select, table.ef td > input{flex:1;min-width:0;}
+  table.ef td.num{text-align:right;}
 }
-table.ef th.num, table.ef td.num{text-align:center;}
-table.ef td{padding:8px 12px;border-bottom:1px solid var(--line-soft);color:var(--ink);}
-table.ef tr:last-child td{border-bottom:none;}
-table.ef tr.total td{font-weight:600;background:var(--bg-panel-2);border-top:1px solid var(--line);}
-table.ef tr:hover td{background:rgba(191,174,140,.04);}
+
+@media screen and (min-width:660px){
+  table.ef th{
+    font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;
+    background:var(--bg-panel-2);color:var(--ink-muted);padding:9px 12px;text-align:left;font-weight:500;
+    border-bottom:1px solid var(--line);
+  }
+  table.ef th.num, table.ef td.num{text-align:center;}
+  table.ef td{padding:8px 12px;border-bottom:1px solid var(--line-soft);color:var(--ink);}
+  table.ef tr:last-child td{border-bottom:none;}
+  table.ef tr.total td{font-weight:600;background:var(--bg-panel-2);border-top:1px solid var(--line);}
+  table.ef tr:hover td{background:rgba(191,174,140,.04);}
+}
+
+/* estilos que valem em qualquer largura (inclusive impressão) */
+table.ef th{font-weight:500;}
+table.ef tr.total td{font-weight:600;}
 
 .badge-status{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:20px;display:inline-block;}
 .badge-status.ok{background:rgba(147,168,79,.15);color:var(--t-sertao);border:1px solid rgba(147,168,79,.35);}
@@ -228,7 +307,3 @@ select.ef-field option{background:var(--bg-panel);color:var(--ink);}
   #ef-print .donut-empty{color:#8a8770;}
 }
 
-@media (min-width:760px){
-  .ef-tabs{padding:0 0 18px;}
-  .ef-section{padding:0;}
-}

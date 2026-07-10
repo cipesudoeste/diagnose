@@ -14,22 +14,28 @@
 <div class="camo-trim camo-bg"></div>
 
 <header class="site-header">
-  <div class="wrap" style="display:flex;align-items:center;gap:14px;">
+  <div class="wrap ef-header">
     <a class="home-btn" href="index.html" title="Voltar para a página inicial">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
         <path d="M3 11l9-7 9 7" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M5 10v9a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1v-9" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </a>
-    <img class="logo-cipe" src="img/logo-cipe.png" alt="CIPE Sudoeste" style="height:34px;">
-    <div class="brand-divider"></div>
-    <div class="logo-pmba-chip"><img src="img/logo-pmba.png" alt="Polícia Militar da Bahia"></div>
-    <div class="brand-text">
-      <div class="eyebrow">Polícia Militar · Bahia</div>
-      <div class="title">Painel de Efetivo</div>
+    <img class="logo-cipe ef-logo-cipe" src="img/logo-cipe.png" alt="CIPE Sudoeste">
+    <div class="brand-divider ef-brand-extra"></div>
+    <div class="logo-pmba-chip ef-brand-extra"><img src="img/logo-pmba.png" alt="Polícia Militar da Bahia"></div>
+    <div class="brand-text ef-titles">
+      <div class="eyebrow ef-eyebrow">Polícia Militar · Bahia</div>
+      <div class="title ef-title">Painel de Efetivo</div>
     </div>
-    <span class="saved-flash" id="saved-flash" style="display:none;">salvo</span>
-    <button class="export-btn" id="btn-print">Exportar PDF</button>
+    <span class="saved-flash" id="saved-flash" style="display:none;">
+      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>
+      <span class="btn-label">salvo</span>
+    </span>
+    <button class="export-btn" id="btn-print">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6v-8z"/></svg>
+      <span class="btn-label">Exportar PDF</span>
+    </button>
   </div>
 </header>
 

@@ -88,7 +88,7 @@ function persist() {
 
 function flashSaved() {
   const el = document.getElementById("saved-flash");
-  el.style.display = "inline";
+  el.style.display = "inline-flex";
   setTimeout(() => (el.style.display = "none"), 1200);
 }
 
@@ -252,15 +252,15 @@ function renderDiagnose() {
     const d = groupData[g];
     const s = statusInfo(d.dif);
     return `<tr>
-      <td>${GROUP_LABEL[g]}</td>
-      <td class="num">${d.qdl}</td>
-      <td class="num">${d.real}</td>
-      <td class="num">${d.dif > 0 ? "+" + d.dif : d.dif}</td>
-      <td><span class="badge-status ${s.cls}">${s.text}</span></td>
+      <td data-label="Posto">${GROUP_LABEL[g]}</td>
+      <td class="num" data-label="QO">${d.qdl}</td>
+      <td class="num" data-label="Real">${d.real}</td>
+      <td class="num" data-label="Dif.">${d.dif > 0 ? "+" + d.dif : d.dif}</td>
+      <td data-label="Situação"><span class="badge-status ${s.cls}">${s.text}</span></td>
     </tr>`;
   }).join("") + `<tr class="total">
-      <td>Total</td><td class="num">${totals.qdl}</td><td class="num">${totals.real}</td>
-      <td class="num">${totals.dif > 0 ? "+" + totals.dif : totals.dif}</td><td></td>
+      <td data-label="Posto">Total</td><td class="num" data-label="QO">${totals.qdl}</td><td class="num" data-label="Real">${totals.real}</td>
+      <td class="num" data-label="Dif.">${totals.dif > 0 ? "+" + totals.dif : totals.dif}</td><td data-label=""></td>
     </tr>`;
 
   const completos = GROUP_ORDER.filter((g) => groupData[g].dif === 0);
@@ -324,12 +324,12 @@ function renderRoster() {
   const tbody = document.getElementById("roster-tbody");
   tbody.innerHTML = roster.map((r) => `
     <tr data-id="${r.id}">
-      <td>
+      <td data-label="Posto">
         <select class="ef-field field-posto">${POSTOS.map((p) => `<option value="${p}" ${p === r.posto ? "selected" : ""}>${p}</option>`).join("")}</select>
       </td>
-      <td><input class="ef-field field-nome" value="${escapeHtml(r.nome)}"></td>
-      <td><input class="ef-field field-matricula" style="width:120px;" value="${escapeHtml(r.matricula)}"></td>
-      <td><button class="icon-btn btn-remove" title="Remover">
+      <td data-label="Nome"><input class="ef-field field-nome" value="${escapeHtml(r.nome)}"></td>
+      <td data-label="Matrícula"><input class="ef-field field-matricula" style="width:120px;" value="${escapeHtml(r.matricula)}"></td>
+      <td class="cell-actions" data-label=""><button class="icon-btn btn-remove" title="Remover">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8">
           <path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m2 0v13a1 1 0 01-1 1H8a1 1 0 01-1-1V7h10z"/>
         </svg>
