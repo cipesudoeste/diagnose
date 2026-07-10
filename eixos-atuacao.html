@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>CIPE Sudoeste — Eixos de Atuação</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="app">
+  <div class="camo-trim camo-bg"></div>
+  <div id="app-body">
+
+    <!-- Topbar — visível apenas em telas pequenas -->
+    <header class="topbar">
+      <a class="home-btn" href="index.html" title="Voltar para a página inicial">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M3 11l9-7 9 7" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M5 10v9a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1v-9" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+      <img class="logo-cipe-sm" src="img/logo-cipe.png" alt="CIPE Sudoeste">
+      <div class="topbar-text">
+        <div class="eyebrow">Mapa 02 de 03</div>
+        <div class="title">Eixos de Atuação</div>
+      </div>
+      <div class="logo-pmba-chip"><img src="img/logo-pmba.png" alt="Polícia Militar da Bahia"></div>
+    </header>
+
+    <!-- Gaveta de filtros (mobile) / barra lateral fixa (desktop) -->
+    <aside id="sidebar">
+      <div class="sheet-handle" id="sheet-handle">
+        <div class="sheet-handle-bar"></div>
+        <div class="swatch-stack" id="handle-swatches"></div>
+        <div class="sheet-handle-label">Filtros e legenda<small>64 municípios · 8 eixos</small></div>
+        <svg class="sheet-chev" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+
+      <div class="sheet-scroll">
+        <div class="brand">
+          <a class="home-btn" href="index.html" title="Voltar para a página inicial">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M3 11l9-7 9 7" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M5 10v9a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1v-9" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+          <img class="logo-cipe" src="img/logo-cipe.png" alt="CIPE Sudoeste">
+          <div class="logo-pmba-chip"><img src="img/logo-pmba.png" alt="Polícia Militar da Bahia"></div>
+          <div class="brand-text">
+            <div class="eyebrow">Polícia Militar · Bahia</div>
+            <div class="title">CIPE Sudoeste</div>
+          </div>
+        </div>
+
+        <div class="page-head">
+          <div class="eyebrow">Mapa 02 de 03</div>
+          <h1>Eixos de Atuação</h1>
+          <p>Municípios agrupados pelos 8 eixos operacionais de atuação da unidade.</p>
+        </div>
+
+        <div class="stat-row">
+          <div class="stat"><div class="n">64</div><div class="l">Municípios</div></div>
+          <div class="stat"><div class="n">8</div><div class="l">Eixos</div></div>
+        </div>
+
+        <div class="section-label">Camadas de referência</div>
+        <div class="tree" style="padding-bottom:0;">
+          <div class="row terr-row" style="padding-left:8px;">
+            <input type="checkbox" checked id="toggle-bahia">
+            <span class="swatch" style="background:#c08a55"></span>
+            <span class="row-name">Contorno da Bahia</span>
+          </div>
+        </div>
+
+        <div class="section-label">Filtrar por eixo</div>
+        <div class="tree" id="tree"></div>
+
+        <div class="legend">
+          <div class="legend-title">Legenda · Eixos</div>
+          <div id="legend-list"></div>
+        </div>
+
+        <div class="sidebar-foot">
+          Fonte: malha municipal IBGE 2025 (BA_Municipios_2025). Eixos de atuação conforme planejamento de 11/set/2025.
+        </div>
+      </div>
+    </aside>
+
+    <div id="map-wrap">
+      <div id="map"></div>
+
+      <button class="layer-btn" id="layer-btn" title="Mudar mapa-base" aria-label="Mudar mapa-base">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+          <path d="M12 3 2 8l10 5 10-5-10-5Z" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M2 13l10 5 10-5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M2 18l10 5 10-5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="layer-panel" id="layer-panel"></div>
+
+      <div class="map-title-overlay"><b>CIPE-SO</b> · Eixos de Atuação</div>
+      <div class="hud" id="hud">lat <span id="hud-lat">—</span>&nbsp;&nbsp;lon <span id="hud-lon">—</span>&nbsp;&nbsp;zoom <span id="hud-zoom">—</span></div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="data_bahia.js"></script>
+<script src="data_eixos.js"></script>
+<script>
+/* ---------------------------------------------------------
+   Configuração dos eixos: cor e ordem
+--------------------------------------------------------- */
+const EIXOS = {
+  "Eixo 01": { color:"#c9863f" },
+  "Eixo 02": { color:"#4a93a8" },
+  "Eixo 03": { color:"#93a84f" },
+  "Eixo 04": { color:"#8a5380" },
+  "Eixo 05": { color:"#b85c50" },
+  "Eixo 06": { color:"#4a7a6a" },
+  "Eixo 07": { color:"#a8954a" },
+  "Eixo 08": { color:"#6a72ae" },
+};
+const EIXO_ORDER = Object.keys(EIXOS);
+
+/* ---------------------------------------------------------
+   Mapas-base disponíveis
+--------------------------------------------------------- */
+const BASEMAPS = [
+  { id:"dark",      name:"Escuro (operacional)", swatch:"#2c2f25",
+    url:"https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png",
+    attribution:"&copy; OpenStreetMap &copy; CARTO", subdomains:"abcd" },
+  { id:"light",     name:"Claro", swatch:"#d8d4c6",
+    url:"https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png",
+    attribution:"&copy; OpenStreetMap &copy; CARTO", subdomains:"abcd" },
+  { id:"streets",   name:"Ruas", swatch:"#a9c4e0",
+    url:"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    attribution:"&copy; OpenStreetMap colaboradores", subdomains:"abc" },
+  { id:"satellite", name:"Satélite", swatch:"#4a5a3a",
+    url:"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    attribution:"&copy; Esri, Maxar, Earthstar Geographics", subdomains:"" },
+];
+const BASEMAP_STORAGE_KEY = "cipe-so-basemap";
+
+/* ---------------------------------------------------------
+   Mapa base
+--------------------------------------------------------- */
+const map = L.map('map', {
+  zoomControl:false,
+  attributionControl:true,
+  minZoom:6,
+  maxZoom:19,
+}).setView([-13.9, -41.6], 7);
+
+L.control.zoom({ position:'bottomright' }).addTo(map);
+L.control.scale({ position:'bottomleft', imperial:false }).addTo(map);
+
+/* ---------------------------------------------------------
+   Contorno do estado da Bahia (camada de referência)
+--------------------------------------------------------- */
+const bahiaLayer = L.geoJSON(DATA_BAHIA, {
+  interactive:false,
+  style: { color:'#c08a55', weight:1.8, opacity:.85, fillColor:'#c08a55', fillOpacity:.04 }
+}).addTo(map);
+
+let currentBaseLayer = null;
+function setBasemap(id){
+  const def = BASEMAPS.find(b => b.id === id) || BASEMAPS[0];
+  if (currentBaseLayer) map.removeLayer(currentBaseLayer);
+  currentBaseLayer = L.tileLayer(def.url, {
+    attribution: def.attribution,
+    subdomains: def.subdomains || undefined,
+    maxZoom: 19,
+  });
+  currentBaseLayer.addTo(map);
+  currentBaseLayer.bringToBack();
+  document.querySelectorAll('.layer-option').forEach(el => {
+    el.classList.toggle('active', el.dataset.id === id);
+  });
+  try { localStorage.setItem(BASEMAP_STORAGE_KEY, id); } catch(e) {}
+}
+
+let savedBasemap = "dark";
+try { savedBasemap = localStorage.getItem(BASEMAP_STORAGE_KEY) || "dark"; } catch(e) {}
+setBasemap(savedBasemap);
+
+/* Painel seletor de mapa-base */
+const layerBtn = document.getElementById('layer-btn');
+const layerPanel = document.getElementById('layer-panel');
+BASEMAPS.forEach(b => {
+  const opt = document.createElement('div');
+  opt.className = 'layer-option';
+  opt.dataset.id = b.id;
+  opt.innerHTML = `<span class="layer-swatch" style="background:${b.swatch}"></span><span>${b.name}</span>`;
+  opt.addEventListener('click', () => { setBasemap(b.id); layerPanel.classList.remove('open'); layerBtn.classList.remove('open'); });
+  layerPanel.appendChild(opt);
+});
+document.querySelectorAll('.layer-option').forEach(el => el.classList.toggle('active', el.dataset.id === savedBasemap));
+
+layerBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  layerPanel.classList.toggle('open');
+  layerBtn.classList.toggle('open');
+});
+document.addEventListener('click', (e) => {
+  if (!layerPanel.contains(e.target) && e.target !== layerBtn) {
+    layerPanel.classList.remove('open');
+    layerBtn.classList.remove('open');
+  }
+});
+
+/* ---------------------------------------------------------
+   Camadas por eixo
+--------------------------------------------------------- */
+const layersByEixo = {};
+const labelsByEixo  = {};
+const countByEixo   = {};
+
+function popupHtml(p){
+  return `
+    <div class="pop-terr" style="color:${EIXOS[p.eixo].color}">${p.eixo}</div>
+    <div class="pop-name">${p.municipio}</div>
+    <div class="pop-row"><span>Código IBGE</span><span>${p.cd_mun}</span></div>
+    <div class="pop-row"><span>Área</span><span>${p.area_km2.toFixed(0)} km²</span></div>
+  `;
+}
+
+function styleFor(eixo){
+  const c = EIXOS[eixo].color;
+  return { color:c, weight:1.4, opacity:.95, fillColor:c, fillOpacity:.4 };
+}
+
+EIXO_ORDER.forEach(e => countByEixo[e] = 0);
+DATA_EIXOS.features.forEach(f => countByEixo[f.properties.eixo]++);
+
+function wrapLabel(name){
+  if (name.length <= 14) return name;
+  const words = name.split(' ');
+  if (words.length === 1) return name;
+  let best = 1, bestDiff = Infinity, cum = 0;
+  for (let i = 0; i < words.length - 1; i++){
+    cum += words[i].length + 1;
+    const diff = Math.abs(cum - name.length / 2);
+    if (diff < bestDiff){ bestDiff = diff; best = i + 1; }
+  }
+  return `${words.slice(0, best).join(' ')}<br>${words.slice(best).join(' ')}`;
+}
+
+const allLabelMarkers = []; // { marker, area, eixo }
+
+EIXO_ORDER.forEach(eixo => {
+  const fc = { type:"FeatureCollection", features: DATA_EIXOS.features.filter(f => f.properties.eixo === eixo) };
+
+  const gj = L.geoJSON(fc, {
+    style: () => styleFor(eixo),
+    onEachFeature: (feature, layer) => {
+      layer.bindPopup(popupHtml(feature.properties));
+      layer.on('mouseover', () => layer.setStyle({ fillOpacity:.62, weight:2.2 }));
+      layer.on('mouseout',  () => layer.setStyle(styleFor(eixo)));
+    }
+  }).addTo(map);
+
+  const labelGroup = L.layerGroup();
+  fc.features.forEach(f => {
+    const p = f.properties;
+    const icon = L.divIcon({
+      className:'muni-label-wrap',
+      html:`<div class="muni-label${p.municipio.length > 14 ? ' wrap' : ''}">${wrapLabel(p.municipio)}</div>`,
+      iconSize:[0,0],
+    });
+    const marker = L.marker([p.LABEL_LAT, p.LABEL_LON], { icon, interactive:false }).addTo(labelGroup);
+    allLabelMarkers.push({ marker, area: p.area_km2, eixo });
+  });
+  labelGroup.addTo(map);
+
+  layersByEixo[eixo] = gj;
+  labelsByEixo[eixo] = labelGroup;
+});
+
+/* ---------------------------------------------------------
+   Anti-colisão de rótulos: ao afastar o zoom, prioriza os
+   municípios maiores e esconde os nomes que colidiriam com
+   um já visível. Recalcula a cada zoom/arraste do mapa.
+--------------------------------------------------------- */
+let declutterRaf = null;
+function declutterLabels(){
+  if (declutterRaf) cancelAnimationFrame(declutterRaf);
+  declutterRaf = requestAnimationFrame(() => {
+    const showAtAll = map.getZoom() >= 7;
+    const active = allLabelMarkers.filter(o => map.hasLayer(labelsByEixo[o.eixo]));
+
+    if (!showAtAll){
+      active.forEach(o => { const el = o.marker.getElement(); if (el) el.style.visibility = 'hidden'; });
+      return;
+    }
+
+    active.forEach(o => { const el = o.marker.getElement(); if (el) el.style.visibility = 'visible'; });
+
+    const withRect = active.map(o => {
+      const el = o.marker.getElement();
+      const labelEl = el ? el.querySelector('.muni-label') : null;
+      return { o, el, labelEl };
+    }).filter(x => x.labelEl);
+
+    withRect.sort((a, b) => b.o.area - a.o.area);
+
+    const pad = 3;
+    const placed = [];
+    withRect.forEach(({ el, labelEl }) => {
+      const r = labelEl.getBoundingClientRect();
+      const box = { left:r.left-pad, right:r.right+pad, top:r.top-pad, bottom:r.bottom+pad };
+      const overlaps = placed.some(p => !(box.right < p.left || box.left > p.right || box.bottom < p.top || box.top > p.bottom));
+      if (overlaps) el.style.visibility = 'hidden';
+      else placed.push(box);
+    });
+  });
+}
+map.on('zoomend moveend', declutterLabels);
+declutterLabels();
+
+/* ---------------------------------------------------------
+   HUD de coordenadas (telas largas)
+--------------------------------------------------------- */
+map.on('mousemove', e => {
+  document.getElementById('hud-lat').textContent = e.latlng.lat.toFixed(3);
+  document.getElementById('hud-lon').textContent = e.latlng.lng.toFixed(3);
+});
+map.on('zoomend', () => {
+  document.getElementById('hud-zoom').textContent = map.getZoom();
+});
+document.getElementById('hud-zoom').textContent = map.getZoom();
+
+/* ---------------------------------------------------------
+   Alça da gaveta: bolinhas de cor (uma por eixo)
+--------------------------------------------------------- */
+const handleSwatches = document.getElementById('handle-swatches');
+EIXO_ORDER.forEach(eixo => {
+  const span = document.createElement('span');
+  span.style.background = EIXOS[eixo].color;
+  handleSwatches.appendChild(span);
+});
+
+/* ---------------------------------------------------------
+   Lista de filtro (um nível: Eixo > Municípios)
+--------------------------------------------------------- */
+const treeEl = document.getElementById('tree');
+const legendEl = document.getElementById('legend-list');
+
+function chevSvg(){
+  return `<svg class="chev" viewBox="0 0 10 10" fill="none"><path d="M2 1L8 5L2 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+
+EIXO_ORDER.forEach(eixo => {
+  const block = document.createElement('div');
+  block.className = 'macro-block';
+
+  const eixoRow = document.createElement('div');
+  eixoRow.className = 'row macro-row';
+  eixoRow.innerHTML = `
+    ${chevSvg()}
+    <input type="checkbox" checked data-eixo="${eixo}">
+    <span class="swatch" style="background:${EIXOS[eixo].color}"></span>
+    <span class="row-name">${eixo}</span>
+    <span class="row-count">${countByEixo[eixo]}</span>
+  `;
+  block.appendChild(eixoRow);
+
+  const muniList = document.createElement('div');
+  muniList.className = 'terr-list';
+  DATA_EIXOS.features
+    .filter(f => f.properties.eixo === eixo)
+    .map(f => f.properties.municipio)
+    .sort((a,b) => a.localeCompare(b, 'pt-BR'))
+    .forEach(nome => {
+      const row = document.createElement('div');
+      row.className = 'row terr-row';
+      row.innerHTML = `<span class="row-name">${nome}</span>`;
+      muniList.appendChild(row);
+    });
+  muniList.style.display = 'none';
+  block.appendChild(muniList);
+  treeEl.appendChild(block);
+
+  legendEl.innerHTML += `<div class="legend-item"><span class="swatch" style="background:${EIXOS[eixo].color}"></span><b>${eixo}</b>&nbsp;(${countByEixo[eixo]})</div>`;
+
+  const chev = eixoRow.querySelector('.chev');
+  const toggleCollapse = () => {
+    chev.classList.toggle('collapsed');
+    muniList.style.display = muniList.style.display === 'none' ? 'block' : 'none';
+  };
+  eixoRow.querySelector('.row-name').addEventListener('click', toggleCollapse);
+  chev.addEventListener('click', toggleCollapse);
+  chev.classList.add('collapsed');
+
+  const cb = eixoRow.querySelector('input');
+  cb.addEventListener('change', () => {
+    const apply = cb.checked ? lyr => lyr.addTo(map) : lyr => map.removeLayer(lyr);
+    apply(layersByEixo[eixo]);
+    apply(labelsByEixo[eixo]);
+    declutterLabels();
+  });
+});
+
+/* ---------------------------------------------------------
+   Gaveta de filtros (sheet) — abrir/fechar no mobile
+--------------------------------------------------------- */
+const sidebarEl = document.getElementById('sidebar');
+const sheetHandle = document.getElementById('sheet-handle');
+sheetHandle.addEventListener('click', () => sidebarEl.classList.toggle('expanded'));
+map.on('click', () => sidebarEl.classList.remove('expanded'));
+
+document.getElementById('toggle-bahia').addEventListener('change', (e) => {
+  if (e.target.checked) bahiaLayer.addTo(map);
+  else map.removeLayer(bahiaLayer);
+});
+</script>
+</body>
+</html>

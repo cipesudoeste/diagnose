@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>CIPE Sudoeste — Área de Responsabilidade</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="app">
+  <div class="camo-trim camo-bg"></div>
+  <div id="app-body">
+
+    <!-- Topbar — visível apenas em telas pequenas -->
+    <header class="topbar">
+      <a class="home-btn" href="index.html" title="Voltar para a página inicial">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M3 11l9-7 9 7" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M5 10v9a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1v-9" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+      <img class="logo-cipe-sm" src="img/logo-cipe.png" alt="CIPE Sudoeste">
+      <div class="topbar-text">
+        <div class="eyebrow">Mapa 01 de 03</div>
+        <div class="title">Área de Responsabilidade</div>
+      </div>
+      <div class="logo-pmba-chip"><img src="img/logo-pmba.png" alt="Polícia Militar da Bahia"></div>
+    </header>
+
+    <!-- Gaveta de filtros (mobile) / barra lateral fixa (desktop) -->
+    <aside id="sidebar">
+      <div class="sheet-handle" id="sheet-handle">
+        <div class="sheet-handle-bar"></div>
+        <div class="swatch-stack">
+          <span style="background:#c9863f"></span>
+          <span style="background:#4a93a8"></span>
+          <span style="background:#93a84f"></span>
+          <span style="background:#8a5380"></span>
+        </div>
+        <div class="sheet-handle-label">Filtros e legenda<small>64 municípios · 4 territórios</small></div>
+        <svg class="sheet-chev" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+
+      <div class="sheet-scroll">
+        <div class="brand">
+          <a class="home-btn" href="index.html" title="Voltar para a página inicial">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M3 11l9-7 9 7" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M5 10v9a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1v-9" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+          <img class="logo-cipe" src="img/logo-cipe.png" alt="CIPE Sudoeste">
+          <div class="logo-pmba-chip"><img src="img/logo-pmba.png" alt="Polícia Militar da Bahia"></div>
+          <div class="brand-text">
+            <div class="eyebrow">Polícia Militar · Bahia</div>
+            <div class="title">CIPE Sudoeste</div>
+          </div>
+        </div>
+
+        <div class="page-head">
+          <div class="eyebrow">Mapa 01 de 03</div>
+          <h1>Área de Responsabilidade</h1>
+          <p>Macrorregiões, territórios de identidade e municípios sob responsabilidade da unidade.</p>
+        </div>
+
+        <div class="stat-row">
+          <div class="stat"><div class="n">64</div><div class="l">Municípios</div></div>
+          <div class="stat"><div class="n">4</div><div class="l">Territórios</div></div>
+          <div class="stat"><div class="n">2</div><div class="l">Macrorregiões</div></div>
+        </div>
+
+        <div class="section-label">Camadas de referência</div>
+        <div class="tree" style="padding-bottom:0;">
+          <div class="row terr-row" style="padding-left:8px;">
+            <input type="checkbox" checked id="toggle-bahia">
+            <span class="swatch" style="background:#c08a55"></span>
+            <span class="row-name">Contorno da Bahia</span>
+          </div>
+        </div>
+
+        <div class="section-label">Filtrar por região</div>
+        <div class="tree" id="tree"></div>
+
+        <div class="legend">
+          <div class="legend-title">Legenda · Territórios</div>
+          <div id="legend-list"></div>
+        </div>
+
+        <div class="sidebar-foot">
+          Fonte: malha municipal IBGE 2025 (BA_Municipios_2025). Classificação por Território de Identidade — SEI/Bahia.
+        </div>
+      </div>
+    </aside>
+
+    <div id="map-wrap">
+      <div id="map"></div>
+
+      <button class="layer-btn" id="layer-btn" title="Mudar mapa-base" aria-label="Mudar mapa-base">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+          <path d="M12 3 2 8l10 5 10-5-10-5Z" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M2 13l10 5 10-5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M2 18l10 5 10-5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="layer-panel" id="layer-panel"></div>
+
+      <div class="map-title-overlay"><b>CIPE-SO</b> · Área de Responsabilidade — Regiões</div>
+      <div class="hud" id="hud">lat <span id="hud-lat">—</span>&nbsp;&nbsp;lon <span id="hud-lon">—</span>&nbsp;&nbsp;zoom <span id="hud-zoom">—</span></div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="data_bahia.js"></script>
+<script src="data_regioes.js"></script>
+<script>
+/* ---------------------------------------------------------
+   Configuração de territórios: cor, ordem, macrorregião
+--------------------------------------------------------- */
+const TERRITORIOS = {
+  "Bacia do Paramirim":  { color:"#c9863f", macro:"MEIO-OESTE" },
+  "Velho Chico":         { color:"#4a93a8", macro:"MEIO-OESTE" },
+  "Sertão Produtivo":    { color:"#93a84f", macro:"SUDOESTE" },
+  "Sudoeste Baiano":     { color:"#8a5380", macro:"SUDOESTE" },
+};
+const MACRO_ORDER = ["MEIO-OESTE","SUDOESTE"];
+
+/* ---------------------------------------------------------
+   Mapas-base disponíveis
+--------------------------------------------------------- */
+const BASEMAPS = [
+  { id:"dark",      name:"Escuro (operacional)", swatch:"#2c2f25",
+    url:"https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png",
+    attribution:"&copy; OpenStreetMap &copy; CARTO", subdomains:"abcd" },
+  { id:"light",     name:"Claro", swatch:"#d8d4c6",
+    url:"https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png",
+    attribution:"&copy; OpenStreetMap &copy; CARTO", subdomains:"abcd" },
+  { id:"streets",   name:"Ruas", swatch:"#a9c4e0",
+    url:"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    attribution:"&copy; OpenStreetMap colaboradores", subdomains:"abc" },
+  { id:"satellite", name:"Satélite", swatch:"#4a5a3a",
+    url:"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    attribution:"&copy; Esri, Maxar, Earthstar Geographics", subdomains:"" },
+];
+const BASEMAP_STORAGE_KEY = "cipe-so-basemap";
+
+/* ---------------------------------------------------------
+   Mapa base
+--------------------------------------------------------- */
+const map = L.map('map', {
+  zoomControl:false,
+  attributionControl:true,
+  minZoom:6,
+  maxZoom:19,
+}).setView([-13.9, -41.6], 7);
+
+L.control.zoom({ position:'bottomright' }).addTo(map);
+L.control.scale({ position:'bottomleft', imperial:false }).addTo(map);
+
+/* ---------------------------------------------------------
+   Contorno do estado da Bahia (camada de referência)
+--------------------------------------------------------- */
+const bahiaLayer = L.geoJSON(DATA_BAHIA, {
+  interactive:false,
+  style: { color:'#c08a55', weight:1.8, opacity:.85, fillColor:'#c08a55', fillOpacity:.04 }
+}).addTo(map);
+
+let currentBaseLayer = null;
+function setBasemap(id){
+  const def = BASEMAPS.find(b => b.id === id) || BASEMAPS[0];
+  if (currentBaseLayer) map.removeLayer(currentBaseLayer);
+  currentBaseLayer = L.tileLayer(def.url, {
+    attribution: def.attribution,
+    subdomains: def.subdomains || undefined,
+    maxZoom: 19,
+  });
+  currentBaseLayer.addTo(map);
+  currentBaseLayer.bringToBack();
+  document.querySelectorAll('.layer-option').forEach(el => {
+    el.classList.toggle('active', el.dataset.id === id);
+  });
+  try { localStorage.setItem(BASEMAP_STORAGE_KEY, id); } catch(e) {}
+}
+
+let savedBasemap = "dark";
+try { savedBasemap = localStorage.getItem(BASEMAP_STORAGE_KEY) || "dark"; } catch(e) {}
+setBasemap(savedBasemap);
+
+/* Painel seletor de mapa-base */
+const layerBtn = document.getElementById('layer-btn');
+const layerPanel = document.getElementById('layer-panel');
+BASEMAPS.forEach(b => {
+  const opt = document.createElement('div');
+  opt.className = 'layer-option';
+  opt.dataset.id = b.id;
+  opt.innerHTML = `<span class="layer-swatch" style="background:${b.swatch}"></span><span>${b.name}</span>`;
+  opt.addEventListener('click', () => { setBasemap(b.id); layerPanel.classList.remove('open'); layerBtn.classList.remove('open'); });
+  layerPanel.appendChild(opt);
+});
+document.querySelectorAll('.layer-option').forEach(el => el.classList.toggle('active', el.dataset.id === savedBasemap));
+
+layerBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  layerPanel.classList.toggle('open');
+  layerBtn.classList.toggle('open');
+});
+document.addEventListener('click', (e) => {
+  if (!layerPanel.contains(e.target) && e.target !== layerBtn) {
+    layerPanel.classList.remove('open');
+    layerBtn.classList.remove('open');
+  }
+});
+
+/* ---------------------------------------------------------
+   Camadas por território
+--------------------------------------------------------- */
+const layersByTerr = {};
+const labelsByTerr  = {};
+const countByTerr   = {};
+
+function popupHtml(p){
+  return `
+    <div class="pop-terr" style="color:${TERRITORIOS[p.territorio].color}">${p.territorio}</div>
+    <div class="pop-name">${p.municipio}</div>
+    <div class="pop-row"><span>Macrorregião</span><span>${p.macro}</span></div>
+    <div class="pop-row"><span>Código IBGE</span><span>${p.cd_mun}</span></div>
+    <div class="pop-row"><span>Área</span><span>${p.area_km2.toFixed(0)} km²</span></div>
+  `;
+}
+
+function styleFor(territorio){
+  const c = TERRITORIOS[territorio].color;
+  return { color:c, weight:1.4, opacity:.95, fillColor:c, fillOpacity:.38 };
+}
+
+Object.keys(TERRITORIOS).forEach(t => countByTerr[t] = 0);
+DATA_REGIOES.features.forEach(f => countByTerr[f.properties.territorio]++);
+
+function wrapLabel(name){
+  if (name.length <= 14) return name;
+  const words = name.split(' ');
+  if (words.length === 1) return name;
+  let best = 1, bestDiff = Infinity, cum = 0;
+  for (let i = 0; i < words.length - 1; i++){
+    cum += words[i].length + 1;
+    const diff = Math.abs(cum - name.length / 2);
+    if (diff < bestDiff){ bestDiff = diff; best = i + 1; }
+  }
+  return `${words.slice(0, best).join(' ')}<br>${words.slice(best).join(' ')}`;
+}
+
+const allLabelMarkers = []; // { marker, area, terr }
+
+Object.keys(TERRITORIOS).forEach(terr => {
+  const fc = { type:"FeatureCollection", features: DATA_REGIOES.features.filter(f => f.properties.territorio === terr) };
+
+  const gj = L.geoJSON(fc, {
+    style: () => styleFor(terr),
+    onEachFeature: (feature, layer) => {
+      layer.bindPopup(popupHtml(feature.properties));
+      layer.on('mouseover', () => layer.setStyle({ fillOpacity:.6, weight:2.2 }));
+      layer.on('mouseout',  () => layer.setStyle(styleFor(terr)));
+    }
+  }).addTo(map);
+
+  const labelGroup = L.layerGroup();
+  fc.features.forEach(f => {
+    const p = f.properties;
+    const icon = L.divIcon({
+      className:'muni-label-wrap',
+      html:`<div class="muni-label${p.municipio.length > 14 ? ' wrap' : ''}">${wrapLabel(p.municipio)}</div>`,
+      iconSize:[0,0],
+    });
+    const marker = L.marker([p.LABEL_LAT, p.LABEL_LON], { icon, interactive:false }).addTo(labelGroup);
+    allLabelMarkers.push({ marker, area: p.area_km2, terr });
+  });
+  labelGroup.addTo(map);
+
+  layersByTerr[terr] = gj;
+  labelsByTerr[terr] = labelGroup;
+});
+
+/* ---------------------------------------------------------
+   Anti-colisão de rótulos: ao afastar o zoom, prioriza os
+   municípios maiores e esconde os nomes que colidiriam com
+   um já visível. Recalcula a cada zoom/arraste do mapa.
+--------------------------------------------------------- */
+let declutterRaf = null;
+function declutterLabels(){
+  if (declutterRaf) cancelAnimationFrame(declutterRaf);
+  declutterRaf = requestAnimationFrame(() => {
+    const showAtAll = map.getZoom() >= 7;
+    const active = allLabelMarkers.filter(o => map.hasLayer(labelsByTerr[o.terr]));
+
+    if (!showAtAll){
+      active.forEach(o => { const el = o.marker.getElement(); if (el) el.style.visibility = 'hidden'; });
+      return;
+    }
+
+    // mostra tudo primeiro para medir o tamanho real de cada rótulo
+    active.forEach(o => { const el = o.marker.getElement(); if (el) el.style.visibility = 'visible'; });
+
+    const withRect = active.map(o => {
+      const el = o.marker.getElement();
+      const labelEl = el ? el.querySelector('.muni-label') : null;
+      return { o, el, labelEl };
+    }).filter(x => x.labelEl);
+
+    withRect.sort((a, b) => b.o.area - a.o.area);
+
+    const pad = 3;
+    const placed = [];
+    withRect.forEach(({ el, labelEl }) => {
+      const r = labelEl.getBoundingClientRect();
+      const box = { left:r.left-pad, right:r.right+pad, top:r.top-pad, bottom:r.bottom+pad };
+      const overlaps = placed.some(p => !(box.right < p.left || box.left > p.right || box.bottom < p.top || box.top > p.bottom));
+      if (overlaps) el.style.visibility = 'hidden';
+      else placed.push(box);
+    });
+  });
+}
+map.on('zoomend moveend', declutterLabels);
+declutterLabels();
+
+/* ---------------------------------------------------------
+   HUD de coordenadas (telas largas)
+--------------------------------------------------------- */
+map.on('mousemove', e => {
+  document.getElementById('hud-lat').textContent = e.latlng.lat.toFixed(3);
+  document.getElementById('hud-lon').textContent = e.latlng.lng.toFixed(3);
+});
+map.on('zoomend', () => {
+  document.getElementById('hud-zoom').textContent = map.getZoom();
+});
+document.getElementById('hud-zoom').textContent = map.getZoom();
+
+/* ---------------------------------------------------------
+   Árvore de filtro hierárquica (Macrorregião > Território)
+--------------------------------------------------------- */
+const treeEl = document.getElementById('tree');
+const legendEl = document.getElementById('legend-list');
+
+function chevSvg(){
+  return `<svg class="chev" viewBox="0 0 10 10" fill="none"><path d="M2 1L8 5L2 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+
+MACRO_ORDER.forEach(macro => {
+  const terrsInMacro = Object.keys(TERRITORIOS).filter(t => TERRITORIOS[t].macro === macro);
+
+  const block = document.createElement('div');
+  block.className = 'macro-block';
+
+  const macroRow = document.createElement('div');
+  macroRow.className = 'row macro-row';
+  macroRow.innerHTML = `
+    ${chevSvg()}
+    <input type="checkbox" checked data-macro="${macro}">
+    <span class="row-name">${macro}</span>
+    <span class="row-count">${terrsInMacro.reduce((s,t)=>s+countByTerr[t],0)}</span>
+  `;
+  block.appendChild(macroRow);
+
+  const terrList = document.createElement('div');
+  terrList.className = 'terr-list';
+
+  terrsInMacro.forEach(terr => {
+    const row = document.createElement('div');
+    row.className = 'row terr-row';
+    row.innerHTML = `
+      <input type="checkbox" checked data-terr="${terr}">
+      <span class="swatch" style="background:${TERRITORIOS[terr].color}"></span>
+      <span class="row-name">${terr}</span>
+      <span class="row-count">${countByTerr[terr]}</span>
+    `;
+    terrList.appendChild(row);
+
+    legendEl.innerHTML += `<div class="legend-item"><span class="swatch" style="background:${TERRITORIOS[terr].color}"></span><b>${terr}</b>&nbsp;(${countByTerr[terr]})</div>`;
+  });
+  block.appendChild(terrList);
+  treeEl.appendChild(block);
+
+  const chev = macroRow.querySelector('.chev');
+  const toggleCollapse = () => {
+    chev.classList.toggle('collapsed');
+    terrList.style.display = terrList.style.display === 'none' ? 'block' : 'none';
+  };
+  macroRow.querySelector('.row-name').addEventListener('click', toggleCollapse);
+  chev.addEventListener('click', toggleCollapse);
+
+  const macroCb = macroRow.querySelector('input');
+  const terrCbs = () => Array.from(terrList.querySelectorAll('input[data-terr]'));
+
+  function setTerrVisible(terr, visible){
+    const apply = visible ? lyr => lyr.addTo(map) : lyr => map.removeLayer(lyr);
+    apply(layersByTerr[terr]);
+    apply(labelsByTerr[terr]);
+    declutterLabels();
+  }
+
+  macroCb.addEventListener('change', () => {
+    terrCbs().forEach(cb => { cb.checked = macroCb.checked; cb.classList.remove('indeterminate'); setTerrVisible(cb.dataset.terr, cb.checked); });
+    macroCb.classList.remove('indeterminate');
+  });
+
+  terrCbs().forEach(cb => {
+    cb.addEventListener('change', () => {
+      setTerrVisible(cb.dataset.terr, cb.checked);
+      const all = terrCbs();
+      const checkedCount = all.filter(c => c.checked).length;
+      macroCb.checked = checkedCount > 0;
+      macroCb.classList.toggle('indeterminate', checkedCount > 0 && checkedCount < all.length);
+    });
+  });
+});
+
+/* ---------------------------------------------------------
+   Gaveta de filtros (sheet) — abrir/fechar no mobile
+--------------------------------------------------------- */
+const sidebarEl = document.getElementById('sidebar');
+const sheetHandle = document.getElementById('sheet-handle');
+sheetHandle.addEventListener('click', () => sidebarEl.classList.toggle('expanded'));
+map.on('click', () => sidebarEl.classList.remove('expanded'));
+
+document.getElementById('toggle-bahia').addEventListener('change', (e) => {
+  if (e.target.checked) bahiaLayer.addTo(map);
+  else map.removeLayer(bahiaLayer);
+});
+</script>
+</body>
+</html>

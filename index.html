@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CIPE Sudoeste — Mapas Operacionais</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="page-home">
+
+<div class="camo-trim camo-bg"></div>
+<header class="site-header">
+  <div class="wrap">
+    <img class="logo-cipe" src="img/logo-cipe.png" alt="CIPE Sudoeste">
+    <div class="brand-divider"></div>
+    <div class="logo-pmba-chip"><img src="img/logo-pmba.png" alt="Polícia Militar da Bahia"></div>
+    <div class="brand-text">
+      <div class="eyebrow">Polícia Militar · Bahia</div>
+      <div class="title">CIPE Sudoeste</div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="hero">
+    <div class="eyebrow">Mapas Operacionais</div>
+    <h1>Visão geográfica da <em>atuação da CIPE Sudoeste</em> em territórios, eixos e unidades.</h1>
+    <p>Conjunto de mapas interativos com a área de responsabilidade da unidade, os eixos de atuação e as unidades apoiadas na região.</p>
+
+    <div class="hero-stats">
+      <div class="hstat"><div class="n">64</div><div class="l">Municípios</div></div>
+      <div class="hstat"><div class="n">4</div><div class="l">Territórios</div></div>
+      <div class="hstat"><div class="n">2</div><div class="l">Macrorregiões</div></div>
+      <div class="hstat"><div class="n">8</div><div class="l">Eixos</div></div>
+    </div>
+  </section>
+
+  <div class="section-label with-rule">Mapas</div>
+
+  <div class="grid">
+
+    <div class="card active">
+      <a class="card-link" href="area-responsabilidade.html" aria-label="Abrir mapa Área de Responsabilidade"></a>
+      <div class="card-no">01</div>
+      <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M3 7l5-3 6 3 6-3v15l-6 3-6-3-5 3V7z"/>
+        <path d="M8 4v15M14 7v15"/>
+      </svg>
+      <h3>Área de Responsabilidade</h3>
+      <p>Macrorregiões, territórios de identidade e municípios sob responsabilidade da unidade.</p>
+      <div class="card-foot">
+        <span class="badge live">Disponível</span>
+        <span class="go">Abrir mapa
+          <svg viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+      </div>
+    </div>
+
+    <div class="card active">
+      <a class="card-link" href="eixos-atuacao.html" aria-label="Abrir mapa Eixos de Atuação"></a>
+      <div class="card-no">02</div>
+      <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="6" cy="18" r="2.2"/>
+        <circle cx="18" cy="6" r="2.2"/>
+        <path d="M7.6 16.6L16.4 7.4"/>
+      </svg>
+      <h3>Eixos de Atuação</h3>
+      <p>Rotas e eixos estratégicos de deslocamento e atuação operacional na área de responsabilidade.</p>
+      <div class="card-foot">
+        <span class="badge live">Disponível</span>
+        <span class="go">Abrir mapa
+          <svg viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+      </div>
+    </div>
+
+    <div class="card active">
+      <a class="card-link" href="efetivo.html" aria-label="Abrir Painel de Efetivo"></a>
+      <div class="card-no">03</div>
+      <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M4 19V9M12 19V5M20 19v-6"/>
+      </svg>
+      <h3>Painel de Efetivo</h3>
+      <p>Base de dados do efetivo, diagnose comparada ao QDL e geração de relatório em PDF.</p>
+      <div class="card-foot">
+        <span class="badge live">Disponível</span>
+        <span class="go">Abrir painel
+          <svg viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+      </div>
+    </div>
+
+    <div class="card disabled">
+      <div class="card-no">04</div>
+      <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="4" y="10" width="16" height="10" rx="1"/>
+        <path d="M9 10V6a3 3 0 016 0v4"/>
+      </svg>
+      <h3>Unidades Apoiadas</h3>
+      <p>Localização das unidades e batalhões apoiados pela CIPE Sudoeste na região.</p>
+      <div class="card-foot">
+        <span class="badge soon">Em construção</span>
+        <span class="go" style="color:var(--ink-faint)">—</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="wrap">
+    Fonte: malha municipal IBGE 2025 (BA_Municipios_2025). Classificação por Território de Identidade — SEI/Bahia.
+  </div>
+</footer>
+
+</body>
+</html>

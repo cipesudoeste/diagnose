@@ -1,0 +1,145 @@
+/* =========================================================
+   EFETIVO — estilos complementares ao styles.css do site
+   (paleta, tipografia e componentes .card/.stat/.row/.legend
+   já vêm de styles.css; aqui só o que é específico desta página)
+   ========================================================= */
+
+/* --- navegação por seções (Diagnose / Efetivo / Metas) --- */
+.ef-tabs{display:flex;gap:4px;padding:0 22px 14px;flex-wrap:wrap;}
+.ef-tab{
+  display:flex;align-items:center;gap:7px;
+  font-family:var(--font-mono);font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;
+  padding:9px 14px;border-radius:6px;border:1px solid var(--line);background:transparent;color:var(--ink-muted);
+  cursor:pointer;transition:all .15s ease;
+}
+.ef-tab:hover{color:var(--ink);}
+.ef-tab.active{background:var(--bg-panel-2);color:var(--accent);border-color:var(--cipe-brown-l);}
+.ef-tab svg{width:14px;height:14px;flex:none;}
+
+.ef-section{display:none;padding:0 22px 40px;}
+.ef-section.active{display:block;}
+
+/* --- botão exportar PDF na topbar / page-head --- */
+.export-btn{
+  display:flex;align-items:center;gap:7px;
+  font-family:var(--font-mono);font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;
+  background:var(--accent);color:var(--camo-black);border:none;border-radius:7px;
+  padding:8px 14px;cursor:pointer;font-weight:600;transition:background .15s ease;
+  margin-left:auto;
+}
+.export-btn:hover{background:var(--cipe-brown-l);}
+.saved-flash{font-family:var(--font-mono);font-size:10.5px;color:var(--t-sertao);margin-right:10px;white-space:nowrap;}
+
+/* --- tabela genérica (diagnose e efetivo) --- */
+.table-wrap{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--bg-panel);margin-bottom:4px;}
+table.ef{width:100%;border-collapse:collapse;font-size:13px;}
+table.ef th{
+  font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;
+  background:var(--bg-panel-2);color:var(--ink-muted);padding:9px 12px;text-align:left;font-weight:500;
+  border-bottom:1px solid var(--line);
+}
+table.ef th.num, table.ef td.num{text-align:center;}
+table.ef td{padding:8px 12px;border-bottom:1px solid var(--line-soft);color:var(--ink);}
+table.ef tr:last-child td{border-bottom:none;}
+table.ef tr.total td{font-weight:600;background:var(--bg-panel-2);border-top:1px solid var(--line);}
+table.ef tr:hover td{background:rgba(191,174,140,.04);}
+
+.badge-status{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:20px;display:inline-block;}
+.badge-status.ok{background:rgba(147,168,79,.15);color:var(--t-sertao);border:1px solid rgba(147,168,79,.35);}
+.badge-status.mid{background:rgba(201,134,63,.15);color:var(--t-paramirim);border:1px solid rgba(201,134,63,.35);}
+.badge-status.bad{background:rgba(176,85,63,.15);color:#c07056;border:1px solid rgba(176,85,63,.35);}
+
+/* --- observações e sugestão --- */
+ul.obs{margin:0;padding-left:18px;font-size:13px;color:var(--ink-muted);line-height:1.7;}
+ul.obs li::marker{color:var(--accent);}
+ul.obs b{color:var(--ink);font-weight:600;}
+
+.callout{background:var(--bg-panel);border:1px solid var(--line);border-left:3px solid var(--cipe-brown-l);border-radius:8px;padding:14px 18px;font-size:13px;color:var(--ink-muted);line-height:1.6;margin:16px 0;}
+.callout b{color:var(--ink);}
+
+.ef-signature{margin-top:30px;text-align:center;}
+.ef-signature .line{width:220px;height:1px;background:var(--line);margin:0 auto 8px;}
+.ef-signature .name{font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--ink);}
+.ef-signature .role{font-size:11px;color:var(--ink-faint);margin-top:2px;}
+
+/* --- toolbar da aba Efetivo --- */
+.ef-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;}
+.ef-toolbar-info{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-faint);}
+.check-rrc{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-muted);}
+
+.ef-btn{
+  display:flex;align-items:center;gap:6px;
+  font-family:var(--font-mono);font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;
+  padding:8px 14px;border-radius:6px;border:1px solid var(--line);background:var(--bg-panel);color:var(--ink-muted);
+  cursor:pointer;transition:all .15s ease;
+}
+.ef-btn:hover{border-color:var(--cipe-brown-l);color:var(--accent);}
+.ef-btn.primary{background:var(--accent-dim);color:var(--camo-black);border-color:var(--accent-dim);font-weight:600;}
+.ef-btn.primary:hover{background:var(--accent);}
+.ef-btn svg{width:13px;height:13px;}
+
+.bulk-box{background:var(--bg-panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:18px;}
+.bulk-box p{font-size:11.5px;color:var(--ink-faint);margin:0 0 10px;line-height:1.6;}
+.bulk-box code{background:var(--bg-panel-2);padding:1px 5px;border-radius:3px;color:var(--accent);}
+.bulk-box textarea{
+  width:100%;background:var(--bg);border:1px solid var(--line);border-radius:6px;color:var(--ink);
+  padding:10px;font-family:var(--font-mono);font-size:12px;resize:vertical;
+}
+.bulk-box .actions{display:flex;gap:8px;margin-top:10px;}
+
+.ef-field{
+  width:100%;background:transparent;border:1px solid transparent;border-radius:5px;
+  color:var(--ink);padding:6px 8px;font-size:12.5px;font-family:var(--font-body);
+  transition:border-color .12s ease, background .12s ease;
+}
+.ef-field:hover{border-color:var(--line);}
+.ef-field:focus{outline:none;border-color:var(--cipe-brown-l);background:var(--bg-panel-2);}
+select.ef-field{cursor:pointer;}
+select.ef-field option{background:var(--bg-panel);color:var(--ink);}
+
+.icon-btn{background:none;border:none;color:#c07056;cursor:pointer;padding:6px;display:flex;align-items:center;border-radius:5px;}
+.icon-btn:hover{background:rgba(176,85,63,.12);}
+
+/* --- aba Metas --- */
+.meta-intro{font-size:13px;color:var(--ink-muted);line-height:1.6;margin-bottom:18px;max-width:600px;}
+.meta-row{display:flex;align-items:center;justify-content:space-between;padding:13px 4px;border-bottom:1px solid var(--line);max-width:480px;}
+.meta-row:last-child{border-bottom:none;}
+.meta-row .lbl{font-family:var(--font-display);font-size:14px;color:var(--ink);}
+.meta-row input{
+  width:90px;text-align:center;background:var(--bg-panel);border:1px solid var(--line);border-radius:6px;
+  color:var(--ink);padding:8px;font-family:var(--font-mono);font-size:14px;
+}
+.meta-row input:focus{outline:none;border-color:var(--cipe-brown-l);}
+
+/* =========================================================
+   IMPRESSÃO — versão clara e independente da aba ativa
+   ========================================================= */
+#ef-print{display:none;}
+@media print{
+  body *{visibility:hidden;}
+  #ef-print, #ef-print *{visibility:visible;}
+  #ef-print{display:block;position:absolute;left:0;top:0;width:100%;padding:24px;
+    background:#fff;color:#26261f;font-family:var(--font-body);}
+  #ef-print .eyebrow{color:#8a5a35;}
+  #ef-print .print-title{font-family:var(--font-display);font-size:19px;font-weight:700;color:#2b2f1e;margin-bottom:4px;}
+  #ef-print .hero-stats{display:flex;gap:10px;margin:14px 0;}
+  #ef-print .hstat{flex:1;border:1px solid #dcd6c2;background:#fbfaf5;border-radius:8px;padding:12px 16px;}
+  #ef-print .hstat .n{font-family:var(--font-mono);font-size:24px;color:#8a5a35;}
+  #ef-print .hstat.alert .n{color:#b0553f;}
+  #ef-print .hstat .l{font-size:10px;color:#5a5748;text-transform:uppercase;margin-top:6px;}
+  #ef-print .section-label{color:#2b2f1e;margin:20px 0 10px;}
+  #ef-print .section-label::after{background:#dcd6c2;}
+  #ef-print .table-wrap{background:#fbfaf5;border-color:#dcd6c2;}
+  #ef-print table.ef th{background:#ece7d8;color:#2b2f1e;}
+  #ef-print table.ef td{color:#26261f;border-color:#e6e1d0;}
+  #ef-print table.ef tr.total td{background:#ece7d8;}
+  #ef-print .callout{background:#f4f1e8;border-left-color:#8a5a35;color:#26261f;}
+  #ef-print .callout b{color:#2b2f1e;}
+  #ef-print ul.obs{color:#26261f;}
+  #ef-print ul.obs b{color:#2b2f1e;}
+}
+
+@media (min-width:760px){
+  .ef-tabs{padding:0 0 18px;}
+  .ef-section{padding:0;}
+}

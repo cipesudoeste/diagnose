@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CIPE Sudoeste — Painel de Efetivo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="efetivo.css">
+</head>
+<body>
+
+<div class="camo-trim camo-bg"></div>
+
+<header class="site-header">
+  <div class="wrap" style="display:flex;align-items:center;gap:14px;">
+    <a class="home-btn" href="index.html" title="Voltar para a página inicial">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M3 11l9-7 9 7" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M5 10v9a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1v-9" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+    <img class="logo-cipe" src="img/logo-cipe.png" alt="CIPE Sudoeste" style="height:34px;">
+    <div class="brand-divider"></div>
+    <div class="logo-pmba-chip"><img src="img/logo-pmba.png" alt="Polícia Militar da Bahia"></div>
+    <div class="brand-text">
+      <div class="eyebrow">Polícia Militar · Bahia</div>
+      <div class="title">Painel de Efetivo</div>
+    </div>
+    <span class="saved-flash" id="saved-flash" style="display:none;">salvo</span>
+    <button class="export-btn" id="btn-print">Exportar PDF</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="section-label with-rule" style="margin-top:26px;">CIPE Sudoeste</div>
+
+  <div class="ef-tabs">
+    <button class="ef-tab active" data-tab="diagnose">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 19V9M12 19V5M20 19v-6"/></svg>
+      Diagnose
+    </button>
+    <button class="ef-tab" data-tab="efetivo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+      Efetivo
+    </button>
+    <button class="ef-tab" data-tab="metas">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>
+      Metas (QDL)
+    </button>
+  </div>
+
+  <!-- ===================== DIAGNOSE ===================== -->
+  <section class="ef-section active" id="sec-diagnose">
+    <div class="eyebrow" id="diag-date"></div>
+
+    <div class="hero-stats" style="margin-top:12px;">
+      <div class="hstat"><div class="n" id="stat-qdl">—</div><div class="l">Previsto no QDL</div></div>
+      <div class="hstat"><div class="n" id="stat-real">—</div><div class="l">Efetivo Real</div></div>
+      <div class="hstat" id="stat-dif-card"><div class="n" id="stat-dif">—</div><div class="l">Diferença Total</div><div class="s" id="stat-pct" style="font-size:10.5px;color:var(--ink-faint);margin-top:2px;"></div></div>
+    </div>
+
+    <div class="section-label">Comparativo QDL x Efetivo Real</div>
+    <div class="table-wrap" style="padding:14px 16px 4px;">
+      <div id="chart-holder"></div>
+    </div>
+
+    <div class="section-label">Detalhamento por Posto/Graduação</div>
+    <div class="table-wrap">
+      <table class="ef">
+        <thead><tr><th>Posto / Graduação</th><th class="num">QDL</th><th class="num">Real</th><th class="num">Dif.</th><th>Situação</th></tr></thead>
+        <tbody id="diag-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="section-label">Observações</div>
+    <ul class="obs" id="diag-obs"></ul>
+
+    <div class="callout" id="diag-callout"></div>
+
+    <div class="ef-signature">
+      <div class="line"></div>
+      <div class="name">Comandante da Companhia Independente de Policiamento Especializado/Sudoeste</div>
+      <div class="role">Polícia Militar da Bahia</div>
+    </div>
+  </section>
+
+  <!-- ===================== EFETIVO ===================== -->
+  <section class="ef-section" id="sec-efetivo">
+    <div class="ef-toolbar">
+      <div class="ef-toolbar-info" id="roster-info">—</div>
+      <label class="check-rrc"><input type="checkbox" id="chk-rrc"> Considerar RR/C no efetivo real</label>
+      <div style="display:flex;gap:8px;">
+        <button class="ef-btn" id="btn-bulk-toggle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v14M6 11l6 6 6-6M4 21h16"/></svg>
+          Importar em lote
+        </button>
+        <button class="ef-btn primary" id="btn-add-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          Adicionar
+        </button>
+      </div>
+    </div>
+
+    <div class="bulk-box" id="bulk-box" style="display:none;">
+      <p>Cole linhas no formato <code>POSTO [tab] NOME [tab] MATRÍCULA</code> — mesmo formato de copiar direto das colunas do Google Planilhas.</p>
+      <textarea rows="6" id="bulk-text" placeholder="SD 1&#170; Cl PM&#9;FULANO DA SILVA&#9;30600000"></textarea>
+      <div class="actions">
+        <button class="ef-btn primary" id="btn-bulk-import">Importar</button>
+        <button class="ef-btn" id="btn-bulk-cancel">Cancelar</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="ef">
+        <thead><tr><th>Posto/Graduação</th><th>Nome</th><th>Matrícula</th><th style="width:40px;"></th></tr></thead>
+        <tbody id="roster-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===================== METAS ===================== -->
+  <section class="ef-section" id="sec-metas">
+    <div class="meta-intro">Quantitativo previsto no QDL (Quadro de Distribuição de Lotação) para cada posto/graduação. Comparado automaticamente ao efetivo real cadastrado na aba Efetivo.</div>
+    <div id="metas-list"></div>
+  </section>
+
+</div>
+
+<footer class="site-footer">
+  <div class="wrap">Painel de Efetivo — Cia Ind PE/Sudoeste — Documento de uso interno</div>
+</footer>
+
+<!-- Versão de impressão (independe da aba ativa) -->
+<div id="ef-print">
+  <div class="eyebrow" id="print-date"></div>
+  <div class="print-title">Relatório de Diagnose do Efetivo</div>
+
+  <div class="hero-stats">
+    <div class="hstat"><div class="n" id="p-stat-qdl">—</div><div class="l">Previsto no QDL</div></div>
+    <div class="hstat"><div class="n" id="p-stat-real">—</div><div class="l">Efetivo Real</div></div>
+    <div class="hstat" id="p-stat-dif-card"><div class="n" id="p-stat-dif">—</div><div class="l">Diferença Total</div></div>
+  </div>
+
+  <div class="section-label">Comparativo QDL x Efetivo Real</div>
+  <div class="table-wrap" id="print-chart-holder" style="padding:14px 16px 4px;"></div>
+
+  <div class="section-label">Detalhamento por Posto/Graduação</div>
+  <div class="table-wrap">
+    <table class="ef">
+      <thead><tr><th>Posto / Graduação</th><th class="num">QDL</th><th class="num">Real</th><th class="num">Dif.</th><th>Situação</th></tr></thead>
+      <tbody id="p-diag-tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="section-label">Observações</div>
+  <ul class="obs" id="p-diag-obs"></ul>
+
+  <div class="callout" id="p-diag-callout"></div>
+
+  <div class="ef-signature">
+    <div class="line"></div>
+    <div class="name">Comandante da Companhia Independente de Policiamento Especializado/Sudoeste</div>
+    <div class="role">Polícia Militar da Bahia</div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="efetivo-config.js"></script>
+<script src="data_efetivo.js"></script>
+<script src="efetivo.js"></script>
+</body>
+</html>
