@@ -111,10 +111,46 @@ select.ef-field option{background:var(--bg-panel);color:var(--ink);}
 }
 .meta-row input:focus{outline:none;border-color:var(--cipe-brown-l);}
 
+/* --- grid de 2 colunas: barras + rosca --- */
+.diag-grid-2{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:4px;}
+@media (min-width:720px){
+  .diag-grid-2{grid-template-columns:1.1fr 1fr;align-items:stretch;}
+}
+
+/* --- barras de percentual de preenchimento --- */
+.fillbars-card{padding:16px 18px;display:flex;flex-direction:column;gap:12px;}
+.fillbar-row{display:flex;align-items:center;gap:10px;}
+.fillbar-label{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-muted);width:64px;flex:none;text-transform:uppercase;letter-spacing:.03em;}
+.fillbar-track{flex:1;height:9px;background:var(--bg-panel-2);border-radius:5px;overflow:hidden;position:relative;}
+.fillbar-fill{height:100%;border-radius:5px;transition:width .3s ease;}
+.fillbar-fill.ok{background:var(--t-sertao);}
+.fillbar-fill.mid{background:var(--t-paramirim);}
+.fillbar-fill.bad{background:#b0553f;}
+.fillbar-pct{font-family:var(--font-mono);font-size:11px;color:var(--ink);width:38px;flex:none;text-align:right;}
+
+/* --- rosca de participação no déficit --- */
+.donut-card{padding:16px 18px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;justify-content:center;}
+.donut-wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap;justify-content:center;width:100%;}
+.donut-legend{display:flex;flex-direction:column;gap:7px;flex:1;min-width:140px;}
+.donut-legend-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-muted);}
+.donut-legend-item b{color:var(--ink);font-family:var(--font-mono);font-weight:600;}
+.donut-swatch{width:10px;height:10px;border-radius:3px;flex:none;}
+.donut-empty{font-size:12.5px;color:var(--ink-faint);text-align:center;padding:30px 10px;line-height:1.6;}
+
+@media print{
+  #ef-print .fillbar-label{color:#5a5748;}
+  #ef-print .fillbar-track{background:#e6e1d0;}
+  #ef-print .fillbar-pct{color:#26261f;}
+  #ef-print .fillbars-card, #ef-print .donut-card{background:#fbfaf5;border-color:#dcd6c2;}
+  #ef-print .donut-legend-item{color:#5a5748;}
+  #ef-print .donut-legend-item b{color:#26261f;}
+  #ef-print .donut-empty{color:#8a8770;}
+}
+
+#ef-print{display:none;}
 /* =========================================================
    IMPRESSÃO — versão clara e independente da aba ativa
    ========================================================= */
-#ef-print{display:none;}
 @media print{
   body *{visibility:hidden;}
   #ef-print, #ef-print *{visibility:visible;}

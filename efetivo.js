@@ -160,12 +160,83 @@ function buildChartSVG(groupData) {
 }
 
 /* ---------------------------------------------------------
+   Barras de percentual de preenchimento por posto
+--------------------------------------------------------- */
+function buildFillBarsHTML(groupData) {
+  return GROUP_ORDER.map((g) => {
+    const d = groupData[g];
+    let pct;
+    if (d.qdl > 0) pct = Math.round((d.real / d.qdl) * 100);
+    else pct = d.real > 0 ? 100 : 0;
+    const pctClamped = Math.min(pct, 100);
+    let cls = "ok";
+    if (pct < 100) cls = pct >= 70 ? "mid" : "bad";
+    return `
+    <div class="fillbar-row">
+      <div class="fillbar-label">${GROUP_LABEL[g].split(" ")[0]}</div>
+      <div class="fillbar-track"><div class="fillbar-fill ${cls}" style="width:${pctClamped}%"></div></div>
+      <div class="fillbar-pct">${pct}%</div>
+    </div>`;
+  }).join("");
+}
+
+/* ---------------------------------------------------------
+   Rosca — participação de cada posto no déficit total
+--------------------------------------------------------- */
+const DEFICIT_COLORS = {
+  Maj: "#8a5a35", Cap: "#c08a55", Ten: "#b0553f",
+  Subten: "#c9863f", Sgt: "#93a84f", Cb: "#4a93a8", Sd: "#8a5380",
+};
+
+function buildDeficitDonutHTML(groupData) {
+  const deficitGroups = GROUP_ORDER.filter((g) => groupData[g].dif < 0);
+  const total = deficitGroups.reduce((s, g) => s + Math.abs(groupData[g].dif), 0);
+
+  if (total === 0) {
+    return `<div class="donut-empty">Nenhum déficit no momento —<br>efetivo completo ou excedente em todos os postos.</div>`;
+  }
+
+  const size = 168, r = 62, stroke = 22, cx = size / 2, cy = size / 2;
+  const circumference = 2 * Math.PI * r;
+  let offset = 0;
+  let segments = "";
+  deficitGroups.forEach((g) => {
+    const val = Math.abs(groupData[g].dif);
+    const frac = val / total;
+    const dash = frac * circumference;
+    segments += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${DEFICIT_COLORS[g]}" stroke-width="${stroke}"
+      stroke-dasharray="${dash} ${circumference - dash}" stroke-dashoffset="${-offset}"
+      transform="rotate(-90 ${cx} ${cy})" stroke-linecap="butt"/>`;
+    offset += dash;
+  });
+
+  const svg = `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" style="flex:none;">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#3a4030" stroke-width="${stroke}"/>
+    ${segments}
+    <text x="${cx}" y="${cy - 3}" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="22" fill="#eef0e4" font-weight="600">${total}</text>
+    <text x="${cx}" y="${cy + 15}" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="8.5" fill="#7c8268">déficit total</text>
+  </svg>`;
+
+  const legend = deficitGroups
+    .sort((a, b) => Math.abs(groupData[b].dif) - Math.abs(groupData[a].dif))
+    .map((g) => {
+      const val = Math.abs(groupData[g].dif);
+      const pct = Math.round((val / total) * 100);
+      return `<div class="donut-legend-item"><span class="donut-swatch" style="background:${DEFICIT_COLORS[g]}"></span>${GROUP_LABEL[g]} <b>${val}</b> (${pct}%)</div>`;
+    }).join("");
+
+  return `<div class="donut-wrap">${svg}<div class="donut-legend">${legend}</div></div>`;
+}
+
+/* ---------------------------------------------------------
    Render — Diagnose (tela + impressão)
 --------------------------------------------------------- */
 function renderDiagnose() {
   const groupData = computeGroupData();
   const totals = computeTotals(groupData);
   const chartSvg = buildChartSVG(groupData);
+  const fillBarsHtml = buildFillBarsHTML(groupData);
+  const donutHtml = buildDeficitDonutHTML(groupData);
 
   const rowsHtml = GROUP_ORDER.map((g) => {
     const d = groupData[g];
@@ -211,6 +282,8 @@ function renderDiagnose() {
   document.getElementById("stat-pct").textContent = totals.pct + "% do previsto";
   document.getElementById("stat-dif-card").classList.toggle("alert", totals.dif < 0);
   document.getElementById("chart-holder").innerHTML = chartSvg;
+  document.getElementById("fillbars-holder").innerHTML = fillBarsHtml;
+  document.getElementById("donut-holder").innerHTML = donutHtml;
   document.getElementById("diag-tbody").innerHTML = rowsHtml;
   document.getElementById("diag-obs").innerHTML = obsHtml;
   document.getElementById("diag-callout").innerHTML = calloutHtml;
@@ -222,6 +295,8 @@ function renderDiagnose() {
   document.getElementById("p-stat-dif").textContent = totals.dif > 0 ? "+" + totals.dif : totals.dif;
   document.getElementById("p-stat-dif-card").classList.toggle("alert", totals.dif < 0);
   document.getElementById("print-chart-holder").innerHTML = chartSvg;
+  document.getElementById("p-fillbars-holder").innerHTML = fillBarsHtml;
+  document.getElementById("p-donut-holder").innerHTML = donutHtml;
   document.getElementById("p-diag-tbody").innerHTML = rowsHtml;
   document.getElementById("p-diag-obs").innerHTML = obsHtml;
   document.getElementById("p-diag-callout").innerHTML = calloutHtml;
