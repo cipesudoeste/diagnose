@@ -9,7 +9,7 @@ sem build, sem framework) e com a mesma identidade visual (`styles.css`).
 efetivo.html          -> a página em si (Diagnose / Efetivo / Metas)
 efetivo.css           -> estilos específicos desta página (usa as variáveis de styles.css)
 efetivo.js            -> toda a lógica (cálculo de diagnose, tabela editável, PDF, Supabase)
-data_efetivo.js        -> efetivo inicial (semente) e metas padrão do QDL
+data_efetivo.js        -> efetivo inicial (semente) e metas padrão do QO
 efetivo-config.js       -> onde você cola a URL e a chave do Supabase
 supabase_setup.sql      -> script para criar a tabela no Supabase
 ```
@@ -67,11 +67,11 @@ estático: a chave do Supabase já vai embutida em `efetivo-config.js`).
 
 ## Como funciona a página
 
-- **Diagnose**: cards de resumo, gráfico (SVG puro) e tabela comparando o QDL
+- **Diagnose**: cards de resumo, gráfico (SVG puro) e tabela comparando o QO
   com o efetivo real, calculados automaticamente a partir da lista de nomes.
 - **Efetivo**: tabela editável (adicionar linha, editar posto/nome/matrícula,
   remover, ou colar em lote no formato `POSTO [tab] NOME [tab] MATRÍCULA`).
-- **Metas (QDL)**: os números previstos por posto/graduação, editáveis.
+- **Metas (QO)**: os números previstos por posto/graduação, editáveis.
 - **Exportar PDF**: usa a impressão do navegador (`window.print()`) com uma
   versão clara e formatada da Diagnose, independente da aba que estiver aberta.
 

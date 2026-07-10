@@ -152,7 +152,7 @@ function buildChartSVG(groupData) {
   });
 
   svg += `<rect x="${width - 210}" y="0" width="10" height="10" fill="${colQdl}" rx="2"/>`;
-  svg += `<text x="${width - 210 + 15}" y="9" font-size="10" fill="#b7bba6">QDL (Previsto)</text>`;
+  svg += `<text x="${width - 210 + 15}" y="9" font-size="10" fill="#b7bba6">QO (Previsto)</text>`;
   svg += `<rect x="${width - 95}" y="0" width="10" height="10" fill="${colReal}" rx="2"/>`;
   svg += `<text x="${width - 95 + 15}" y="9" font-size="10" fill="#b7bba6">Real</text>`;
   svg += `</svg>`;
@@ -257,7 +257,7 @@ function escapeHtml(s) {
 }
 
 /* ---------------------------------------------------------
-   Render — Metas (QDL)
+   Render — Metas (QO)
 --------------------------------------------------------- */
 function renderMetas() {
   const el = document.getElementById("metas-list");
