@@ -52,6 +52,8 @@ let roster = [];
 let qdl = { ...DEFAULT_QDL };
 let includeRRC = false;
 let saveTimer = null;
+let projHorizonMonths = 12;
+let projOnlyConfirmed = false;
 
 /* ---------------------------------------------------------
    Supabase
@@ -329,6 +331,13 @@ function renderRoster() {
       </td>
       <td data-label="Nome"><input class="ef-field field-nome" value="${escapeHtml(r.nome)}"></td>
       <td data-label="Matrícula"><input class="ef-field field-matricula" style="width:120px;" value="${escapeHtml(r.matricula)}"></td>
+      <td data-label="Previsão Reserva"><input type="date" class="ef-field field-reserva-data" value="${r.reservaData || ""}"></td>
+      <td data-label="Pediu Reserva?">
+        <select class="ef-field field-reserva-pedida">
+          <option value="nao" ${!r.reservaPedida ? "selected" : ""}>Não</option>
+          <option value="sim" ${r.reservaPedida ? "selected" : ""}>Sim</option>
+        </select>
+      </td>
       <td class="cell-actions" data-label=""><button class="icon-btn btn-remove" title="Remover">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8">
           <path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m2 0v13a1 1 0 01-1 1H8a1 1 0 01-1-1V7h10z"/>
@@ -356,12 +365,107 @@ function renderMetas() {
 }
 
 /* ---------------------------------------------------------
+   Projeção de déficit futuro (reserva remunerada)
+--------------------------------------------------------- */
+function addMonths(date, months) {
+  const d = new Date(date);
+  d.setMonth(d.getMonth() + months);
+  return d;
+}
+
+function parseDate(s) {
+  if (!s) return null;
+  const d = new Date(s + "T00:00:00");
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function getUpcomingDepartures() {
+  const today = new Date();
+  const cutoff = projHorizonMonths >= 9999 ? null : addMonths(today, projHorizonMonths);
+  return roster.filter((r) => {
+    if (isRRC(r.posto) && !includeRRC) return false;
+    const d = parseDate(r.reservaData);
+    if (!d) return false;
+    if (d < today) return false; // já deveria ter saído — não conta como "futuro"
+    if (cutoff && d > cutoff) return false;
+    if (projOnlyConfirmed && !r.reservaPedida) return false;
+    return true;
+  });
+}
+
+function computeProjection() {
+  const departures = getUpcomingDepartures();
+  const groupData = computeGroupData();
+  const departuresByGroup = {};
+  GROUP_ORDER.forEach((g) => (departuresByGroup[g] = 0));
+  departures.forEach((r) => {
+    const g = groupOf(r.posto);
+    if (GROUP_ORDER.includes(g)) departuresByGroup[g] += 1;
+  });
+
+  const projected = {};
+  GROUP_ORDER.forEach((g) => {
+    const realProjetado = Math.max(0, groupData[g].real - departuresByGroup[g]);
+    projected[g] = {
+      qdl: groupData[g].qdl,
+      realAtual: groupData[g].real,
+      saidas: departuresByGroup[g],
+      realProjetado,
+      difAtual: groupData[g].dif,
+      difProjetado: realProjetado - groupData[g].qdl,
+    };
+  });
+  return { departures, projected };
+}
+
+function renderProjecao() {
+  const { departures, projected } = computeProjection();
+
+  let totalDifAtual = 0, totalDifProjetado = 0;
+  GROUP_ORDER.forEach((g) => { totalDifAtual += projected[g].difAtual; totalDifProjetado += projected[g].difProjetado; });
+
+  document.getElementById("proj-stat-saidas").textContent = departures.length;
+  document.getElementById("proj-stat-atual").textContent = totalDifAtual > 0 ? "+" + totalDifAtual : totalDifAtual;
+  document.getElementById("proj-stat-futuro").textContent = totalDifProjetado > 0 ? "+" + totalDifProjetado : totalDifProjetado;
+
+  document.getElementById("proj-tbody").innerHTML = GROUP_ORDER.map((g) => {
+    const p = projected[g];
+    return `<tr>
+      <td data-label="Posto">${GROUP_LABEL[g]}</td>
+      <td class="num" data-label="QO">${p.qdl}</td>
+      <td class="num" data-label="Real Atual">${p.realAtual}</td>
+      <td class="num" data-label="Saídas">${p.saidas > 0 ? "−" + p.saidas : "0"}</td>
+      <td class="num" data-label="Real Projetado">${p.realProjetado}</td>
+      <td class="num" data-label="Déficit Projetado">${p.difProjetado > 0 ? "+" + p.difProjetado : p.difProjetado}</td>
+    </tr>`;
+  }).join("");
+
+  const sorted = [...departures].sort((a, b) => parseDate(a.reservaData) - parseDate(b.reservaData));
+  const timelineHtml = sorted.map((r) => {
+    const d = parseDate(r.reservaData);
+    const dataFmt = d.toLocaleDateString("pt-BR");
+    const statusTag = r.reservaPedida
+      ? `<span class="badge-status ok">Solicitado</span>`
+      : `<span class="badge-status mid">Previsto</span>`;
+    return `<tr>
+      <td data-label="Data">${dataFmt}</td>
+      <td data-label="Nome">${escapeHtml(r.nome) || "—"}</td>
+      <td data-label="Posto">${r.posto}</td>
+      <td data-label="Situação">${statusTag}</td>
+    </tr>`;
+  }).join("");
+  document.getElementById("proj-timeline-tbody").innerHTML = timelineHtml ||
+    `<tr><td colspan="4" style="text-align:center;color:var(--ink-faint);padding:20px;">Nenhuma saída prevista nesse período.</td></tr>`;
+}
+
+/* ---------------------------------------------------------
    Render geral
 --------------------------------------------------------- */
 function renderAll() {
   renderDiagnose();
   renderRoster();
   renderMetas();
+  renderProjecao();
 }
 
 /* ---------------------------------------------------------
@@ -376,8 +480,11 @@ document.getElementById("roster-tbody").addEventListener("change", (e) => {
   if (e.target.classList.contains("field-posto")) item.posto = e.target.value;
   if (e.target.classList.contains("field-nome")) item.nome = e.target.value;
   if (e.target.classList.contains("field-matricula")) item.matricula = e.target.value;
+  if (e.target.classList.contains("field-reserva-data")) item.reservaData = e.target.value;
+  if (e.target.classList.contains("field-reserva-pedida")) item.reservaPedida = e.target.value === "sim";
   persist();
   renderDiagnose();
+  renderProjecao();
   document.getElementById("roster-info").textContent = `${roster.length} registros · ${roster.filter((r) => isRRC(r.posto)).length} em RR/C`;
 });
 
@@ -390,14 +497,16 @@ document.getElementById("roster-tbody").addEventListener("click", (e) => {
   persist();
   renderRoster();
   renderDiagnose();
+  renderProjecao();
 });
 
 document.getElementById("btn-add-row").addEventListener("click", () => {
   const nextId = Math.max(0, ...roster.map((r) => r.id)) + 1;
-  roster.push({ id: nextId, posto: "SD 1ª Cl PM", nome: "", matricula: "" });
+  roster.push({ id: nextId, posto: "SD 1ª Cl PM", nome: "", matricula: "", reservaData: "", reservaPedida: false });
   persist();
   renderRoster();
   renderDiagnose();
+  renderProjecao();
 });
 
 document.getElementById("chk-rrc").addEventListener("change", (e) => {
@@ -421,13 +530,14 @@ document.getElementById("btn-bulk-import").addEventListener("click", () => {
   lines.forEach((line) => {
     const [posto, nome, matricula] = line.split("\t").map((p) => (p || "").trim());
     nextId += 1;
-    roster.push({ id: nextId, posto: posto || "SD 1ª Cl PM", nome: nome || "", matricula: matricula || "" });
+    roster.push({ id: nextId, posto: posto || "SD 1ª Cl PM", nome: nome || "", matricula: matricula || "", reservaData: "", reservaPedida: false });
   });
   document.getElementById("bulk-text").value = "";
   document.getElementById("bulk-box").style.display = "none";
   persist();
   renderRoster();
   renderDiagnose();
+  renderProjecao();
 });
 
 /* ---------------------------------------------------------
@@ -440,6 +550,24 @@ document.getElementById("metas-list").addEventListener("change", (e) => {
   qdl[g] = Number(e.target.value) || 0;
   persist();
   renderDiagnose();
+  renderProjecao();
+});
+
+/* ---------------------------------------------------------
+   Event delegation — Projeção
+--------------------------------------------------------- */
+document.getElementById("horizon-group").addEventListener("click", (e) => {
+  const btn = e.target.closest(".horizon-btn");
+  if (!btn) return;
+  document.querySelectorAll(".horizon-btn").forEach((b) => b.classList.remove("active"));
+  btn.classList.add("active");
+  projHorizonMonths = Number(btn.dataset.months);
+  renderProjecao();
+});
+
+document.getElementById("chk-only-confirmed").addEventListener("change", (e) => {
+  projOnlyConfirmed = e.target.checked;
+  renderProjecao();
 });
 
 /* ---------------------------------------------------------

@@ -55,6 +55,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>
       Metas (QO)
     </button>
+    <button class="ef-tab" data-tab="projecao">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 3v18h18M7 14l4-4 3 3 5-6"/></svg>
+      Projeção
+    </button>
   </div>
 
   <!-- ===================== DIAGNOSE ===================== -->
@@ -131,8 +135,48 @@
 
     <div class="table-wrap">
       <table class="ef">
-        <thead><tr><th>Posto/Graduação</th><th>Nome</th><th>Matrícula</th><th style="width:40px;"></th></tr></thead>
+        <thead><tr><th>Posto/Graduação</th><th>Nome</th><th>Matrícula</th><th>Previsão Reserva</th><th>Pediu Reserva?</th><th style="width:40px;"></th></tr></thead>
         <tbody id="roster-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===================== PROJEÇÃO ===================== -->
+  <section class="ef-section" id="sec-projecao">
+    <div class="meta-intro">
+      Projeta o efetivo futuro com base nas previsões de reserva remunerada cadastradas na aba Efetivo.
+      Use o horizonte e o filtro abaixo para simular diferentes cenários.
+    </div>
+
+    <div class="proj-controls">
+      <div class="horizon-group" id="horizon-group">
+        <button class="horizon-btn" data-months="6">6 meses</button>
+        <button class="horizon-btn active" data-months="12">12 meses</button>
+        <button class="horizon-btn" data-months="24">24 meses</button>
+        <button class="horizon-btn" data-months="9999">Todos</button>
+      </div>
+      <label class="check-rrc"><input type="checkbox" id="chk-only-confirmed"> Considerar somente quem já solicitou</label>
+    </div>
+
+    <div class="hero-stats" style="margin-top:14px;">
+      <div class="hstat"><div class="n" id="proj-stat-saidas">—</div><div class="l">Saídas previstas no período</div></div>
+      <div class="hstat"><div class="n" id="proj-stat-atual">—</div><div class="l">Déficit atual</div></div>
+      <div class="hstat alert"><div class="n" id="proj-stat-futuro">—</div><div class="l">Déficit projetado</div></div>
+    </div>
+
+    <div class="section-label">Déficit Atual x Projetado por Posto</div>
+    <div class="table-wrap">
+      <table class="ef">
+        <thead><tr><th>Posto/Graduação</th><th class="num">QO</th><th class="num">Real Atual</th><th class="num">Saídas</th><th class="num">Real Projetado</th><th class="num">Déficit Projetado</th></tr></thead>
+        <tbody id="proj-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="section-label">Linha do Tempo de Saídas Previstas</div>
+    <div class="table-wrap">
+      <table class="ef">
+        <thead><tr><th>Data Prevista</th><th>Nome</th><th>Posto</th><th>Situação</th></tr></thead>
+        <tbody id="proj-timeline-tbody"></tbody>
       </table>
     </div>
   </section>
