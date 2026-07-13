@@ -5,15 +5,20 @@ const SEED_FROTA = [
     prefixo: "VTR-01",
     placa: "",
     modelo: "",
-    tipo: "Caracterizada",
+    categoria: "Automóvel",
+    caracterizacao: "Caracterizada",
     status: "em_uso",
     km: 0,
     manutencoes: [],
   },
 ];
 
-const TIPOS_VIATURA = [
-  "Caracterizada", "Descaracterizada", "Motocicleta", "Camburão", "Van/Utilitário", "Outro",
+const CATEGORIAS_VIATURA = [
+  "Motocicleta", "Automóvel", "Transporte de Tropa", "Outro",
+];
+
+const CARACTERIZACAO_VIATURA = [
+  "Caracterizada", "Descaracterizada",
 ];
 
 const STATUS_VIATURA = [

@@ -5,9 +5,8 @@
 const STATUS_LABEL = { em_uso: "Em Uso", manutencao: "Em Manutenção", baixada: "Baixada" };
 const STATUS_CLS = { em_uso: "ok", manutencao: "mid", baixada: "bad" };
 const STATUS_COLOR = { em_uso: "#4a93a8", manutencao: "#c9863f", baixada: "#b0553f" };
-const TIPO_COLORS = {
-  "Caracterizada": "#8a5a35", "Descaracterizada": "#c08a55", "Motocicleta": "#8a5380",
-  "Camburão": "#b0553f", "Van/Utilitário": "#c9863f", "Outro": "#6b3f5c",
+const CATEGORIA_COLORS = {
+  "Motocicleta": "#8a5380", "Automóvel": "#8a5a35", "Transporte de Tropa": "#4a93a8", "Outro": "#6b3f5c",
 };
 
 let frota = [];
@@ -120,8 +119,8 @@ function renderPainel() {
   ], "viaturas");
   document.getElementById("status-donut-holder").innerHTML = statusDonut;
 
-  const tipoEntries = TIPOS_VIATURA.map((t) => ({
-    label: t, value: frota.filter((v) => v.tipo === t).length, color: TIPO_COLORS[t] || "#8a5a35",
+  const tipoEntries = CATEGORIAS_VIATURA.map((t) => ({
+    label: t, value: frota.filter((v) => v.categoria === t).length, color: CATEGORIA_COLORS[t] || "#8a5a35",
   }));
   document.getElementById("tipo-donut-holder").innerHTML = buildDonutHTML(tipoEntries, "viaturas");
 
@@ -129,7 +128,7 @@ function renderPainel() {
     <tr>
       <td data-label="Prefixo">${escapeHtml(v.prefixo) || "—"}</td>
       <td data-label="Modelo">${escapeHtml(v.modelo) || "—"}</td>
-      <td data-label="Tipo">${escapeHtml(v.tipo) || "—"}</td>
+      <td data-label="Categoria">${escapeHtml(v.categoria) || "—"}</td>
       <td class="num" data-label="KM">${v.km || 0}</td>
     </tr>
   `).join("");
@@ -141,13 +140,14 @@ function renderPainel() {
       <td data-label="Prefixo">${escapeHtml(v.prefixo) || "—"}</td>
       <td data-label="Placa">${escapeHtml(v.placa) || "—"}</td>
       <td data-label="Modelo">${escapeHtml(v.modelo) || "—"}</td>
-      <td data-label="Tipo">${escapeHtml(v.tipo) || "—"}</td>
+      <td data-label="Categoria">${escapeHtml(v.categoria) || "—"}</td>
+      <td data-label="Caracterização">${escapeHtml(v.caracterizacao) || "—"}</td>
       <td data-label="Status"><span class="badge-status ${STATUS_CLS[v.status] || "mid"}">${STATUS_LABEL[v.status] || v.status}</span></td>
       <td class="num" data-label="KM">${v.km || 0}</td>
     </tr>
   `).join("");
   document.getElementById("p-frota-tbody").innerHTML = printRows ||
-    `<tr><td colspan="6" style="text-align:center;color:#8a8770;padding:20px;">Nenhuma viatura cadastrada.</td></tr>`;
+    `<tr><td colspan="7" style="text-align:center;color:#8a8770;padding:20px;">Nenhuma viatura cadastrada.</td></tr>`;
 }
 
 /* ---------------------------------------------------------
@@ -162,8 +162,11 @@ function renderFrota() {
       <td data-label="Prefixo"><input class="ef-field field-prefixo" value="${escapeHtml(v.prefixo)}"></td>
       <td data-label="Placa"><input class="ef-field field-placa" style="width:100px;" value="${escapeHtml(v.placa)}"></td>
       <td data-label="Modelo"><input class="ef-field field-modelo" value="${escapeHtml(v.modelo)}"></td>
-      <td data-label="Tipo">
-        <select class="ef-field field-tipo">${TIPOS_VIATURA.map((t) => `<option value="${t}" ${t === v.tipo ? "selected" : ""}>${t}</option>`).join("")}</select>
+      <td data-label="Categoria">
+        <select class="ef-field field-categoria">${CATEGORIAS_VIATURA.map((t) => `<option value="${t}" ${t === v.categoria ? "selected" : ""}>${t}</option>`).join("")}</select>
+      </td>
+      <td data-label="Caracterização">
+        <select class="ef-field field-caracterizacao">${CARACTERIZACAO_VIATURA.map((t) => `<option value="${t}" ${t === v.caracterizacao ? "selected" : ""}>${t}</option>`).join("")}</select>
       </td>
       <td data-label="Status">
         <select class="ef-field field-status">${STATUS_VIATURA.map((s) => `<option value="${s.value}" ${s.value === v.status ? "selected" : ""}>${s.label}</option>`).join("")}</select>
@@ -219,12 +222,14 @@ function renderManutencaoHistorico() {
 
   tbody.innerHTML = registros.map((m) => `
     <tr data-mid="${m.id}">
-      <td data-label="Data">${m.data ? new Date(m.data + "T00:00:00").toLocaleDateString("pt-BR") : "—"}</td>
-      <td class="num" data-label="KM">${m.km || 0}</td>
-      <td data-label="Oficina">${escapeHtml(m.oficina) || "—"}</td>
-      <td data-label="Tipo de Serviço">${escapeHtml(m.tipoServico) || "—"}</td>
-      <td data-label="Descrição">${escapeHtml(m.descricao) || "—"}</td>
-      <td data-label="Processo SEI">${escapeHtml(m.processoSei) || "—"}</td>
+      <td data-label="Data"><input type="date" class="ef-field field-manut-data" value="${m.data || ""}"></td>
+      <td class="num" data-label="KM"><input type="number" class="ef-field field-manut-km" style="width:80px;text-align:right;" value="${m.km || 0}"></td>
+      <td data-label="Oficina"><input type="text" class="ef-field field-manut-oficina" value="${escapeHtml(m.oficina)}"></td>
+      <td data-label="Tipo de Serviço">
+        <select class="ef-field field-manut-tipo">${TIPOS_SERVICO.map((t) => `<option value="${t}" ${t === m.tipoServico ? "selected" : ""}>${t}</option>`).join("")}</select>
+      </td>
+      <td data-label="Descrição"><input type="text" class="ef-field field-manut-desc" value="${escapeHtml(m.descricao)}"></td>
+      <td data-label="Processo SEI"><input type="text" class="ef-field field-manut-sei" style="width:120px;" value="${escapeHtml(m.processoSei)}"></td>
       <td class="cell-actions" data-label=""><button class="icon-btn btn-remove-manut" title="Remover">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8">
           <path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m2 0v13a1 1 0 01-1 1H8a1 1 0 01-1-1V7h10z"/>
@@ -255,7 +260,8 @@ document.getElementById("frota-tbody").addEventListener("change", (e) => {
   if (e.target.classList.contains("field-prefixo")) v.prefixo = e.target.value;
   if (e.target.classList.contains("field-placa")) v.placa = e.target.value;
   if (e.target.classList.contains("field-modelo")) v.modelo = e.target.value;
-  if (e.target.classList.contains("field-tipo")) v.tipo = e.target.value;
+  if (e.target.classList.contains("field-categoria")) v.categoria = e.target.value;
+  if (e.target.classList.contains("field-caracterizacao")) v.caracterizacao = e.target.value;
   if (e.target.classList.contains("field-status")) v.status = e.target.value;
   if (e.target.classList.contains("field-km")) v.km = Number(e.target.value) || 0;
   persist();
@@ -276,7 +282,7 @@ document.getElementById("frota-tbody").addEventListener("click", (e) => {
 
 document.getElementById("btn-add-viatura").addEventListener("click", () => {
   const nextId = Math.max(0, ...frota.map((v) => v.id)) + 1;
-  frota.push({ id: nextId, prefixo: "", placa: "", modelo: "", tipo: "Caracterizada", status: "em_uso", km: 0, manutencoes: [] });
+  frota.push({ id: nextId, prefixo: "", placa: "", modelo: "", categoria: "Automóvel", caracterizacao: "Caracterizada", status: "em_uso", km: 0, manutencoes: [] });
   persist();
   renderAll();
 });
@@ -285,6 +291,27 @@ document.getElementById("btn-add-viatura").addEventListener("click", () => {
    Event delegation — Manutenção
 --------------------------------------------------------- */
 document.getElementById("manut-select").addEventListener("change", renderManutencaoHistorico);
+
+document.getElementById("manut-tbody").addEventListener("change", (e) => {
+  const tr = e.target.closest("tr");
+  if (!tr || !tr.dataset.mid) return;
+  const v = getSelectedViatura();
+  if (!v) return;
+  const mid = Number(tr.dataset.mid);
+  const m = (v.manutencoes || []).find((x) => x.id === mid);
+  if (!m) return;
+  if (e.target.classList.contains("field-manut-data")) m.data = e.target.value;
+  if (e.target.classList.contains("field-manut-km")) m.km = Number(e.target.value) || 0;
+  if (e.target.classList.contains("field-manut-oficina")) m.oficina = e.target.value;
+  if (e.target.classList.contains("field-manut-tipo")) m.tipoServico = e.target.value;
+  if (e.target.classList.contains("field-manut-desc")) m.descricao = e.target.value;
+  if (e.target.classList.contains("field-manut-sei")) m.processoSei = e.target.value;
+  persist();
+  document.getElementById("manut-stat-ultima").textContent = (() => {
+    const ordenado = [...(v.manutencoes || [])].sort((a, b) => new Date(b.data) - new Date(a.data));
+    return ordenado.length ? new Date(ordenado[0].data + "T00:00:00").toLocaleDateString("pt-BR") : "—";
+  })();
+});
 
 document.getElementById("btn-add-manut").addEventListener("click", () => {
   const v = getSelectedViatura();
