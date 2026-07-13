@@ -155,7 +155,7 @@
         </button>
       </div>
 
-      <div class="section-label">Histórico de Ocorrências (clique em um campo para editar)</div>
+      <div class="section-label">Histórico de Ocorrências</div>
       <div class="table-wrap">
         <table class="ef">
           <thead><tr><th>Data</th><th class="num">KM</th><th>Oficina</th><th>Tipo de Serviço</th><th>Descrição</th><th>Processo SEI</th><th style="width:40px;"></th></tr></thead>
@@ -170,6 +170,11 @@
 <footer class="site-footer">
   <div class="wrap">Controle de Viaturas — Cia Ind PE/Sudoeste — Documento de uso interno</div>
 </footer>
+
+<!-- Modal reutilizável (editar / atualizar / visualizar ocorrência) -->
+<div class="modal-overlay no-print" id="modal-overlay">
+  <div class="modal-card" id="modal-card"></div>
+</div>
 
 <!-- Versão de impressão (independe da aba ativa) -->
 <div id="ef-print">

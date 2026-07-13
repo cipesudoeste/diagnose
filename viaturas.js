@@ -220,23 +220,175 @@ function renderManutencaoHistorico() {
     ? new Date(registros[0].data + "T00:00:00").toLocaleDateString("pt-BR")
     : "—";
 
-  tbody.innerHTML = registros.map((m) => `
+  tbody.innerHTML = registros.map((m) => {
+    const nUpdates = (m.atualizacoes || []).length;
+    return `
     <tr data-mid="${m.id}">
-      <td data-label="Data"><input type="date" class="ef-field field-manut-data" value="${m.data || ""}"></td>
-      <td class="num" data-label="KM"><input type="number" class="ef-field field-manut-km" style="width:80px;text-align:right;" value="${m.km || 0}"></td>
-      <td data-label="Oficina"><input type="text" class="ef-field field-manut-oficina" value="${escapeHtml(m.oficina)}"></td>
-      <td data-label="Tipo de Serviço">
-        <select class="ef-field field-manut-tipo">${TIPOS_SERVICO.map((t) => `<option value="${t}" ${t === m.tipoServico ? "selected" : ""}>${t}</option>`).join("")}</select>
+      <td data-label="Data">${m.data ? new Date(m.data + "T00:00:00").toLocaleDateString("pt-BR") : "—"}</td>
+      <td class="num" data-label="KM">${m.km || 0}</td>
+      <td data-label="Oficina">${escapeHtml(m.oficina) || "—"}</td>
+      <td data-label="Tipo de Serviço">${escapeHtml(m.tipoServico) || "—"}</td>
+      <td data-label="Descrição">${escapeHtml(m.descricao) || "—"}</td>
+      <td data-label="Processo SEI">${escapeHtml(m.processoSei) || "—"}</td>
+      <td data-label="" class="cell-actions">
+        <div class="row-actions">
+          <button class="icon-btn edit btn-edit-manut" title="Editar ocorrência">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="icon-btn add-update btn-add-update" title="Adicionar atualização">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+            ${nUpdates > 0 ? `<span class="update-count">${nUpdates}</span>` : ""}
+          </button>
+          <button class="icon-btn view btn-view-manut" title="Ver todas as informações">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          <button class="icon-btn btn-remove-manut" title="Remover">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m2 0v13a1 1 0 01-1 1H8a1 1 0 01-1-1V7h10z"/></svg>
+          </button>
+        </div>
       </td>
-      <td data-label="Descrição"><input type="text" class="ef-field field-manut-desc" value="${escapeHtml(m.descricao)}"></td>
-      <td data-label="Processo SEI"><input type="text" class="ef-field field-manut-sei" style="width:120px;" value="${escapeHtml(m.processoSei)}"></td>
-      <td class="cell-actions" data-label=""><button class="icon-btn btn-remove-manut" title="Remover">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8">
-          <path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m2 0v13a1 1 0 01-1 1H8a1 1 0 01-1-1V7h10z"/>
-        </svg>
-      </button></td>
     </tr>
-  `).join("") || `<tr><td colspan="7" style="text-align:center;color:var(--ink-faint);padding:20px;">Nenhum registro ainda.</td></tr>`;
+  `;
+  }).join("") || `<tr><td colspan="7" style="text-align:center;color:var(--ink-faint);padding:20px;">Nenhum registro ainda.</td></tr>`;
+}
+
+/* ---------------------------------------------------------
+   Modal reutilizável
+--------------------------------------------------------- */
+function openModal(html) {
+  document.getElementById("modal-card").innerHTML = `
+    <button class="modal-close" id="modal-close-btn">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    ${html}
+  `;
+  document.getElementById("modal-overlay").classList.add("open");
+  document.getElementById("modal-close-btn").addEventListener("click", closeModal);
+}
+function closeModal() {
+  document.getElementById("modal-overlay").classList.remove("open");
+  document.getElementById("modal-card").innerHTML = "";
+}
+document.getElementById("modal-overlay").addEventListener("click", (e) => {
+  if (e.target.id === "modal-overlay") closeModal();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeModal();
+});
+
+function fmtDateBR(iso) {
+  return iso ? new Date(iso + "T00:00:00").toLocaleDateString("pt-BR") : "—";
+}
+
+/* --- Modal: Editar ocorrência --- */
+function openEditManutModal(viaturaId, mid) {
+  const v = frota.find((x) => x.id === viaturaId);
+  const m = v && (v.manutencoes || []).find((x) => x.id === mid);
+  if (!m) return;
+  openModal(`
+    <div class="modal-title">Editar Ocorrência</div>
+    <div class="modal-subtitle">${escapeHtml(v.prefixo) || "Viatura #" + v.id}</div>
+    <div class="modal-grid cols-2">
+      <div class="modal-field"><label>Data</label><input type="date" id="edit-data" value="${m.data || ""}"></div>
+      <div class="modal-field"><label>KM</label><input type="number" id="edit-km" value="${m.km || 0}"></div>
+      <div class="modal-field"><label>Oficina</label><input type="text" id="edit-oficina" value="${escapeHtml(m.oficina)}"></div>
+      <div class="modal-field"><label>Tipo de Serviço</label>
+        <select id="edit-tipo">${TIPOS_SERVICO.map((t) => `<option value="${t}" ${t === m.tipoServico ? "selected" : ""}>${t}</option>`).join("")}</select>
+      </div>
+      <div class="modal-field" style="grid-column:1/-1;"><label>Descrição</label><input type="text" id="edit-desc" value="${escapeHtml(m.descricao)}"></div>
+      <div class="modal-field" style="grid-column:1/-1;"><label>Processo SEI</label><input type="text" id="edit-sei" value="${escapeHtml(m.processoSei)}"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="ef-btn" id="edit-cancel-btn">Cancelar</button>
+      <button class="ef-btn primary" id="edit-save-btn">Salvar Alterações</button>
+    </div>
+  `);
+  document.getElementById("edit-cancel-btn").addEventListener("click", closeModal);
+  document.getElementById("edit-save-btn").addEventListener("click", () => {
+    m.data = document.getElementById("edit-data").value;
+    m.km = Number(document.getElementById("edit-km").value) || 0;
+    m.oficina = document.getElementById("edit-oficina").value.trim();
+    m.tipoServico = document.getElementById("edit-tipo").value;
+    m.descricao = document.getElementById("edit-desc").value.trim();
+    m.processoSei = document.getElementById("edit-sei").value.trim();
+    persist();
+    renderManutencaoHistorico();
+    closeModal();
+  });
+}
+
+/* --- Modal: Adicionar atualização (enriquece o histórico da ocorrência) --- */
+function openAddUpdateModal(viaturaId, mid) {
+  const v = frota.find((x) => x.id === viaturaId);
+  const m = v && (v.manutencoes || []).find((x) => x.id === mid);
+  if (!m) return;
+  const updates = [...(m.atualizacoes || [])].sort((a, b) => new Date(b.data) - new Date(a.data));
+  const updatesHtml = updates.length
+    ? `<div class="timeline">${updates.map((u) => `
+        <div class="timeline-item">
+          <div class="timeline-date">${fmtDateBR(u.data)}</div>
+          <div class="timeline-text">${escapeHtml(u.texto)}</div>
+        </div>`).join("")}</div>`
+    : `<div class="timeline-empty">Nenhuma atualização registrada ainda.</div>`;
+
+  openModal(`
+    <div class="modal-title">Adicionar Atualização</div>
+    <div class="modal-subtitle">${escapeHtml(v.prefixo) || "Viatura #" + v.id} — ${escapeHtml(m.descricao) || "ocorrência de " + fmtDateBR(m.data)}</div>
+    <div class="modal-grid">
+      <div class="modal-field"><label>Data da Atualização</label><input type="date" id="update-data" value="${new Date().toISOString().slice(0, 10)}"></div>
+      <div class="modal-field"><label>O que aconteceu</label><textarea id="update-texto" placeholder="Ex: peça chegou, previsão de liberação em 3 dias..."></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="ef-btn" id="update-cancel-btn">Fechar</button>
+      <button class="ef-btn primary" id="update-save-btn">Adicionar</button>
+    </div>
+    <div class="section-label" style="margin-top:20px;">Atualizações Anteriores</div>
+    ${updatesHtml}
+  `);
+  document.getElementById("update-cancel-btn").addEventListener("click", closeModal);
+  document.getElementById("update-save-btn").addEventListener("click", () => {
+    const data = document.getElementById("update-data").value;
+    const texto = document.getElementById("update-texto").value.trim();
+    if (!data || !texto) { alert("Preencha a data e o texto da atualização."); return; }
+    const nextUid = Math.max(0, ...(m.atualizacoes || []).map((u) => u.id)) + 1;
+    m.atualizacoes = m.atualizacoes || [];
+    m.atualizacoes.push({ id: nextUid, data, texto });
+    persist();
+    renderManutencaoHistorico();
+    openAddUpdateModal(viaturaId, mid); // reabre atualizado, com o novo item na lista
+  });
+}
+
+/* --- Modal: Ver todas as informações --- */
+function openViewManutModal(viaturaId, mid) {
+  const v = frota.find((x) => x.id === viaturaId);
+  const m = v && (v.manutencoes || []).find((x) => x.id === mid);
+  if (!m) return;
+  const updates = [...(m.atualizacoes || [])].sort((a, b) => new Date(a.data) - new Date(b.data));
+  const updatesHtml = updates.length
+    ? `<div class="timeline">${updates.map((u) => `
+        <div class="timeline-item">
+          <div class="timeline-date">${fmtDateBR(u.data)}</div>
+          <div class="timeline-text">${escapeHtml(u.texto)}</div>
+        </div>`).join("")}</div>`
+    : `<div class="timeline-empty">Nenhuma atualização registrada.</div>`;
+
+  openModal(`
+    <div class="modal-title">Detalhes da Ocorrência</div>
+    <div class="modal-subtitle">${escapeHtml(v.prefixo) || "Viatura #" + v.id}${v.placa ? " — " + escapeHtml(v.placa) : ""}</div>
+    <div class="view-row"><div class="k">Data</div><div class="v">${fmtDateBR(m.data)}</div></div>
+    <div class="view-row"><div class="k">KM</div><div class="v">${m.km || 0}</div></div>
+    <div class="view-row"><div class="k">Oficina</div><div class="v">${escapeHtml(m.oficina) || "—"}</div></div>
+    <div class="view-row"><div class="k">Tipo de Serviço</div><div class="v">${escapeHtml(m.tipoServico) || "—"}</div></div>
+    <div class="view-row"><div class="k">Descrição</div><div class="v">${escapeHtml(m.descricao) || "—"}</div></div>
+    <div class="view-row"><div class="k">Processo SEI</div><div class="v">${escapeHtml(m.processoSei) || "—"}</div></div>
+    <div class="section-label" style="margin-top:18px;">Linha do Tempo de Atualizações</div>
+    ${updatesHtml}
+    <div class="modal-actions">
+      <button class="ef-btn primary" id="view-close-btn">Fechar</button>
+    </div>
+  `);
+  document.getElementById("view-close-btn").addEventListener("click", closeModal);
 }
 
 /* ---------------------------------------------------------
@@ -292,25 +444,32 @@ document.getElementById("btn-add-viatura").addEventListener("click", () => {
 --------------------------------------------------------- */
 document.getElementById("manut-select").addEventListener("change", renderManutencaoHistorico);
 
-document.getElementById("manut-tbody").addEventListener("change", (e) => {
+document.getElementById("manut-tbody").addEventListener("click", (e) => {
   const tr = e.target.closest("tr");
   if (!tr || !tr.dataset.mid) return;
+  const mid = Number(tr.dataset.mid);
   const v = getSelectedViatura();
   if (!v) return;
-  const mid = Number(tr.dataset.mid);
-  const m = (v.manutencoes || []).find((x) => x.id === mid);
-  if (!m) return;
-  if (e.target.classList.contains("field-manut-data")) m.data = e.target.value;
-  if (e.target.classList.contains("field-manut-km")) m.km = Number(e.target.value) || 0;
-  if (e.target.classList.contains("field-manut-oficina")) m.oficina = e.target.value;
-  if (e.target.classList.contains("field-manut-tipo")) m.tipoServico = e.target.value;
-  if (e.target.classList.contains("field-manut-desc")) m.descricao = e.target.value;
-  if (e.target.classList.contains("field-manut-sei")) m.processoSei = e.target.value;
-  persist();
-  document.getElementById("manut-stat-ultima").textContent = (() => {
-    const ordenado = [...(v.manutencoes || [])].sort((a, b) => new Date(b.data) - new Date(a.data));
-    return ordenado.length ? new Date(ordenado[0].data + "T00:00:00").toLocaleDateString("pt-BR") : "—";
-  })();
+
+  if (e.target.closest(".btn-edit-manut")) {
+    openEditManutModal(v.id, mid);
+    return;
+  }
+  if (e.target.closest(".btn-add-update")) {
+    openAddUpdateModal(v.id, mid);
+    return;
+  }
+  if (e.target.closest(".btn-view-manut")) {
+    openViewManutModal(v.id, mid);
+    return;
+  }
+  if (e.target.closest(".btn-remove-manut")) {
+    v.manutencoes = (v.manutencoes || []).filter((m) => m.id !== mid);
+    persist();
+    renderManutencaoHistorico();
+    renderFrota();
+    renderPainel();
+  }
 });
 
 document.getElementById("btn-add-manut").addEventListener("click", () => {
@@ -328,7 +487,7 @@ document.getElementById("btn-add-manut").addEventListener("click", () => {
   }
   const nextMid = Math.max(0, ...(v.manutencoes || []).map((m) => m.id)) + 1;
   v.manutencoes = v.manutencoes || [];
-  v.manutencoes.push({ id: nextMid, data, km, oficina, tipoServico, descricao, processoSei });
+  v.manutencoes.push({ id: nextMid, data, km, oficina, tipoServico, descricao, processoSei, atualizacoes: [] });
   document.getElementById("manut-data").value = "";
   document.getElementById("manut-km").value = "";
   document.getElementById("manut-oficina").value = "";
@@ -340,19 +499,6 @@ document.getElementById("btn-add-manut").addEventListener("click", () => {
   renderPainel();
 });
 
-document.getElementById("manut-tbody").addEventListener("click", (e) => {
-  const btn = e.target.closest(".btn-remove-manut");
-  if (!btn) return;
-  const v = getSelectedViatura();
-  if (!v) return;
-  const tr = btn.closest("tr");
-  const mid = Number(tr.dataset.mid);
-  v.manutencoes = (v.manutencoes || []).filter((m) => m.id !== mid);
-  persist();
-  renderManutencaoHistorico();
-  renderFrota();
-  renderPainel();
-});
 
 /* ---------------------------------------------------------
    Abas
