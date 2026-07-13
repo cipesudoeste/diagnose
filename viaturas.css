@@ -168,19 +168,24 @@ select.ef-field option{background:var(--bg-panel);color:var(--ink);}
 /* --- aba Manutenção --- */
 .manut-picker{margin:6px 0 18px;max-width:420px;}
 .manut-form{
-  display:flex;flex-direction:column;gap:8px;background:var(--bg-panel);border:1px solid var(--line);
-  border-radius:10px;padding:14px;margin-bottom:6px;
+  display:grid;grid-template-columns:1fr;gap:10px;background:var(--bg-panel);border:1px solid var(--line);
+  border-radius:10px;padding:16px;margin-bottom:6px;
 }
-.manut-form input{
+.manut-form-row{display:flex;flex-direction:column;gap:4px;}
+.manut-form-row-wide{grid-column:1 / -1;}
+.manut-label{font-family:var(--font-mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-faint);}
+.manut-form input, .manut-form select{
   background:var(--bg);border:1px solid var(--line);border-radius:6px;color:var(--ink);
   padding:8px 10px;font-size:12.5px;font-family:var(--font-body);
 }
-.manut-form input:focus{outline:none;border-color:var(--cipe-brown-l);}
-@media (min-width:640px){
-  .manut-form{flex-direction:row;align-items:center;}
-  .manut-form input[type="date"]{flex:0 0 140px;}
-  .manut-form input[type="number"]{flex:0 0 130px;}
-  .manut-form input[type="text"]{flex:1;}
+.manut-form input:focus, .manut-form select:focus{outline:none;border-color:var(--cipe-brown-l);}
+.manut-form .ef-btn{grid-column:1 / -1;justify-content:center;margin-top:4px;}
+@media (min-width:620px){
+  .manut-form{grid-template-columns:1fr 1fr;}
+}
+@media (min-width:900px){
+  .manut-form{grid-template-columns:repeat(4, 1fr);align-items:end;}
+  .manut-form .ef-btn{grid-column:auto;margin-top:0;}
 }
 
 /* =========================================================

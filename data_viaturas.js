@@ -21,3 +21,8 @@ const STATUS_VIATURA = [
   { value: "manutencao", label: "Em Manutenção" },
   { value: "baixada", label: "Baixada" },
 ];
+
+const TIPOS_SERVICO = [
+  "Revisão Preventiva", "Mecânica", "Elétrica", "Funilaria/Pintura",
+  "Pneus/Suspensão", "Vidros/Lataria", "Ar-condicionado", "Outro",
+];

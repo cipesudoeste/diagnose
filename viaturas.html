@@ -66,6 +66,7 @@
       <div class="hstat"><div class="n" id="stat-em-uso">—</div><div class="l">Em Uso</div></div>
       <div class="hstat"><div class="n" id="stat-manutencao">—</div><div class="l">Em Manutenção</div></div>
       <div class="hstat alert"><div class="n" id="stat-baixada">—</div><div class="l">Baixadas</div></div>
+      <div class="hstat"><div class="n" id="stat-ocorrencias">—</div><div class="l">Ocorrências Registradas</div></div>
     </div>
 
     <div class="diag-grid-2">
@@ -100,7 +101,7 @@
 
     <div class="table-wrap">
       <table class="ef">
-        <thead><tr><th>Prefixo</th><th>Placa</th><th>Modelo</th><th>Tipo</th><th>Status</th><th class="num">KM</th><th style="width:40px;"></th></tr></thead>
+        <thead><tr><th>Prefixo</th><th>Placa</th><th>Modelo</th><th>Tipo</th><th>Status</th><th class="num">KM</th><th class="num">Ocorrências</th><th style="width:40px;"></th></tr></thead>
         <tbody id="frota-tbody"></tbody>
       </table>
     </div>
@@ -108,7 +109,7 @@
 
   <!-- ===================== MANUTENÇÃO ===================== -->
   <section class="ef-section" id="sec-manutencao">
-    <div class="meta-intro">Selecione uma viatura para ver ou registrar o histórico de revisões e manutenções.</div>
+    <div class="meta-intro">Selecione uma viatura para ver ou registrar o histórico de ocorrências (baixas para manutenção).</div>
 
     <div class="manut-picker">
       <select class="ef-field" id="manut-select"></select>
@@ -117,18 +118,47 @@
     <div id="manut-empty" class="donut-empty" style="display:none;">Cadastre uma viatura na aba Frota primeiro.</div>
 
     <div id="manut-content" style="display:none;">
-      <div class="section-label">Adicionar Registro</div>
-      <div class="manut-form">
-        <input type="date" class="ef-field" id="manut-data">
-        <input type="number" class="ef-field" id="manut-km" placeholder="KM na revisão">
-        <input type="text" class="ef-field" id="manut-desc" placeholder="Descrição (ex: troca de óleo, revisão dos freios...)">
-        <button class="ef-btn primary" id="btn-add-manut">Adicionar</button>
+      <div class="hero-stats" style="margin-bottom:6px;">
+        <div class="hstat"><div class="n" id="manut-stat-ocorrencias">—</div><div class="l">Ocorrências Registradas</div></div>
+        <div class="hstat"><div class="n" id="manut-stat-ultima">—</div><div class="l">Última Ocorrência</div></div>
       </div>
 
-      <div class="section-label">Histórico</div>
+      <div class="section-label">Registrar Nova Ocorrência</div>
+      <div class="manut-form">
+        <div class="manut-form-row">
+          <label class="manut-label">Data</label>
+          <input type="date" class="ef-field" id="manut-data">
+        </div>
+        <div class="manut-form-row">
+          <label class="manut-label">KM</label>
+          <input type="number" class="ef-field" id="manut-km" placeholder="KM na ocorrência">
+        </div>
+        <div class="manut-form-row">
+          <label class="manut-label">Oficina</label>
+          <input type="text" class="ef-field" id="manut-oficina" placeholder="Ex: Oficina Central, Concessionária X...">
+        </div>
+        <div class="manut-form-row">
+          <label class="manut-label">Tipo de Serviço</label>
+          <select class="ef-field" id="manut-tipo-servico"></select>
+        </div>
+        <div class="manut-form-row manut-form-row-wide">
+          <label class="manut-label">Descrição</label>
+          <input type="text" class="ef-field" id="manut-desc" placeholder="Detalhes do serviço realizado...">
+        </div>
+        <div class="manut-form-row">
+          <label class="manut-label">Processo SEI</label>
+          <input type="text" class="ef-field" id="manut-sei" placeholder="Ex: 00143885318">
+        </div>
+        <button class="ef-btn primary" id="btn-add-manut">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          Adicionar Ocorrência
+        </button>
+      </div>
+
+      <div class="section-label">Histórico de Ocorrências</div>
       <div class="table-wrap">
         <table class="ef">
-          <thead><tr><th>Data</th><th class="num">KM</th><th>Descrição</th><th style="width:40px;"></th></tr></thead>
+          <thead><tr><th>Data</th><th class="num">KM</th><th>Oficina</th><th>Tipo de Serviço</th><th>Descrição</th><th>Processo SEI</th><th style="width:40px;"></th></tr></thead>
           <tbody id="manut-tbody"></tbody>
         </table>
       </div>

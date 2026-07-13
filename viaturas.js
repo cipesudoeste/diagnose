@@ -97,11 +97,14 @@ function renderPainel() {
   const manutencao = frota.filter((v) => v.status === "manutencao").length;
   const baixada = frota.filter((v) => v.status === "baixada").length;
 
+  const totalOcorrencias = frota.reduce((sum, v) => sum + (v.manutencoes || []).length, 0);
+
   document.getElementById("painel-date").textContent = todayStr;
   document.getElementById("stat-total").textContent = total;
   document.getElementById("stat-em-uso").textContent = emUso;
   document.getElementById("stat-manutencao").textContent = manutencao;
   document.getElementById("stat-baixada").textContent = baixada;
+  document.getElementById("stat-ocorrencias").textContent = totalOcorrencias;
 
   document.getElementById("print-date").textContent = todayStr;
   document.getElementById("print-footer-date").textContent = todayStr;
@@ -166,6 +169,7 @@ function renderFrota() {
         <select class="ef-field field-status">${STATUS_VIATURA.map((s) => `<option value="${s.value}" ${s.value === v.status ? "selected" : ""}>${s.label}</option>`).join("")}</select>
       </td>
       <td class="num" data-label="KM"><input type="number" class="ef-field field-km" style="width:90px;text-align:right;" value="${v.km || 0}"></td>
+      <td class="num" data-label="Ocorrências">${(v.manutencoes || []).length}</td>
       <td class="cell-actions" data-label=""><button class="icon-btn btn-remove-viatura" title="Remover">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8">
           <path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m2 0v13a1 1 0 01-1 1H8a1 1 0 01-1-1V7h10z"/>
@@ -184,6 +188,12 @@ function renderManutencaoSelect() {
   sel.innerHTML = frota.map((v) => `<option value="${v.id}">${escapeHtml(v.prefixo) || "Viatura #" + v.id}${v.placa ? " — " + escapeHtml(v.placa) : ""}</option>`).join("");
   if (frota.some((v) => String(v.id) === prevValue)) sel.value = prevValue;
 
+  const tipoSel = document.getElementById("manut-tipo-servico");
+  if (tipoSel && !tipoSel.dataset.filled) {
+    tipoSel.innerHTML = TIPOS_SERVICO.map((t) => `<option value="${t}">${t}</option>`).join("");
+    tipoSel.dataset.filled = "1";
+  }
+
   const hasFrota = frota.length > 0;
   document.getElementById("manut-empty").style.display = hasFrota ? "none" : "block";
   document.getElementById("manut-content").style.display = hasFrota ? "block" : "none";
@@ -201,18 +211,27 @@ function renderManutencaoHistorico() {
   const tbody = document.getElementById("manut-tbody");
   if (!v) { tbody.innerHTML = ""; return; }
   const registros = [...(v.manutencoes || [])].sort((a, b) => new Date(b.data) - new Date(a.data));
+
+  document.getElementById("manut-stat-ocorrencias").textContent = registros.length;
+  document.getElementById("manut-stat-ultima").textContent = registros.length
+    ? new Date(registros[0].data + "T00:00:00").toLocaleDateString("pt-BR")
+    : "—";
+
   tbody.innerHTML = registros.map((m) => `
     <tr data-mid="${m.id}">
       <td data-label="Data">${m.data ? new Date(m.data + "T00:00:00").toLocaleDateString("pt-BR") : "—"}</td>
       <td class="num" data-label="KM">${m.km || 0}</td>
-      <td data-label="Descrição">${escapeHtml(m.descricao)}</td>
+      <td data-label="Oficina">${escapeHtml(m.oficina) || "—"}</td>
+      <td data-label="Tipo de Serviço">${escapeHtml(m.tipoServico) || "—"}</td>
+      <td data-label="Descrição">${escapeHtml(m.descricao) || "—"}</td>
+      <td data-label="Processo SEI">${escapeHtml(m.processoSei) || "—"}</td>
       <td class="cell-actions" data-label=""><button class="icon-btn btn-remove-manut" title="Remover">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8">
           <path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m2 0v13a1 1 0 01-1 1H8a1 1 0 01-1-1V7h10z"/>
         </svg>
       </button></td>
     </tr>
-  `).join("") || `<tr><td colspan="4" style="text-align:center;color:var(--ink-faint);padding:20px;">Nenhum registro ainda.</td></tr>`;
+  `).join("") || `<tr><td colspan="7" style="text-align:center;color:var(--ink-faint);padding:20px;">Nenhum registro ainda.</td></tr>`;
 }
 
 /* ---------------------------------------------------------
@@ -272,19 +291,26 @@ document.getElementById("btn-add-manut").addEventListener("click", () => {
   if (!v) return;
   const data = document.getElementById("manut-data").value;
   const km = Number(document.getElementById("manut-km").value) || 0;
+  const oficina = document.getElementById("manut-oficina").value.trim();
+  const tipoServico = document.getElementById("manut-tipo-servico").value;
   const descricao = document.getElementById("manut-desc").value.trim();
+  const processoSei = document.getElementById("manut-sei").value.trim();
   if (!data || !descricao) {
     alert("Preencha ao menos a data e a descrição.");
     return;
   }
   const nextMid = Math.max(0, ...(v.manutencoes || []).map((m) => m.id)) + 1;
   v.manutencoes = v.manutencoes || [];
-  v.manutencoes.push({ id: nextMid, data, km, descricao });
+  v.manutencoes.push({ id: nextMid, data, km, oficina, tipoServico, descricao, processoSei });
   document.getElementById("manut-data").value = "";
   document.getElementById("manut-km").value = "";
+  document.getElementById("manut-oficina").value = "";
   document.getElementById("manut-desc").value = "";
+  document.getElementById("manut-sei").value = "";
   persist();
   renderManutencaoHistorico();
+  renderFrota();
+  renderPainel();
 });
 
 document.getElementById("manut-tbody").addEventListener("click", (e) => {
@@ -297,6 +323,8 @@ document.getElementById("manut-tbody").addEventListener("click", (e) => {
   v.manutencoes = (v.manutencoes || []).filter((m) => m.id !== mid);
   persist();
   renderManutencaoHistorico();
+  renderFrota();
+  renderPainel();
 });
 
 /* ---------------------------------------------------------
