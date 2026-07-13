@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CIPE Sudoeste — Controle de Viaturas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="viaturas.css">
+</head>
+<body>
+
+<div class="camo-trim camo-bg"></div>
+
+<header class="site-header">
+  <div class="wrap ef-header">
+    <a class="home-btn" href="index.html" title="Voltar para a página inicial">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M3 11l9-7 9 7" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M5 10v9a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1v-9" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+    <img class="logo-cipe ef-logo-cipe" src="img/logo-cipe.png" alt="CIPE Sudoeste">
+    <div class="brand-divider ef-brand-extra"></div>
+    <div class="logo-pmba-chip ef-brand-extra"><img src="img/logo-pmba.png" alt="Polícia Militar da Bahia"></div>
+    <div class="brand-text ef-titles">
+      <div class="eyebrow ef-eyebrow">Polícia Militar · Bahia</div>
+      <div class="title ef-title">Controle de Viaturas</div>
+    </div>
+    <span class="saved-flash" id="saved-flash" style="display:none;">
+      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>
+      <span class="btn-label">salvo</span>
+    </span>
+    <button class="export-btn" id="btn-print">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6v-8z"/></svg>
+      <span class="btn-label">Exportar PDF</span>
+    </button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="section-label with-rule" style="margin-top:26px;">CIPE Sudoeste</div>
+
+  <div class="ef-tabs">
+    <button class="ef-tab active" data-tab="painel">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 19V9M12 19V5M20 19v-6"/></svg>
+      Painel
+    </button>
+    <button class="ef-tab" data-tab="frota">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 13l2-6a2 2 0 012-1h10a2 2 0 012 1l2 6M5 13h14v5a1 1 0 01-1 1h-1a1 1 0 01-1-1v-1H8v1a1 1 0 01-1 1H6a1 1 0 01-1-1v-5z"/><circle cx="7.5" cy="16.5" r="1.2"/><circle cx="16.5" cy="16.5" r="1.2"/></svg>
+      Frota
+    </button>
+    <button class="ef-tab" data-tab="manutencao">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14.7 6.3a4 4 0 10-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.5 2.5-2-2 2.5-2.5z"/></svg>
+      Manutenção
+    </button>
+  </div>
+
+  <!-- ===================== PAINEL ===================== -->
+  <section class="ef-section active" id="sec-painel">
+    <div class="eyebrow" id="painel-date"></div>
+
+    <div class="hero-stats" style="margin-top:12px;">
+      <div class="hstat"><div class="n" id="stat-total">—</div><div class="l">Total de Viaturas</div></div>
+      <div class="hstat"><div class="n" id="stat-em-uso">—</div><div class="l">Em Uso</div></div>
+      <div class="hstat"><div class="n" id="stat-manutencao">—</div><div class="l">Em Manutenção</div></div>
+      <div class="hstat alert"><div class="n" id="stat-baixada">—</div><div class="l">Baixadas</div></div>
+    </div>
+
+    <div class="diag-grid-2">
+      <div>
+        <div class="section-label">Frota por Status</div>
+        <div class="table-wrap donut-card" id="status-donut-holder"></div>
+      </div>
+      <div>
+        <div class="section-label">Frota por Tipo</div>
+        <div class="table-wrap donut-card" id="tipo-donut-holder"></div>
+      </div>
+    </div>
+
+    <div class="section-label">Viaturas em Manutenção Agora</div>
+    <div class="table-wrap">
+      <table class="ef">
+        <thead><tr><th>Prefixo</th><th>Modelo</th><th>Tipo</th><th class="num">KM</th></tr></thead>
+        <tbody id="painel-manutencao-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===================== FROTA ===================== -->
+  <section class="ef-section" id="sec-frota">
+    <div class="ef-toolbar">
+      <div class="ef-toolbar-info" id="frota-info">—</div>
+      <button class="ef-btn primary" id="btn-add-viatura">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        Adicionar Viatura
+      </button>
+    </div>
+
+    <div class="table-wrap">
+      <table class="ef">
+        <thead><tr><th>Prefixo</th><th>Placa</th><th>Modelo</th><th>Tipo</th><th>Status</th><th class="num">KM</th><th style="width:40px;"></th></tr></thead>
+        <tbody id="frota-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===================== MANUTENÇÃO ===================== -->
+  <section class="ef-section" id="sec-manutencao">
+    <div class="meta-intro">Selecione uma viatura para ver ou registrar o histórico de revisões e manutenções.</div>
+
+    <div class="manut-picker">
+      <select class="ef-field" id="manut-select"></select>
+    </div>
+
+    <div id="manut-empty" class="donut-empty" style="display:none;">Cadastre uma viatura na aba Frota primeiro.</div>
+
+    <div id="manut-content" style="display:none;">
+      <div class="section-label">Adicionar Registro</div>
+      <div class="manut-form">
+        <input type="date" class="ef-field" id="manut-data">
+        <input type="number" class="ef-field" id="manut-km" placeholder="KM na revisão">
+        <input type="text" class="ef-field" id="manut-desc" placeholder="Descrição (ex: troca de óleo, revisão dos freios...)">
+        <button class="ef-btn primary" id="btn-add-manut">Adicionar</button>
+      </div>
+
+      <div class="section-label">Histórico</div>
+      <div class="table-wrap">
+        <table class="ef">
+          <thead><tr><th>Data</th><th class="num">KM</th><th>Descrição</th><th style="width:40px;"></th></tr></thead>
+          <tbody id="manut-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer class="site-footer">
+  <div class="wrap">Controle de Viaturas — Cia Ind PE/Sudoeste — Documento de uso interno</div>
+</footer>
+
+<!-- Versão de impressão (independe da aba ativa) -->
+<div id="ef-print">
+  <div class="print-header">
+    <img class="print-logo-pmba" src="img/logo-pmba.png" alt="Polícia Militar da Bahia">
+    <div class="print-header-text">
+      <div class="eyebrow">Polícia Militar · Bahia</div>
+      <div class="print-org-title">CIPE Sudoeste</div>
+    </div>
+    <img class="print-logo-cipe" src="img/logo-cipe.png" alt="CIPE Sudoeste">
+  </div>
+
+  <div class="eyebrow" id="print-date" style="margin-top:16px;"></div>
+  <div class="print-title">Relatório de Situação da Frota</div>
+
+  <div class="hero-stats">
+    <div class="hstat"><div class="n" id="p-stat-total">—</div><div class="l">Total de Viaturas</div></div>
+    <div class="hstat"><div class="n" id="p-stat-em-uso">—</div><div class="l">Em Uso</div></div>
+    <div class="hstat"><div class="n" id="p-stat-manutencao">—</div><div class="l">Em Manutenção</div></div>
+    <div class="hstat alert"><div class="n" id="p-stat-baixada">—</div><div class="l">Baixadas</div></div>
+  </div>
+
+  <div class="section-label">Relação da Frota</div>
+  <div class="table-wrap">
+    <table class="ef">
+      <thead><tr><th>Prefixo</th><th>Placa</th><th>Modelo</th><th>Tipo</th><th>Status</th><th class="num">KM</th></tr></thead>
+      <tbody id="p-frota-tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="ef-signature">
+    <div class="line"></div>
+    <div class="name">Comandante da Companhia Independente de Policiamento Especializado/Sudoeste</div>
+    <div class="role">Polícia Militar da Bahia</div>
+  </div>
+
+  <div class="print-footer">
+    <span>Cia Ind PE/Sudoeste — Controle de Viaturas — Documento de uso interno</span>
+    <span id="print-footer-date"></span>
+  </div>
+</div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="viaturas-config.js"></script>
+<script src="data_viaturas.js"></script>
+<script src="viaturas.js"></script>
+</body>
+</html>
