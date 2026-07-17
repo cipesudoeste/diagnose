@@ -363,16 +363,22 @@ function openAddUpdateModal(viaturaId, mid) {
 function renderAnexosListHTML(m) {
   const anexos = m.anexos || [];
   if (!anexos.length) return `<div class="timeline-empty">Nenhum anexo enviado ainda.</div>`;
-  return `<div class="anexos-list">${anexos.map((a) => `
+  return `<div class="anexos-list">${anexos.map((a) => {
+    const isImage = (a.tipo || "").startsWith("image/");
+    const thumb = isImage
+      ? `<img src="${a.url}" alt="" class="anexo-thumb">`
+      : `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" class="anexo-icon"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>`;
+    return `
     <div class="anexo-item" data-aid="${a.id}">
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" class="anexo-icon"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
+      ${thumb}
       <a href="${a.url}" target="_blank" rel="noopener" class="anexo-name">${escapeHtml(a.nome)}</a>
       <span class="anexo-meta">${formatBytes(a.tamanho)} · ${fmtDateBR(a.data)}</span>
       <button class="icon-btn btn-remove-anexo" title="Remover anexo">
         <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m2 0v13a1 1 0 01-1 1H8a1 1 0 01-1-1V7h10z"/></svg>
       </button>
     </div>
-  `).join("")}</div>`;
+  `;
+  }).join("")}</div>`;
 }
 
 function formatBytes(n) {
@@ -383,7 +389,8 @@ function formatBytes(n) {
 
 async function uploadAnexo(viaturaId, mid, file) {
   if (!sb) { alert("Envio de arquivos indisponível: Supabase não configurado."); return; }
-  if (file.type !== "application/pdf") { alert("Só é permitido anexar arquivos PDF."); return; }
+  const tiposAceitos = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
+  if (!tiposAceitos.includes(file.type)) { alert("Só é permitido anexar PDF, JPG, PNG ou WEBP."); return; }
   const v = frota.find((x) => x.id === viaturaId);
   const m = v && (v.manutencoes || []).find((x) => x.id === mid);
   if (!m) return;
@@ -411,7 +418,7 @@ async function uploadAnexo(viaturaId, mid, file) {
   const { data } = sb.storage.from("viaturas-anexos").getPublicUrl(path);
   const nextAid = Math.max(0, ...(m.anexos || []).map((a) => a.id)) + 1;
   m.anexos = m.anexos || [];
-  m.anexos.push({ id: nextAid, nome: file.name, path, url: data.publicUrl, tamanho: file.size, data: new Date().toISOString().slice(0, 10) });
+  m.anexos.push({ id: nextAid, nome: file.name, path, url: data.publicUrl, tamanho: file.size, tipo: file.type, data: new Date().toISOString().slice(0, 10) });
   persist();
   openViewManutModal(viaturaId, mid); // reabre atualizado
 }
@@ -452,10 +459,10 @@ function openViewManutModal(viaturaId, mid) {
     <div class="view-row"><div class="k">Descrição</div><div class="v">${escapeHtml(m.descricao) || "—"}</div></div>
     <div class="view-row"><div class="k">Processo SEI</div><div class="v">${escapeHtml(m.processoSei) || "—"}</div></div>
 
-    <div class="section-label" style="margin-top:18px;">Anexos (PDF)</div>
+    <div class="section-label" style="margin-top:18px;">Anexos (PDF ou imagem)</div>
     ${renderAnexosListHTML(m)}
     <div class="anexo-upload">
-      <input type="file" accept="application/pdf" id="anexo-file-input">
+      <input type="file" accept="application/pdf,image/jpeg,image/png,image/webp" id="anexo-file-input">
       <span id="anexo-status"></span>
     </div>
 
