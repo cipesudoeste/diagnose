@@ -202,14 +202,13 @@ function renderFrota() {
 --------------------------------------------------------- */
 const STATUS_CARD_CLASS = { em_uso: "st-em-uso", manutencao: "st-manutencao", baixada: "st-baixada" };
 
-function buildVehicleCardHTML(v, { selected = false, clickable = true } = {}) {
+function buildVehicleCardHTML(v, { selected = false, mode = "select" } = {}) {
   const nOcorr = (v.manutencoes || []).length;
   const nDocs = (v.documentos || []).length;
   const statusClass = STATUS_CARD_CLASS[v.status] || "st-manutencao";
-  const tag = clickable ? "button" : "div";
-  const typeAttr = clickable ? `type="button"` : "";
+  const modeClass = mode === "docs" ? "vehicle-card-docs" : "vehicle-card-select";
   return `
-    <${tag} class="vehicle-card ${statusClass}${selected ? " active" : ""}" data-vid="${v.id}" ${typeAttr}>
+    <button class="vehicle-card ${statusClass} ${modeClass}${selected ? " active" : ""}" data-vid="${v.id}" type="button">
       <div class="vc-prefixo">${escapeHtml(v.prefixo) || "Viatura #" + v.id}</div>
       <div class="vc-placa">${escapeHtml(v.placa) || "sem placa"}</div>
       <div class="vc-meta">${escapeHtml(v.modelo) || "—"} · ${escapeHtml(v.categoria) || "—"}</div>
@@ -217,17 +216,29 @@ function buildVehicleCardHTML(v, { selected = false, clickable = true } = {}) {
         <span class="badge-status ${STATUS_CLS[v.status] || "mid"}">${STATUS_LABEL[v.status] || v.status}</span>
         <span class="vc-ocorrencias">${nOcorr} ocorrência${nOcorr === 1 ? "" : "s"}</span>
       </div>
-      ${nDocs > 0 ? `<div class="vc-docs">
+      ${mode === "docs" ? `<div class="vc-docs${nDocs > 0 ? "" : " empty"}">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
+        ${nDocs > 0 ? `${nDocs} documento${nDocs === 1 ? "" : "s"}` : "Ver documentos"}
+      </div>` : (nDocs > 0 ? `<div class="vc-docs">
         <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
         ${nDocs} documento${nDocs === 1 ? "" : "s"}
-      </div>` : ""}
-    </${tag}>`;
+      </div>` : "")}
+    </button>`;
 }
 
 function buildVehicleGroupHTML(lista) {
   if (!lista.length) return `<div class="vehicle-card-empty">Nenhuma viatura nesse grupo.</div>`;
-  return `<div class="manut-vehicle-grid">${lista.map((v) => buildVehicleCardHTML(v, { clickable: false })).join("")}</div>`;
+  return `<div class="manut-vehicle-grid">${lista.map((v) => buildVehicleCardHTML(v, { mode: "docs" })).join("")}</div>`;
 }
+document.getElementById("frota-caracterizada-holder").addEventListener("click", (e) => {
+  const btn = e.target.closest(".vehicle-card-docs");
+  if (btn) openVehicleDocsModal(Number(btn.dataset.vid));
+});
+document.getElementById("frota-descaracterizada-holder").addEventListener("click", (e) => {
+  const btn = e.target.closest(".vehicle-card-docs");
+  if (btn) openVehicleDocsModal(Number(btn.dataset.vid));
+});
+
 
 /* ---------------------------------------------------------
    Render — Manutenção
@@ -241,7 +252,7 @@ function renderManutencaoSelect() {
 
   const grid = document.getElementById("manut-select-cards");
   grid.innerHTML = frota.length
-    ? frota.map((v) => buildVehicleCardHTML(v, { selected: v.id === selectedViaturaId, clickable: true })).join("")
+    ? frota.map((v) => buildVehicleCardHTML(v, { selected: v.id === selectedViaturaId, mode: "select" })).join("")
     : `<div class="vehicle-card-empty">Nenhuma viatura cadastrada.</div>`;
 
   const tipoSel = document.getElementById("manut-tipo-servico");

@@ -182,11 +182,9 @@ select.ef-field option{background:var(--bg-panel);color:var(--ink);}
 .vehicle-card.st-manutencao{border-left-color:var(--t-paramirim);}
 .vehicle-card.st-baixada{border-left-color:#b0553f;}
 .vehicle-card:hover{border-color:var(--cipe-brown-l);}
-div.vehicle-card{cursor:default;}
-div.vehicle-card:hover{border-color:var(--line);}
-div.vehicle-card.st-em-uso:hover{border-left-color:var(--t-velhochico);}
-div.vehicle-card.st-manutencao:hover{border-left-color:var(--t-paramirim);}
-div.vehicle-card.st-baixada:hover{border-left-color:#b0553f;}
+.vehicle-card-docs .vc-docs{color:var(--cipe-brown-l);}
+.vehicle-card-docs .vc-docs.empty{color:var(--ink-faint);}
+.vehicle-card-docs:hover .vc-docs{color:var(--accent);}
 .vehicle-card.active{background:var(--bg-panel-2);border-color:var(--t-velhochico);box-shadow:0 0 0 1px var(--t-velhochico);}
 .vehicle-card .vc-prefixo{font-family:var(--font-display);font-size:15px;font-weight:600;color:var(--ink);}
 .vehicle-card .vc-placa{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint);margin-top:1px;}
