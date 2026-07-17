@@ -185,11 +185,27 @@ function renderFrota() {
 /* ---------------------------------------------------------
    Render — Manutenção
 --------------------------------------------------------- */
+let selectedViaturaId = null;
+
 function renderManutencaoSelect() {
-  const sel = document.getElementById("manut-select");
-  const prevValue = sel.value;
-  sel.innerHTML = frota.map((v) => `<option value="${v.id}">${escapeHtml(v.prefixo) || "Viatura #" + v.id}${v.placa ? " — " + escapeHtml(v.placa) : ""}</option>`).join("");
-  if (frota.some((v) => String(v.id) === prevValue)) sel.value = prevValue;
+  if (!frota.some((v) => v.id === selectedViaturaId)) {
+    selectedViaturaId = frota.length ? frota[0].id : null;
+  }
+
+  const grid = document.getElementById("manut-select-cards");
+  grid.innerHTML = frota.length ? frota.map((v) => {
+    const nOcorr = (v.manutencoes || []).length;
+    return `
+    <button class="vehicle-card${v.id === selectedViaturaId ? " active" : ""}" data-vid="${v.id}" type="button">
+      <div class="vc-prefixo">${escapeHtml(v.prefixo) || "Viatura #" + v.id}</div>
+      <div class="vc-placa">${escapeHtml(v.placa) || "sem placa"}</div>
+      <div class="vc-meta">${escapeHtml(v.modelo) || "—"} · ${escapeHtml(v.categoria) || "—"}</div>
+      <div class="vc-foot">
+        <span class="badge-status ${STATUS_CLS[v.status] || "mid"}">${STATUS_LABEL[v.status] || v.status}</span>
+        <span class="vc-ocorrencias">${nOcorr} ocorrência${nOcorr === 1 ? "" : "s"}</span>
+      </div>
+    </button>`;
+  }).join("") : `<div class="vehicle-card-empty">Nenhuma viatura cadastrada.</div>`;
 
   const tipoSel = document.getElementById("manut-tipo-servico");
   if (tipoSel && !tipoSel.dataset.filled) {
@@ -204,10 +220,16 @@ function renderManutencaoSelect() {
 }
 
 function getSelectedViatura() {
-  const sel = document.getElementById("manut-select");
-  const id = Number(sel.value);
-  return frota.find((v) => v.id === id);
+  return frota.find((v) => v.id === selectedViaturaId);
 }
+
+document.getElementById("manut-select-cards").addEventListener("click", (e) => {
+  const btn = e.target.closest(".vehicle-card");
+  if (!btn) return;
+  selectedViaturaId = Number(btn.dataset.vid);
+  renderManutencaoSelect();
+});
+
 
 function renderManutencaoHistorico() {
   const v = getSelectedViatura();
@@ -540,7 +562,6 @@ document.getElementById("btn-add-viatura").addEventListener("click", () => {
 /* ---------------------------------------------------------
    Event delegation — Manutenção
 --------------------------------------------------------- */
-document.getElementById("manut-select").addEventListener("change", renderManutencaoHistorico);
 
 document.getElementById("manut-tbody").addEventListener("click", (e) => {
   const tr = e.target.closest("tr");

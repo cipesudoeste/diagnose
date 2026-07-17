@@ -166,7 +166,26 @@ select.ef-field option{background:var(--bg-panel);color:var(--ink);}
 }
 
 /* --- aba Manutenção --- */
-.manut-picker{margin:6px 0 18px;max-width:420px;}
+.manut-picker{margin:6px 0 20px;}
+.manut-vehicle-grid{
+  display:grid;grid-template-columns:1fr;gap:10px;
+}
+@media (min-width:560px){ .manut-vehicle-grid{grid-template-columns:repeat(2, 1fr);} }
+@media (min-width:860px){ .manut-vehicle-grid{grid-template-columns:repeat(3, 1fr);} }
+@media (min-width:1160px){ .manut-vehicle-grid{grid-template-columns:repeat(4, 1fr);} }
+
+.vehicle-card{
+  text-align:left;background:var(--bg-panel);border:1px solid var(--line);border-radius:10px;
+  padding:12px 14px;cursor:pointer;transition:all .15s ease;position:relative;
+}
+.vehicle-card:hover{border-color:var(--cipe-brown-l);}
+.vehicle-card.active{background:var(--bg-panel-2);border-color:var(--t-velhochico);box-shadow:0 0 0 1px var(--t-velhochico);}
+.vehicle-card .vc-prefixo{font-family:var(--font-display);font-size:15px;font-weight:600;color:var(--ink);}
+.vehicle-card .vc-placa{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint);margin-top:1px;}
+.vehicle-card .vc-meta{font-size:11.5px;color:var(--ink-muted);margin-top:6px;}
+.vehicle-card .vc-foot{display:flex;align-items:center;justify-content:space-between;margin-top:10px;}
+.vehicle-card .vc-ocorrencias{font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);}
+.vehicle-card-empty{grid-column:1/-1;font-size:12.5px;color:var(--ink-faint);text-align:center;padding:20px;}
 .manut-form{
   display:grid;grid-template-columns:1fr;gap:10px;background:var(--bg-panel);border:1px solid var(--line);
   border-radius:10px;padding:16px;margin-bottom:6px;
