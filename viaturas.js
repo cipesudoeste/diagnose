@@ -180,11 +180,19 @@ function renderFrota() {
       </td>
       <td class="num" data-label="KM"><input type="number" class="ef-field field-km" style="width:90px;text-align:right;" value="${v.km || 0}"></td>
       <td class="num" data-label="Ocorrências">${(v.manutencoes || []).length}</td>
-      <td class="cell-actions" data-label=""><button class="icon-btn btn-remove-viatura" title="Remover">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8">
-          <path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m2 0v13a1 1 0 01-1 1H8a1 1 0 01-1-1V7h10z"/>
-        </svg>
-      </button></td>
+      <td class="cell-actions" data-label="">
+        <div class="row-actions">
+          <button class="icon-btn view btn-docs-viatura" title="Documentos da viatura">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
+            ${(v.documentos || []).length > 0 ? `<span class="update-count">${(v.documentos || []).length}</span>` : ""}
+          </button>
+          <button class="icon-btn btn-remove-viatura" title="Remover">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m2 0v13a1 1 0 01-1 1H8a1 1 0 01-1-1V7h10z"/>
+            </svg>
+          </button>
+        </div>
+      </td>
     </tr>
   `).join("");
 }
@@ -196,6 +204,7 @@ const STATUS_CARD_CLASS = { em_uso: "st-em-uso", manutencao: "st-manutencao", ba
 
 function buildVehicleCardHTML(v, { selected = false, clickable = true } = {}) {
   const nOcorr = (v.manutencoes || []).length;
+  const nDocs = (v.documentos || []).length;
   const statusClass = STATUS_CARD_CLASS[v.status] || "st-manutencao";
   const tag = clickable ? "button" : "div";
   const typeAttr = clickable ? `type="button"` : "";
@@ -208,6 +217,10 @@ function buildVehicleCardHTML(v, { selected = false, clickable = true } = {}) {
         <span class="badge-status ${STATUS_CLS[v.status] || "mid"}">${STATUS_LABEL[v.status] || v.status}</span>
         <span class="vc-ocorrencias">${nOcorr} ocorrência${nOcorr === 1 ? "" : "s"}</span>
       </div>
+      ${nDocs > 0 ? `<div class="vc-docs">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
+        ${nDocs} documento${nDocs === 1 ? "" : "s"}
+      </div>` : ""}
     </${tag}>`;
 }
 
@@ -482,6 +495,126 @@ async function removeAnexo(viaturaId, mid, aid) {
   openViewManutModal(viaturaId, mid);
 }
 
+/* ---------------------------------------------------------
+   Documentos da viatura (CRLV, Termo de Entrega, etc.)
+--------------------------------------------------------- */
+const TIPOS_DOCUMENTO_SUGESTOES = [
+  "CRLV", "Termo de Entrega", "Seguro", "Licenciamento", "Nota Fiscal", "Contrato de Locação",
+];
+
+function renderDocumentosListHTML(v) {
+  const docs = v.documentos || [];
+  if (!docs.length) return `<div class="timeline-empty">Nenhum documento enviado ainda.</div>`;
+  return `<div class="anexos-list">${docs.map((d) => {
+    const isImage = (d.tipo || "").startsWith("image/");
+    const thumb = isImage
+      ? `<img src="${d.url}" alt="" class="anexo-thumb">`
+      : `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" class="anexo-icon"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>`;
+    return `
+    <div class="anexo-item" data-did="${d.id}">
+      ${thumb}
+      <span class="doc-type-tag">${escapeHtml(d.tipoDocumento)}</span>
+      <a href="${d.url}" target="_blank" rel="noopener" class="anexo-name">${escapeHtml(d.nome)}</a>
+      <span class="anexo-meta">${formatBytes(d.tamanho)} · ${fmtDateBR(d.data)}</span>
+      <button class="icon-btn btn-remove-doc" title="Remover documento">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m2 0v13a1 1 0 01-1 1H8a1 1 0 01-1-1V7h10z"/></svg>
+      </button>
+    </div>`;
+  }).join("")}</div>`;
+}
+
+async function uploadDocumento(viaturaId, tipoDocumento, file) {
+  if (!sb) { alert("Envio de arquivos indisponível: Supabase não configurado."); return; }
+  const tiposAceitos = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
+  if (!tiposAceitos.includes(file.type)) { alert("Só é permitido anexar PDF, JPG, PNG ou WEBP."); return; }
+  if (!tipoDocumento) { alert("Informe o tipo do documento (ex: CRLV, Termo de Entrega...)."); return; }
+  const v = frota.find((x) => x.id === viaturaId);
+  if (!v) return;
+  const statusEl = document.getElementById("doc-status");
+  if (statusEl) statusEl.textContent = "Enviando...";
+  const safeName = file.name
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9.\-_]/g, "_");
+  const path = `veiculo/${viaturaId}/${Date.now()}_${safeName}`;
+  const { error } = await sb.storage.from("viaturas-anexos").upload(path, file);
+  if (error) {
+    console.error(error);
+    const msg = error.message || "Erro desconhecido";
+    if (statusEl) statusEl.textContent = "Erro: " + msg;
+    alert("Erro ao enviar arquivo: " + msg);
+    return;
+  }
+  const { data } = sb.storage.from("viaturas-anexos").getPublicUrl(path);
+  const nextDid = Math.max(0, ...(v.documentos || []).map((d) => d.id)) + 1;
+  v.documentos = v.documentos || [];
+  v.documentos.push({
+    id: nextDid, tipoDocumento, nome: file.name, path, url: data.publicUrl,
+    tamanho: file.size, tipo: file.type, data: new Date().toISOString().slice(0, 10),
+  });
+  persist();
+  renderFrota();
+  renderManutencaoSelect();
+  openVehicleDocsModal(viaturaId); // reabre atualizado
+}
+
+async function removeDocumento(viaturaId, did) {
+  const v = frota.find((x) => x.id === viaturaId);
+  if (!v) return;
+  const doc = (v.documentos || []).find((d) => d.id === did);
+  if (sb && doc) {
+    await sb.storage.from("viaturas-anexos").remove([doc.path]);
+  }
+  v.documentos = (v.documentos || []).filter((d) => d.id !== did);
+  persist();
+  renderFrota();
+  renderManutencaoSelect();
+  openVehicleDocsModal(viaturaId);
+}
+
+function openVehicleDocsModal(viaturaId) {
+  const v = frota.find((x) => x.id === viaturaId);
+  if (!v) return;
+  const datalistOptions = TIPOS_DOCUMENTO_SUGESTOES.map((t) => `<option value="${t}">`).join("");
+
+  openModal(`
+    <div class="modal-title">Documentos da Viatura</div>
+    <div class="modal-subtitle">${escapeHtml(v.prefixo) || "Viatura #" + v.id}${v.placa ? " — " + escapeHtml(v.placa) : ""}</div>
+
+    ${renderDocumentosListHTML(v)}
+
+    <div class="section-label" style="margin-top:16px;">Adicionar Documento</div>
+    <div class="modal-grid">
+      <div class="modal-field">
+        <label>Tipo de Documento</label>
+        <input type="text" id="doc-tipo" list="doc-tipo-sugestoes" placeholder="Ex: CRLV, Termo de Entrega...">
+        <datalist id="doc-tipo-sugestoes">${datalistOptions}</datalist>
+      </div>
+      <div class="modal-field">
+        <label>Arquivo (PDF ou imagem)</label>
+        <input type="file" accept="application/pdf,image/jpeg,image/png,image/webp" id="doc-file-input">
+      </div>
+    </div>
+    <span id="doc-status" style="font-family:var(--font-mono);font-size:10.5px;color:var(--t-paramirim);"></span>
+
+    <div class="modal-actions">
+      <button class="ef-btn primary" id="doc-close-btn">Fechar</button>
+    </div>
+  `);
+
+  document.getElementById("doc-close-btn").addEventListener("click", closeModal);
+  document.getElementById("doc-file-input").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    const tipoDocumento = document.getElementById("doc-tipo").value.trim();
+    if (file) uploadDocumento(viaturaId, tipoDocumento, file);
+  });
+  document.querySelectorAll(".btn-remove-doc").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const did = Number(btn.closest(".anexo-item").dataset.did);
+      removeDocumento(viaturaId, did);
+    });
+  });
+}
+
 function openViewManutModal(viaturaId, mid) {
   const v = frota.find((x) => x.id === viaturaId);
   const m = v && (v.manutencoes || []).find((x) => x.id === mid);
@@ -567,18 +700,24 @@ document.getElementById("frota-tbody").addEventListener("change", (e) => {
 });
 
 document.getElementById("frota-tbody").addEventListener("click", (e) => {
-  const btn = e.target.closest(".btn-remove-viatura");
-  if (!btn) return;
-  const tr = btn.closest("tr");
+  const tr = e.target.closest("tr");
+  if (!tr) return;
   const id = Number(tr.dataset.id);
-  frota = frota.filter((v) => v.id !== id);
-  persist();
-  renderAll();
+
+  if (e.target.closest(".btn-docs-viatura")) {
+    openVehicleDocsModal(id);
+    return;
+  }
+  if (e.target.closest(".btn-remove-viatura")) {
+    frota = frota.filter((v) => v.id !== id);
+    persist();
+    renderAll();
+  }
 });
 
 document.getElementById("btn-add-viatura").addEventListener("click", () => {
   const nextId = Math.max(0, ...frota.map((v) => v.id)) + 1;
-  frota.push({ id: nextId, prefixo: "", placa: "", modelo: "", categoria: "Automóvel", caracterizacao: "Caracterizada", status: "em_uso", km: 0, manutencoes: [] });
+  frota.push({ id: nextId, prefixo: "", placa: "", modelo: "", categoria: "Automóvel", caracterizacao: "Caracterizada", status: "em_uso", km: 0, manutencoes: [], documentos: [] });
   persist();
   renderAll();
 });
@@ -672,6 +811,7 @@ function migrarDadosLegados() {
     if (!CATEGORIAS_VIATURA.includes(v.categoria)) { v.categoria = "Automóvel"; mudou = true; }
     if (!CARACTERIZACAO_VIATURA.includes(v.caracterizacao)) { v.caracterizacao = "Caracterizada"; mudou = true; }
     if (!Array.isArray(v.manutencoes)) { v.manutencoes = []; mudou = true; }
+    if (!Array.isArray(v.documentos)) { v.documentos = []; mudou = true; }
     v.manutencoes.forEach((m) => {
       if (!Array.isArray(m.atualizacoes)) { m.atualizacoes = []; mudou = true; }
       if (!Array.isArray(m.anexos)) { m.anexos = []; mudou = true; }
