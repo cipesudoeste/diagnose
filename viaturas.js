@@ -124,17 +124,6 @@ function renderPainel() {
   }));
   document.getElementById("tipo-donut-holder").innerHTML = buildDonutHTML(tipoEntries, "viaturas");
 
-  const emManutencaoRows = frota.filter((v) => v.status === "manutencao").map((v) => `
-    <tr>
-      <td data-label="Prefixo">${escapeHtml(v.prefixo) || "—"}</td>
-      <td data-label="Modelo">${escapeHtml(v.modelo) || "—"}</td>
-      <td data-label="Categoria">${escapeHtml(v.categoria) || "—"}</td>
-      <td class="num" data-label="KM">${v.km || 0}</td>
-    </tr>
-  `).join("");
-  document.getElementById("painel-manutencao-tbody").innerHTML = emManutencaoRows ||
-    `<tr><td colspan="4" style="text-align:center;color:var(--ink-faint);padding:20px;">Nenhuma viatura em manutenção no momento.</td></tr>`;
-
   const caracterizadas = frota.filter((v) => v.caracterizacao === "Caracterizada");
   const descaracterizadas = frota.filter((v) => v.caracterizacao === "Descaracterizada");
   document.getElementById("frota-caracterizada-holder").innerHTML = buildVehicleGroupHTML(caracterizadas);
