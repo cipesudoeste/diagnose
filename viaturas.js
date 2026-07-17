@@ -232,11 +232,11 @@ function buildVehicleGroupHTML(lista) {
 }
 document.getElementById("frota-caracterizada-holder").addEventListener("click", (e) => {
   const btn = e.target.closest(".vehicle-card-docs");
-  if (btn) openVehicleDocsModal(Number(btn.dataset.vid));
+  if (btn) openVehicleDocsViewModal(Number(btn.dataset.vid));
 });
 document.getElementById("frota-descaracterizada-holder").addEventListener("click", (e) => {
   const btn = e.target.closest(".vehicle-card-docs");
-  if (btn) openVehicleDocsModal(Number(btn.dataset.vid));
+  if (btn) openVehicleDocsViewModal(Number(btn.dataset.vid));
 });
 
 
@@ -513,7 +513,7 @@ const TIPOS_DOCUMENTO_SUGESTOES = [
   "CRLV", "Termo de Entrega", "Seguro", "Licenciamento", "Nota Fiscal", "Contrato de Locação",
 ];
 
-function renderDocumentosListHTML(v) {
+function renderDocumentosListHTML(v, { readOnly = false } = {}) {
   const docs = v.documentos || [];
   if (!docs.length) return `<div class="timeline-empty">Nenhum documento enviado ainda.</div>`;
   return `<div class="anexos-list">${docs.map((d) => {
@@ -527,11 +527,25 @@ function renderDocumentosListHTML(v) {
       <span class="doc-type-tag">${escapeHtml(d.tipoDocumento)}</span>
       <a href="${d.url}" target="_blank" rel="noopener" class="anexo-name">${escapeHtml(d.nome)}</a>
       <span class="anexo-meta">${formatBytes(d.tamanho)} · ${fmtDateBR(d.data)}</span>
-      <button class="icon-btn btn-remove-doc" title="Remover documento">
+      ${readOnly ? "" : `<button class="icon-btn btn-remove-doc" title="Remover documento">
         <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m2 0v13a1 1 0 01-1 1H8a1 1 0 01-1-1V7h10z"/></svg>
-      </button>
+      </button>`}
     </div>`;
   }).join("")}</div>`;
+}
+
+function openVehicleDocsViewModal(viaturaId) {
+  const v = frota.find((x) => x.id === viaturaId);
+  if (!v) return;
+  openModal(`
+    <div class="modal-title">Documentos da Viatura</div>
+    <div class="modal-subtitle">${escapeHtml(v.prefixo) || "Viatura #" + v.id}${v.placa ? " — " + escapeHtml(v.placa) : ""}</div>
+    ${renderDocumentosListHTML(v, { readOnly: true })}
+    <div class="modal-actions">
+      <button class="ef-btn primary" id="docview-close-btn">Fechar</button>
+    </div>
+  `);
+  document.getElementById("docview-close-btn").addEventListener("click", closeModal);
 }
 
 async function uploadDocumento(viaturaId, tipoDocumento, file) {
