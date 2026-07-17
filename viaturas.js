@@ -135,6 +135,13 @@ function renderPainel() {
   document.getElementById("painel-manutencao-tbody").innerHTML = emManutencaoRows ||
     `<tr><td colspan="4" style="text-align:center;color:var(--ink-faint);padding:20px;">Nenhuma viatura em manutenção no momento.</td></tr>`;
 
+  const caracterizadas = frota.filter((v) => v.caracterizacao === "Caracterizada");
+  const descaracterizadas = frota.filter((v) => v.caracterizacao === "Descaracterizada");
+  document.getElementById("frota-caracterizada-holder").innerHTML = buildVehicleGroupHTML(caracterizadas);
+  document.getElementById("frota-descaracterizada-holder").innerHTML = buildVehicleGroupHTML(descaracterizadas);
+  document.getElementById("count-caracterizada").textContent = caracterizadas.length;
+  document.getElementById("count-descaracterizada").textContent = descaracterizadas.length;
+
   const printRows = frota.map((v) => `
     <tr>
       <td data-label="Prefixo">${escapeHtml(v.prefixo) || "—"}</td>
@@ -183,6 +190,33 @@ function renderFrota() {
 }
 
 /* ---------------------------------------------------------
+   Card de viatura (compartilhado entre Painel e Manutenção)
+--------------------------------------------------------- */
+const STATUS_CARD_CLASS = { em_uso: "st-em-uso", manutencao: "st-manutencao", baixada: "st-baixada" };
+
+function buildVehicleCardHTML(v, { selected = false, clickable = true } = {}) {
+  const nOcorr = (v.manutencoes || []).length;
+  const statusClass = STATUS_CARD_CLASS[v.status] || "st-manutencao";
+  const tag = clickable ? "button" : "div";
+  const typeAttr = clickable ? `type="button"` : "";
+  return `
+    <${tag} class="vehicle-card ${statusClass}${selected ? " active" : ""}" data-vid="${v.id}" ${typeAttr}>
+      <div class="vc-prefixo">${escapeHtml(v.prefixo) || "Viatura #" + v.id}</div>
+      <div class="vc-placa">${escapeHtml(v.placa) || "sem placa"}</div>
+      <div class="vc-meta">${escapeHtml(v.modelo) || "—"} · ${escapeHtml(v.categoria) || "—"}</div>
+      <div class="vc-foot">
+        <span class="badge-status ${STATUS_CLS[v.status] || "mid"}">${STATUS_LABEL[v.status] || v.status}</span>
+        <span class="vc-ocorrencias">${nOcorr} ocorrência${nOcorr === 1 ? "" : "s"}</span>
+      </div>
+    </${tag}>`;
+}
+
+function buildVehicleGroupHTML(lista) {
+  if (!lista.length) return `<div class="vehicle-card-empty">Nenhuma viatura nesse grupo.</div>`;
+  return `<div class="manut-vehicle-grid">${lista.map((v) => buildVehicleCardHTML(v, { clickable: false })).join("")}</div>`;
+}
+
+/* ---------------------------------------------------------
    Render — Manutenção
 --------------------------------------------------------- */
 let selectedViaturaId = null;
@@ -193,19 +227,9 @@ function renderManutencaoSelect() {
   }
 
   const grid = document.getElementById("manut-select-cards");
-  grid.innerHTML = frota.length ? frota.map((v) => {
-    const nOcorr = (v.manutencoes || []).length;
-    return `
-    <button class="vehicle-card${v.id === selectedViaturaId ? " active" : ""}" data-vid="${v.id}" type="button">
-      <div class="vc-prefixo">${escapeHtml(v.prefixo) || "Viatura #" + v.id}</div>
-      <div class="vc-placa">${escapeHtml(v.placa) || "sem placa"}</div>
-      <div class="vc-meta">${escapeHtml(v.modelo) || "—"} · ${escapeHtml(v.categoria) || "—"}</div>
-      <div class="vc-foot">
-        <span class="badge-status ${STATUS_CLS[v.status] || "mid"}">${STATUS_LABEL[v.status] || v.status}</span>
-        <span class="vc-ocorrencias">${nOcorr} ocorrência${nOcorr === 1 ? "" : "s"}</span>
-      </div>
-    </button>`;
-  }).join("") : `<div class="vehicle-card-empty">Nenhuma viatura cadastrada.</div>`;
+  grid.innerHTML = frota.length
+    ? frota.map((v) => buildVehicleCardHTML(v, { selected: v.id === selectedViaturaId, clickable: true })).join("")
+    : `<div class="vehicle-card-empty">Nenhuma viatura cadastrada.</div>`;
 
   const tipoSel = document.getElementById("manut-tipo-servico");
   if (tipoSel && !tipoSel.dataset.filled) {
