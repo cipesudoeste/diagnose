@@ -360,6 +360,63 @@ function openAddUpdateModal(viaturaId, mid) {
 }
 
 /* --- Modal: Ver todas as informações --- */
+function renderAnexosListHTML(m) {
+  const anexos = m.anexos || [];
+  if (!anexos.length) return `<div class="timeline-empty">Nenhum anexo enviado ainda.</div>`;
+  return `<div class="anexos-list">${anexos.map((a) => `
+    <div class="anexo-item" data-aid="${a.id}">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" class="anexo-icon"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
+      <a href="${a.url}" target="_blank" rel="noopener" class="anexo-name">${escapeHtml(a.nome)}</a>
+      <span class="anexo-meta">${formatBytes(a.tamanho)} · ${fmtDateBR(a.data)}</span>
+      <button class="icon-btn btn-remove-anexo" title="Remover anexo">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m2 0v13a1 1 0 01-1 1H8a1 1 0 01-1-1V7h10z"/></svg>
+      </button>
+    </div>
+  `).join("")}</div>`;
+}
+
+function formatBytes(n) {
+  if (!n) return "0 KB";
+  const kb = n / 1024;
+  return kb < 1024 ? `${kb.toFixed(0)} KB` : `${(kb / 1024).toFixed(1)} MB`;
+}
+
+async function uploadAnexo(viaturaId, mid, file) {
+  if (!sb) { alert("Envio de arquivos indisponível: Supabase não configurado."); return; }
+  if (file.type !== "application/pdf") { alert("Só é permitido anexar arquivos PDF."); return; }
+  const v = frota.find((x) => x.id === viaturaId);
+  const m = v && (v.manutencoes || []).find((x) => x.id === mid);
+  if (!m) return;
+  const statusEl = document.getElementById("anexo-status");
+  if (statusEl) statusEl.textContent = "Enviando...";
+  const path = `${viaturaId}/${mid}/${Date.now()}_${file.name}`;
+  const { error } = await sb.storage.from("viaturas-anexos").upload(path, file);
+  if (error) {
+    console.error(error);
+    if (statusEl) statusEl.textContent = "Erro ao enviar arquivo.";
+    return;
+  }
+  const { data } = sb.storage.from("viaturas-anexos").getPublicUrl(path);
+  const nextAid = Math.max(0, ...(m.anexos || []).map((a) => a.id)) + 1;
+  m.anexos = m.anexos || [];
+  m.anexos.push({ id: nextAid, nome: file.name, path, url: data.publicUrl, tamanho: file.size, data: new Date().toISOString().slice(0, 10) });
+  persist();
+  openViewManutModal(viaturaId, mid); // reabre atualizado
+}
+
+async function removeAnexo(viaturaId, mid, aid) {
+  const v = frota.find((x) => x.id === viaturaId);
+  const m = v && (v.manutencoes || []).find((x) => x.id === mid);
+  if (!m) return;
+  const anexo = (m.anexos || []).find((a) => a.id === aid);
+  if (sb && anexo) {
+    await sb.storage.from("viaturas-anexos").remove([anexo.path]);
+  }
+  m.anexos = (m.anexos || []).filter((a) => a.id !== aid);
+  persist();
+  openViewManutModal(viaturaId, mid);
+}
+
 function openViewManutModal(viaturaId, mid) {
   const v = frota.find((x) => x.id === viaturaId);
   const m = v && (v.manutencoes || []).find((x) => x.id === mid);
@@ -382,6 +439,14 @@ function openViewManutModal(viaturaId, mid) {
     <div class="view-row"><div class="k">Tipo de Serviço</div><div class="v">${escapeHtml(m.tipoServico) || "—"}</div></div>
     <div class="view-row"><div class="k">Descrição</div><div class="v">${escapeHtml(m.descricao) || "—"}</div></div>
     <div class="view-row"><div class="k">Processo SEI</div><div class="v">${escapeHtml(m.processoSei) || "—"}</div></div>
+
+    <div class="section-label" style="margin-top:18px;">Anexos (PDF)</div>
+    ${renderAnexosListHTML(m)}
+    <div class="anexo-upload">
+      <input type="file" accept="application/pdf" id="anexo-file-input">
+      <span id="anexo-status"></span>
+    </div>
+
     <div class="section-label" style="margin-top:18px;">Linha do Tempo de Atualizações</div>
     ${updatesHtml}
     <div class="modal-actions">
@@ -389,6 +454,20 @@ function openViewManutModal(viaturaId, mid) {
     </div>
   `);
   document.getElementById("view-close-btn").addEventListener("click", closeModal);
+
+  const fileInput = document.getElementById("anexo-file-input");
+  if (fileInput) {
+    fileInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (file) uploadAnexo(viaturaId, mid, file);
+    });
+  }
+  document.querySelectorAll(".btn-remove-anexo").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const aid = Number(btn.closest(".anexo-item").dataset.aid);
+      removeAnexo(viaturaId, mid, aid);
+    });
+  });
 }
 
 /* ---------------------------------------------------------
