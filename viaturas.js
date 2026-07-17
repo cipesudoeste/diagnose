@@ -389,11 +389,23 @@ async function uploadAnexo(viaturaId, mid, file) {
   if (!m) return;
   const statusEl = document.getElementById("anexo-status");
   if (statusEl) statusEl.textContent = "Enviando...";
-  const path = `${viaturaId}/${mid}/${Date.now()}_${file.name}`;
+  // Nomes com acento/espaço/parênteses podem quebrar a chave do Storage;
+  // guardamos o nome original em "nome" (exibição) e usamos uma versão
+  // sanitizada só no caminho interno do arquivo.
+  const safeName = file.name
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // remove acentos
+    .replace(/[^a-zA-Z0-9.\-_]/g, "_");
+  const path = `${viaturaId}/${mid}/${Date.now()}_${safeName}`;
   const { error } = await sb.storage.from("viaturas-anexos").upload(path, file);
   if (error) {
     console.error(error);
-    if (statusEl) statusEl.textContent = "Erro ao enviar arquivo.";
+    const msg = error.message || "Erro desconhecido";
+    if (statusEl) statusEl.textContent = "Erro: " + msg;
+    alert(
+      "Erro ao enviar arquivo: " + msg +
+      "\n\nConfira se o bucket 'viaturas-anexos' foi criado no Supabase (Storage) " +
+      "e se o SQL de policies (viaturas_storage_setup.sql) foi executado."
+    );
     return;
   }
   const { data } = sb.storage.from("viaturas-anexos").getPublicUrl(path);
