@@ -666,6 +666,20 @@ document.getElementById("btn-print").addEventListener("click", () => {
 /* ---------------------------------------------------------
    Inicialização
 --------------------------------------------------------- */
+function migrarDadosLegados() {
+  let mudou = false;
+  frota.forEach((v) => {
+    if (!CATEGORIAS_VIATURA.includes(v.categoria)) { v.categoria = "Automóvel"; mudou = true; }
+    if (!CARACTERIZACAO_VIATURA.includes(v.caracterizacao)) { v.caracterizacao = "Caracterizada"; mudou = true; }
+    if (!Array.isArray(v.manutencoes)) { v.manutencoes = []; mudou = true; }
+    v.manutencoes.forEach((m) => {
+      if (!Array.isArray(m.atualizacoes)) { m.atualizacoes = []; mudou = true; }
+      if (!Array.isArray(m.anexos)) { m.anexos = []; mudou = true; }
+    });
+  });
+  return mudou;
+}
+
 (async function init() {
   try {
     const cloud = await loadFromCloud();
@@ -678,6 +692,9 @@ document.getElementById("btn-print").addEventListener("click", () => {
   } catch (e) {
     console.error("Erro ao carregar dados:", e);
     frota = SEED_FROTA;
+  }
+  if (migrarDadosLegados()) {
+    await saveToCloud({ viaturas: frota });
   }
   renderAll();
 })();
