@@ -75,6 +75,40 @@ function autoGrow(el) {
 }
 
 /* ---------------------------------------------------------
+   Indisponibilidade — dias parados desde a última ocorrência
+   marcada como "indisponível" (a mais recente define o status)
+--------------------------------------------------------- */
+function getIndisponibilidade(v) {
+  const registros = v.manutencoes || [];
+  if (!registros.length) return null;
+  const ultima = [...registros].sort((a, b) => new Date(b.data) - new Date(a.data))[0];
+  if (!ultima.indisponivel || !ultima.data) return null;
+  const inicio = new Date(ultima.data + "T00:00:00");
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const dias = Math.max(0, Math.floor((hoje - inicio) / 86400000));
+  return { dias };
+}
+
+let indispBadgeSeq = 0;
+function buildIndispBadgeSVG(dias) {
+  indispBadgeSeq += 1;
+  const uid = "indisp-arc-" + indispBadgeSeq;
+  const size = 68, cx = size / 2, cy = size / 2, r = 29;
+  const x1 = cx - r, x2 = cx + r;
+  return `
+  <svg class="indisp-badge" viewBox="0 0 ${size} ${size}" width="56" height="56">
+    <defs><path id="${uid}" d="M ${x1} ${cy} A ${r} ${r} 0 0 1 ${x2} ${cy}" fill="none"/></defs>
+    <circle cx="${cx}" cy="${cy}" r="19" fill="#3a1f1a" stroke="#b0553f" stroke-width="1.5"/>
+    <text font-family="JetBrains Mono, monospace" font-size="6.4" letter-spacing="0.5" fill="#e08a72" font-weight="600">
+      <textPath href="#${uid}" startOffset="50%" text-anchor="middle">INDISPONIBILIDADE</textPath>
+    </text>
+    <text x="${cx}" y="${cy + 4}" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" font-weight="700" fill="#e08a72">${dias}</text>
+    <text x="${cx}" y="${cy + 14}" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="6" fill="#e08a72" opacity=".85">dia${dias === 1 ? "" : "s"}</text>
+  </svg>`;
+}
+
+/* ---------------------------------------------------------
    Rosca genérica (reaproveitada do padrão do Efetivo)
 --------------------------------------------------------- */
 function buildDonutHTML(entries, totalLabel) {
@@ -217,8 +251,10 @@ function buildVehicleCardHTML(v, { selected = false, mode = "select" } = {}) {
   const nDocs = (v.documentos || []).length;
   const statusClass = STATUS_CARD_CLASS[v.status] || "st-manutencao";
   const modeClass = mode === "docs" ? "vehicle-card-docs" : "vehicle-card-select";
+  const indisp = getIndisponibilidade(v);
   return `
-    <button class="vehicle-card ${statusClass} ${modeClass}${selected ? " active" : ""}" data-vid="${v.id}" type="button">
+    <button class="vehicle-card ${statusClass} ${modeClass}${selected ? " active" : ""}${indisp ? " has-indisp" : ""}" data-vid="${v.id}" type="button">
+      ${indisp ? buildIndispBadgeSVG(indisp.dias) : ""}
       <div class="vc-prefixo">${escapeHtml(v.prefixo) || "Viatura #" + v.id}</div>
       <div class="vc-placa">${escapeHtml(v.placa) || "sem placa"}</div>
       <div class="vc-meta">${escapeHtml(v.modelo) || "—"} · ${escapeHtml(v.categoria) || "—"}</div>
@@ -377,6 +413,9 @@ function openEditManutModal(viaturaId, mid) {
       </div>
       <div class="modal-field" style="grid-column:1/-1;"><label>Descrição</label><textarea id="edit-desc" rows="2">${escapeHtml(m.descricao)}</textarea></div>
       <div class="modal-field" style="grid-column:1/-1;"><label>Processo SEI</label><input type="text" id="edit-sei" value="${escapeHtml(m.processoSei)}"></div>
+      <div class="modal-field" style="grid-column:1/-1;">
+        <label class="manut-check-indisp"><input type="checkbox" id="edit-indisponivel" ${m.indisponivel ? "checked" : ""}> Viatura indisponível a partir desta ocorrência</label>
+      </div>
     </div>
     <div class="modal-actions">
       <button class="ef-btn" id="edit-cancel-btn">Cancelar</button>
@@ -394,8 +433,12 @@ function openEditManutModal(viaturaId, mid) {
     m.tipoServico = document.getElementById("edit-tipo").value;
     m.descricao = document.getElementById("edit-desc").value.trim();
     m.processoSei = document.getElementById("edit-sei").value.trim();
+    m.indisponivel = document.getElementById("edit-indisponivel").checked;
     persist();
     renderManutencaoHistorico();
+    renderManutencaoSelect();
+    renderFrota();
+    renderPainel();
     closeModal();
   });
 }
@@ -806,21 +849,24 @@ document.getElementById("btn-add-manut").addEventListener("click", () => {
   const tipoServico = document.getElementById("manut-tipo-servico").value;
   const descricao = document.getElementById("manut-desc").value.trim();
   const processoSei = document.getElementById("manut-sei").value.trim();
+  const indisponivel = document.getElementById("manut-indisponivel").checked;
   if (!data || !descricao) {
     alert("Preencha ao menos a data e a descrição.");
     return;
   }
   const nextMid = Math.max(0, ...(v.manutencoes || []).map((m) => m.id)) + 1;
   v.manutencoes = v.manutencoes || [];
-  v.manutencoes.push({ id: nextMid, data, km, oficina, tipoServico, descricao, processoSei, atualizacoes: [] });
+  v.manutencoes.push({ id: nextMid, data, km, oficina, tipoServico, descricao, processoSei, indisponivel, atualizacoes: [] });
   document.getElementById("manut-data").value = "";
   document.getElementById("manut-km").value = "";
   document.getElementById("manut-oficina").value = "";
   document.getElementById("manut-desc").value = "";
   autoGrow(document.getElementById("manut-desc"));
   document.getElementById("manut-sei").value = "";
+  document.getElementById("manut-indisponivel").checked = false;
   persist();
   renderManutencaoHistorico();
+  renderManutencaoSelect();
   renderFrota();
   renderPainel();
 });
@@ -859,6 +905,7 @@ function migrarDadosLegados() {
     v.manutencoes.forEach((m) => {
       if (!Array.isArray(m.atualizacoes)) { m.atualizacoes = []; mudou = true; }
       if (!Array.isArray(m.anexos)) { m.anexos = []; mudou = true; }
+      if (typeof m.indisponivel !== "boolean") { m.indisponivel = false; mudou = true; }
     });
   });
   return mudou;
