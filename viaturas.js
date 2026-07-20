@@ -59,7 +59,7 @@ function escapeHtml(s) {
    ponto/vírgula sozinho dependendo do navegador/idioma do SO.
 --------------------------------------------------------- */
 function formatKm(n) {
-  const num = Number(n) || 0;
+  const num = Math.round(Number(n) || 0);
   return num.toLocaleString("pt-BR");
 }
 function parseKm(str) {
