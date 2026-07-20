@@ -67,6 +67,13 @@ function parseKm(str) {
   return digits ? parseInt(digits, 10) : 0;
 }
 
+/* Faz um <textarea> crescer junto com o conteúdo (compatível com qualquer navegador) */
+function autoGrow(el) {
+  if (!el) return;
+  el.style.height = "auto";
+  el.style.height = el.scrollHeight + "px";
+}
+
 /* ---------------------------------------------------------
    Rosca genérica (reaproveitada do padrão do Efetivo)
 --------------------------------------------------------- */
@@ -368,7 +375,7 @@ function openEditManutModal(viaturaId, mid) {
       <div class="modal-field"><label>Tipo de Serviço</label>
         <select id="edit-tipo">${TIPOS_SERVICO.map((t) => `<option value="${t}" ${t === m.tipoServico ? "selected" : ""}>${t}</option>`).join("")}</select>
       </div>
-      <div class="modal-field" style="grid-column:1/-1;"><label>Descrição</label><input type="text" id="edit-desc" value="${escapeHtml(m.descricao)}"></div>
+      <div class="modal-field" style="grid-column:1/-1;"><label>Descrição</label><textarea id="edit-desc" rows="2">${escapeHtml(m.descricao)}</textarea></div>
       <div class="modal-field" style="grid-column:1/-1;"><label>Processo SEI</label><input type="text" id="edit-sei" value="${escapeHtml(m.processoSei)}"></div>
     </div>
     <div class="modal-actions">
@@ -377,6 +384,9 @@ function openEditManutModal(viaturaId, mid) {
     </div>
   `);
   document.getElementById("edit-cancel-btn").addEventListener("click", closeModal);
+  const editDescEl = document.getElementById("edit-desc");
+  autoGrow(editDescEl);
+  editDescEl.addEventListener("input", () => autoGrow(editDescEl));
   document.getElementById("edit-save-btn").addEventListener("click", () => {
     m.data = document.getElementById("edit-data").value;
     m.km = parseKm(document.getElementById("edit-km").value);
@@ -785,6 +795,8 @@ document.getElementById("manut-tbody").addEventListener("click", (e) => {
   }
 });
 
+document.getElementById("manut-desc").addEventListener("input", (e) => autoGrow(e.target));
+
 document.getElementById("btn-add-manut").addEventListener("click", () => {
   const v = getSelectedViatura();
   if (!v) return;
@@ -805,6 +817,7 @@ document.getElementById("btn-add-manut").addEventListener("click", () => {
   document.getElementById("manut-km").value = "";
   document.getElementById("manut-oficina").value = "";
   document.getElementById("manut-desc").value = "";
+  autoGrow(document.getElementById("manut-desc"));
   document.getElementById("manut-sei").value = "";
   persist();
   renderManutencaoHistorico();

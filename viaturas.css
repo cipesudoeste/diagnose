@@ -203,11 +203,15 @@ select.ef-field option{background:var(--bg-panel);color:var(--ink);}
 .manut-form-row{display:flex;flex-direction:column;gap:4px;}
 .manut-form-row-wide{grid-column:1 / -1;}
 .manut-label{font-family:var(--font-mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-faint);}
-.manut-form input, .manut-form select{
+.manut-form input, .manut-form select, .manut-form textarea{
   background:var(--bg);border:1px solid var(--line);border-radius:6px;color:var(--ink);
   padding:8px 10px;font-size:12.5px;font-family:var(--font-body);
 }
-.manut-form input:focus, .manut-form select:focus{outline:none;border-color:var(--cipe-brown-l);}
+.manut-form input:focus, .manut-form select:focus, .manut-form textarea:focus{outline:none;border-color:var(--cipe-brown-l);}
+.manut-desc-area{
+  resize:vertical;min-height:38px;max-height:260px;line-height:1.4;
+  field-sizing:content; /* navegadores que suportam: cresce sozinho com o texto */
+}
 .manut-form .ef-btn{grid-column:1 / -1;justify-content:center;margin-top:4px;}
 @media (min-width:620px){
   .manut-form{grid-template-columns:1fr 1fr;}
