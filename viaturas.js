@@ -91,17 +91,26 @@ function getIndisponibilidade(v) {
 }
 
 let indispBadgeSeq = 0;
+function arcPoint(cx, cy, r, angleDeg) {
+  const rad = (angleDeg * Math.PI) / 180;
+  return { x: cx + r * Math.sin(rad), y: cy - r * Math.cos(rad) };
+}
+
 function buildIndispBadgeSVG(dias) {
   indispBadgeSeq += 1;
   const uid = "indisp-arc-" + indispBadgeSeq;
-  const size = 68, cx = size / 2, cy = size / 2, r = 29;
-  const x1 = cx - r, x2 = cx + r;
+  const size = 68, cx = size / 2, cy = size / 2;
+  const circleR = 19, textR = 22; // textR próximo do círculo (antes era 29)
+  const startAngle = 330; // 11 horas
+  const sweep = 300; // percorre o círculo quase inteiro, no sentido horário
+  const p1 = arcPoint(cx, cy, textR, startAngle);
+  const p2 = arcPoint(cx, cy, textR, startAngle + sweep);
   return `
   <svg class="indisp-badge" viewBox="0 0 ${size} ${size}" width="56" height="56">
-    <defs><path id="${uid}" d="M ${x1} ${cy} A ${r} ${r} 0 0 1 ${x2} ${cy}" fill="none"/></defs>
-    <circle cx="${cx}" cy="${cy}" r="19" fill="#3a1f1a" stroke="#b0553f" stroke-width="1.5"/>
-    <text font-family="JetBrains Mono, monospace" font-size="6.4" letter-spacing="0.5" fill="#e08a72" font-weight="600">
-      <textPath href="#${uid}" startOffset="50%" text-anchor="middle">INDISPONIBILIDADE</textPath>
+    <defs><path id="${uid}" d="M ${p1.x.toFixed(2)} ${p1.y.toFixed(2)} A ${textR} ${textR} 0 1 1 ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}" fill="none"/></defs>
+    <circle cx="${cx}" cy="${cy}" r="${circleR}" fill="#3a1f1a" stroke="#b0553f" stroke-width="1.5"/>
+    <text font-family="JetBrains Mono, monospace" font-size="6.6" letter-spacing="0.4" fill="#e08a72" font-weight="600">
+      <textPath href="#${uid}" startOffset="1%" text-anchor="start">INDISPONÍVEL</textPath>
     </text>
     <text x="${cx}" y="${cy + 4}" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" font-weight="700" fill="#e08a72">${dias}</text>
     <text x="${cx}" y="${cy + 14}" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="6" fill="#e08a72" opacity=".85">dia${dias === 1 ? "" : "s"}</text>
