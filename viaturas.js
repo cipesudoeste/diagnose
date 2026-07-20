@@ -102,12 +102,13 @@ function buildIndispBadgeSVG(dias) {
   const size = 68, cx = size / 2, cy = size / 2;
   const circleR = 19, textR = 22; // textR próximo do círculo (antes era 29)
   const startAngle = 330; // 11 horas
-  const sweep = 300; // percorre o círculo quase inteiro, no sentido horário
+  const sweep = -300; // negativo = sentido anti-horário
   const p1 = arcPoint(cx, cy, textR, startAngle);
   const p2 = arcPoint(cx, cy, textR, startAngle + sweep);
+  const sweepFlag = sweep > 0 ? 1 : 0;
   return `
   <svg class="indisp-badge" viewBox="0 0 ${size} ${size}" width="56" height="56">
-    <defs><path id="${uid}" d="M ${p1.x.toFixed(2)} ${p1.y.toFixed(2)} A ${textR} ${textR} 0 1 1 ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}" fill="none"/></defs>
+    <defs><path id="${uid}" d="M ${p1.x.toFixed(2)} ${p1.y.toFixed(2)} A ${textR} ${textR} 0 1 ${sweepFlag} ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}" fill="none"/></defs>
     <circle cx="${cx}" cy="${cy}" r="${circleR}" fill="#3a1f1a" stroke="#b0553f" stroke-width="1.5"/>
     <text font-family="JetBrains Mono, monospace" font-size="6.6" letter-spacing="0.4" fill="#e08a72" font-weight="600">
       <textPath href="#${uid}" startOffset="1%" text-anchor="start">INDISPONÍVEL</textPath>
