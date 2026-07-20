@@ -100,8 +100,8 @@ function buildIndispBadgeSVG(dias) {
   indispBadgeSeq += 1;
   const uid = "indisp-arc-" + indispBadgeSeq;
   const size = 68, cx = size / 2, cy = size / 2;
-  const circleR = 19, textR = 22; // textR próximo do círculo (antes era 29)
-  const startAngle = 330; // 11 horas
+  const circleR = 19, textR = 29; // textR próximo do círculo (antes era 29)
+  const startAngle = 270; // 9 horas
   const sweep = -300; // negativo = sentido anti-horário
   const p1 = arcPoint(cx, cy, textR, startAngle);
   const p2 = arcPoint(cx, cy, textR, startAngle + sweep);
