@@ -54,6 +54,20 @@ function escapeHtml(s) {
 }
 
 /* ---------------------------------------------------------
+   KM — formatação/parse manuais (padrão BR: ponto como milhar).
+   Evita o bug de <input type="number"> com locale, que troca
+   ponto/vírgula sozinho dependendo do navegador/idioma do SO.
+--------------------------------------------------------- */
+function formatKm(n) {
+  const num = Number(n) || 0;
+  return num.toLocaleString("pt-BR");
+}
+function parseKm(str) {
+  const digits = String(str || "").replace(/\D/g, "");
+  return digits ? parseInt(digits, 10) : 0;
+}
+
+/* ---------------------------------------------------------
    Rosca genérica (reaproveitada do padrão do Efetivo)
 --------------------------------------------------------- */
 function buildDonutHTML(entries, totalLabel) {
@@ -139,7 +153,7 @@ function renderPainel() {
       <td data-label="Categoria">${escapeHtml(v.categoria) || "—"}</td>
       <td data-label="Caracterização">${escapeHtml(v.caracterizacao) || "—"}</td>
       <td data-label="Status"><span class="badge-status ${STATUS_CLS[v.status] || "mid"}">${STATUS_LABEL[v.status] || v.status}</span></td>
-      <td class="num" data-label="KM">${v.km || 0}</td>
+      <td class="num" data-label="KM">${formatKm(v.km)}</td>
     </tr>
   `).join("");
   document.getElementById("p-frota-tbody").innerHTML = printRows ||
@@ -167,7 +181,7 @@ function renderFrota() {
       <td data-label="Status">
         <select class="ef-field field-status">${STATUS_VIATURA.map((s) => `<option value="${s.value}" ${s.value === v.status ? "selected" : ""}>${s.label}</option>`).join("")}</select>
       </td>
-      <td class="num" data-label="KM"><input type="number" class="ef-field field-km" style="width:90px;text-align:right;" value="${v.km || 0}"></td>
+      <td class="num" data-label="KM"><input type="text" inputmode="numeric" class="ef-field field-km" style="width:90px;text-align:right;" value="${formatKm(v.km)}"></td>
       <td class="num" data-label="Ocorrências">${(v.manutencoes || []).length}</td>
       <td class="cell-actions" data-label="">
         <div class="row-actions">
@@ -284,7 +298,7 @@ function renderManutencaoHistorico() {
     return `
     <tr data-mid="${m.id}">
       <td data-label="Data">${m.data ? new Date(m.data + "T00:00:00").toLocaleDateString("pt-BR") : "—"}</td>
-      <td class="num" data-label="KM">${m.km || 0}</td>
+      <td class="num" data-label="KM">${formatKm(m.km)}</td>
       <td data-label="Oficina">${escapeHtml(m.oficina) || "—"}</td>
       <td data-label="Tipo de Serviço">${escapeHtml(m.tipoServico) || "—"}</td>
       <td data-label="Descrição">${escapeHtml(m.descricao) || "—"}</td>
@@ -349,7 +363,7 @@ function openEditManutModal(viaturaId, mid) {
     <div class="modal-subtitle">${escapeHtml(v.prefixo) || "Viatura #" + v.id}</div>
     <div class="modal-grid cols-2">
       <div class="modal-field"><label>Data</label><input type="date" id="edit-data" value="${m.data || ""}"></div>
-      <div class="modal-field"><label>KM</label><input type="number" id="edit-km" value="${m.km || 0}"></div>
+      <div class="modal-field"><label>KM</label><input type="text" inputmode="numeric" id="edit-km" value="${formatKm(m.km)}"></div>
       <div class="modal-field"><label>Oficina</label><input type="text" id="edit-oficina" value="${escapeHtml(m.oficina)}"></div>
       <div class="modal-field"><label>Tipo de Serviço</label>
         <select id="edit-tipo">${TIPOS_SERVICO.map((t) => `<option value="${t}" ${t === m.tipoServico ? "selected" : ""}>${t}</option>`).join("")}</select>
@@ -365,7 +379,7 @@ function openEditManutModal(viaturaId, mid) {
   document.getElementById("edit-cancel-btn").addEventListener("click", closeModal);
   document.getElementById("edit-save-btn").addEventListener("click", () => {
     m.data = document.getElementById("edit-data").value;
-    m.km = Number(document.getElementById("edit-km").value) || 0;
+    m.km = parseKm(document.getElementById("edit-km").value);
     m.oficina = document.getElementById("edit-oficina").value.trim();
     m.tipoServico = document.getElementById("edit-tipo").value;
     m.descricao = document.getElementById("edit-desc").value.trim();
@@ -646,7 +660,7 @@ function openViewManutModal(viaturaId, mid) {
     <div class="modal-title">Detalhes da Ocorrência</div>
     <div class="modal-subtitle">${escapeHtml(v.prefixo) || "Viatura #" + v.id}${v.placa ? " — " + escapeHtml(v.placa) : ""}</div>
     <div class="view-row"><div class="k">Data</div><div class="v">${fmtDateBR(m.data)}</div></div>
-    <div class="view-row"><div class="k">KM</div><div class="v">${m.km || 0}</div></div>
+    <div class="view-row"><div class="k">KM</div><div class="v">${formatKm(m.km)}</div></div>
     <div class="view-row"><div class="k">Oficina</div><div class="v">${escapeHtml(m.oficina) || "—"}</div></div>
     <div class="view-row"><div class="k">Tipo de Serviço</div><div class="v">${escapeHtml(m.tipoServico) || "—"}</div></div>
     <div class="view-row"><div class="k">Descrição</div><div class="v">${escapeHtml(m.descricao) || "—"}</div></div>
@@ -706,7 +720,10 @@ document.getElementById("frota-tbody").addEventListener("change", (e) => {
   if (e.target.classList.contains("field-categoria")) v.categoria = e.target.value;
   if (e.target.classList.contains("field-caracterizacao")) v.caracterizacao = e.target.value;
   if (e.target.classList.contains("field-status")) v.status = e.target.value;
-  if (e.target.classList.contains("field-km")) v.km = Number(e.target.value) || 0;
+  if (e.target.classList.contains("field-km")) {
+    v.km = parseKm(e.target.value);
+    e.target.value = formatKm(v.km);
+  }
   persist();
   renderPainel();
   renderManutencaoSelect();
@@ -772,7 +789,7 @@ document.getElementById("btn-add-manut").addEventListener("click", () => {
   const v = getSelectedViatura();
   if (!v) return;
   const data = document.getElementById("manut-data").value;
-  const km = Number(document.getElementById("manut-km").value) || 0;
+  const km = parseKm(document.getElementById("manut-km").value);
   const oficina = document.getElementById("manut-oficina").value.trim();
   const tipoServico = document.getElementById("manut-tipo-servico").value;
   const descricao = document.getElementById("manut-desc").value.trim();
