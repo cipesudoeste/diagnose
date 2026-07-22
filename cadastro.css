@@ -7,6 +7,19 @@
    MOBILE-FIRST: base = tela pequena.
    ========================================================= */
 
+/* --- cabeçalho da página pública (formulario.html) — sem home/abas --- */
+.form-header{display:flex;align-items:center;gap:10px;padding:6px 0;}
+.form-logo-cipe{height:32px;}
+.form-brand-divider{display:none;}
+.form-title{font-size:13px;}
+@media (min-width:560px){
+  .form-brand-divider{display:block;}
+  .logo-pmba-chip.form-brand-divider{display:flex;}
+  .form-logo-cipe{height:40px;}
+  .form-title{font-size:17px;}
+}
+.form-wrap{padding-top:26px;padding-bottom:50px;max-width:880px;}
+
 /* --- cabeçalho (mesmo padrão das outras páginas) --- */
 .ef-header{display:flex;align-items:center;gap:8px;}
 .ef-logo-cipe{height:26px;}
