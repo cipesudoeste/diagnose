@@ -1,0 +1,187 @@
+/* =========================================================
+   CADASTRO DE INGRESSANTES — reaproveita os componentes
+   já criados em efetivo.css/viaturas.css (cabeçalho, abas,
+   badges, modal), com os estilos específicos do assistente
+   em etapas (wizard) abaixo.
+
+   MOBILE-FIRST: base = tela pequena.
+   ========================================================= */
+
+/* --- cabeçalho (mesmo padrão das outras páginas) --- */
+.ef-header{display:flex;align-items:center;gap:8px;}
+.ef-logo-cipe{height:26px;}
+.ef-brand-extra{display:none;}
+.ef-titles{flex:1;min-width:0;}
+.ef-eyebrow{font-size:8.5px;}
+.ef-title{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.saved-flash{
+  display:none;align-items:center;gap:4px;flex:none;
+  font-family:var(--font-mono);font-size:10px;color:var(--t-sertao);white-space:nowrap;
+}
+.saved-flash .btn-label{display:none;}
+@media (min-width:420px){ .saved-flash{display:flex;} }
+@media (min-width:640px){
+  .ef-brand-extra{display:block;}
+  .logo-pmba-chip.ef-brand-extra{display:flex;}
+  .ef-logo-cipe{height:34px;}
+  .ef-eyebrow{font-size:9px;}
+  .ef-title{font-size:16px;}
+}
+
+/* --- abas --- */
+.ef-tabs{
+  display:flex;gap:4px;padding:0 16px 12px;
+  overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;scrollbar-width:none;
+}
+.ef-tabs::-webkit-scrollbar{display:none;}
+.ef-tab{
+  display:flex;align-items:center;gap:6px;flex:none;
+  font-family:var(--font-mono);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;
+  padding:9px 12px;border-radius:6px;border:1px solid var(--line);background:transparent;color:var(--ink-muted);
+  cursor:pointer;transition:all .15s ease;white-space:nowrap;
+}
+.ef-tab:hover{color:var(--ink);}
+.ef-tab.active{background:var(--bg-panel-2);color:var(--accent);border-color:var(--cipe-brown-l);}
+.ef-tab svg{width:13px;height:13px;flex:none;}
+.ef-section{display:none;padding:0 16px 40px;}
+.ef-section.active{display:block;}
+@media (min-width:640px){
+  .ef-tabs{padding:0 22px 14px;}
+  .ef-tab{font-size:11.5px;padding:9px 14px;}
+  .ef-section{padding:0 22px 40px;}
+}
+
+/* --- barra de progresso do assistente --- */
+.wiz-progress{display:flex;gap:4px;margin-bottom:20px;}
+.wiz-progress .seg{flex:1;height:4px;border-radius:3px;background:var(--line);transition:background .2s ease;}
+.wiz-progress .seg.done{background:var(--t-velhochico);}
+.wiz-progress .seg.current{background:var(--accent);}
+
+/* --- etapas --- */
+.wiz-step{display:none;}
+.wiz-step.active{display:block;animation:wizIn .2s ease;}
+@keyframes wizIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+.wf-help{font-size:12.5px;color:var(--ink-muted);line-height:1.6;margin:0 0 16px;}
+.wf-subhead{
+  font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--accent);
+  grid-column:1/-1;border-top:1px solid var(--line);padding-top:12px;margin-top:4px;
+}
+
+.wf-grid{display:grid;grid-template-columns:1fr;gap:14px;}
+@media (min-width:640px){ .wf-grid{grid-template-columns:1fr 1fr;} }
+.wf-row{display:flex;flex-direction:column;gap:5px;}
+.wf-wide{grid-column:1/-1;}
+.wf-label{font-family:var(--font-mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-faint);}
+.wf-cond{display:none;}
+.wf-cond.wf-visible{display:flex;}
+
+.wf-grid input.ef-field, .wf-grid select.ef-field, .wf-grid textarea.ef-field{
+  background:var(--bg-panel);border:1px solid var(--line);border-radius:6px;color:var(--ink);
+  padding:9px 11px;font-size:13px;
+}
+.wf-grid input.ef-field:focus, .wf-grid select.ef-field:focus, .wf-grid textarea.ef-field:focus{
+  outline:none;border-color:var(--cipe-brown-l);
+}
+.wf-grid select.ef-field option{background:var(--bg-panel);color:var(--ink);}
+
+/* --- busca por matrícula --- */
+.wf-search-row{display:flex;gap:8px;max-width:420px;}
+.wf-search-row input{flex:1;}
+.wf-search-result{margin-top:14px;font-size:12.5px;}
+.wf-search-result.ok{color:var(--t-velhochico);}
+.wf-search-result.notfound{color:var(--ink-faint);}
+
+/* --- upload de arquivo --- */
+.wf-upload-status{display:block;margin-top:6px;font-family:var(--font-mono);font-size:10.5px;color:var(--t-paramirim);}
+input[type="file"].ef-field{
+  background:var(--bg-panel);border:1px dashed var(--line);border-radius:6px;padding:10px;font-size:12px;color:var(--ink-muted);
+}
+input[type="file"].ef-field::file-selector-button{
+  font-family:var(--font-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;
+  background:var(--accent-dim);color:var(--camo-black);border:none;border-radius:5px;
+  padding:6px 10px;margin-right:8px;cursor:pointer;font-weight:600;
+}
+
+/* --- checklist (cursos, pendências) --- */
+.wf-checklist{
+  display:grid;grid-template-columns:1fr;gap:8px;background:var(--bg-panel);border:1px solid var(--line);
+  border-radius:8px;padding:14px;max-height:280px;overflow-y:auto;
+}
+@media (min-width:640px){ .wf-checklist{grid-template-columns:1fr 1fr;} }
+.wf-checklist label{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--ink-muted);line-height:1.4;cursor:pointer;}
+.wf-checklist input{margin-top:2px;flex:none;}
+.wf-checklist label:hover{color:var(--ink);}
+
+/* --- navegação do assistente --- */
+.wiz-nav{display:flex;justify-content:space-between;gap:10px;margin-top:24px;}
+.wiz-nav .ef-btn{flex:1;justify-content:center;padding:11px;}
+#wiz-btn-voltar:disabled{opacity:.35;cursor:default;}
+
+/* --- botões (mesmo padrão do resto do site) --- */
+.ef-btn{
+  display:flex;align-items:center;gap:6px;
+  font-family:var(--font-mono);font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;
+  padding:8px 14px;border-radius:6px;border:1px solid var(--line);background:var(--bg-panel);color:var(--ink-muted);
+  cursor:pointer;transition:all .15s ease;
+}
+.ef-btn:hover{border-color:var(--cipe-brown-l);color:var(--accent);}
+.ef-btn.primary{background:var(--accent-dim);color:var(--camo-black);border-color:var(--accent-dim);font-weight:600;}
+.ef-btn.primary:hover{background:var(--accent);}
+.ef-field{
+  width:100%;background:transparent;border:1px solid transparent;border-radius:5px;
+  color:var(--ink);padding:6px 8px;font-size:12.5px;
+}
+
+/* --- tela de sucesso --- */
+.wf-success{text-align:center;padding:50px 20px;}
+.wf-success svg{color:var(--t-velhochico);margin-bottom:14px;}
+.wf-success-title{font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--ink);}
+.wf-success-sub{font-size:13px;color:var(--ink-muted);margin-top:6px;margin-bottom:20px;}
+
+/* --- toolbar e grid de cadastros recebidos --- */
+.ef-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;}
+.ef-toolbar-info{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-faint);}
+
+.cadastros-grid{display:grid;grid-template-columns:1fr;gap:10px;}
+@media (min-width:640px){ .cadastros-grid{grid-template-columns:repeat(2, 1fr);} }
+@media (min-width:960px){ .cadastros-grid{grid-template-columns:repeat(3, 1fr);} }
+
+.cadastro-card{
+  text-align:left;background:var(--bg-panel);border:1px solid var(--line);border-radius:10px;
+  padding:14px;cursor:pointer;transition:all .15s ease;
+}
+.cadastro-card:hover{border-color:var(--cipe-brown-l);}
+.cadastro-card .cc-nome{font-family:var(--font-display);font-size:14px;font-weight:600;color:var(--ink);}
+.cadastro-card .cc-meta{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint);margin-top:4px;}
+.cadastro-card .cc-data{font-size:10.5px;color:var(--ink-muted);margin-top:8px;}
+.cadastros-empty{grid-column:1/-1;font-size:12.5px;color:var(--ink-faint);text-align:center;padding:30px;}
+
+/* --- modal (reaproveitado do padrão de efetivo/viaturas) --- */
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(20,20,16,.72);
+  z-index:1000;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;
+}
+.modal-overlay.open{display:flex;}
+.modal-card{
+  background:var(--bg-panel);border:1px solid var(--line);border-radius:12px;
+  width:100%;max-width:640px;padding:20px;margin-top:20px;position:relative;
+}
+.modal-title{font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink);margin-bottom:2px;}
+.modal-subtitle{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint);margin-bottom:16px;}
+.modal-close{
+  position:absolute;top:14px;right:14px;background:none;border:none;color:var(--ink-faint);
+  cursor:pointer;padding:4px;display:flex;
+}
+.modal-close:hover{color:var(--ink);}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;}
+.view-row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line-soft);font-size:12.5px;}
+.view-row:last-child{border-bottom:none;}
+.view-row .k{color:var(--ink-faint);font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.04em;flex:none;}
+.view-row .v{color:var(--ink);text-align:right;}
+.modal-section-title{
+  font-family:var(--font-display);font-size:12.5px;font-weight:600;color:var(--accent);
+  margin:16px 0 4px;border-top:1px solid var(--line);padding-top:12px;
+}
+.anexo-link{display:inline-flex;align-items:center;gap:6px;color:var(--t-velhochico);text-decoration:none;font-size:12.5px;}
+.anexo-link:hover{text-decoration:underline;}
