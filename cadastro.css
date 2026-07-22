@@ -140,22 +140,72 @@ input[type="file"].ef-field::file-selector-button{
 .wf-success-sub{font-size:13px;color:var(--ink-muted);margin-top:6px;margin-bottom:20px;}
 
 /* --- toolbar e grid de cadastros recebidos --- */
-.ef-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;}
+.ef-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
 .ef-toolbar-info{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-faint);}
+
+.lista-view-toggle{display:flex;gap:4px;background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:3px;}
+.view-btn{
+  display:flex;align-items:center;justify-content:center;width:30px;height:26px;
+  background:transparent;border:none;border-radius:5px;color:var(--ink-faint);cursor:pointer;transition:all .15s ease;
+}
+.view-btn:hover{color:var(--ink);}
+.view-btn.active{background:var(--bg-panel-2);color:var(--accent);}
+
+/* --- campo de busca/filtro: SEMPRE com borda e fundo visíveis --- */
+.search-input{
+  width:100%;background:var(--bg) !important;border:1px solid var(--line) !important;
+  border-radius:6px;color:var(--ink);padding:8px 10px;font-size:12.5px;
+}
+.search-input:hover{border-color:var(--ink-faint) !important;}
+.search-input:focus{outline:none;border-color:var(--cipe-brown-l) !important;background:var(--bg-panel-2) !important;}
+.search-input option{background:var(--bg-panel);color:var(--ink);}
+
+.lista-filtros{
+  display:grid;grid-template-columns:1fr;gap:10px;background:var(--bg-panel);border:1px solid var(--line);
+  border-radius:10px;padding:14px;margin-bottom:16px;
+}
+@media (min-width:720px){
+  .lista-filtros{grid-template-columns:2fr 1fr 1fr 1.4fr auto;align-items:end;}
+}
+.filtro-field{display:flex;flex-direction:column;gap:4px;}
+.filtro-field label{font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-faint);}
 
 .cadastros-grid{display:grid;grid-template-columns:1fr;gap:10px;}
 @media (min-width:640px){ .cadastros-grid{grid-template-columns:repeat(2, 1fr);} }
 @media (min-width:960px){ .cadastros-grid{grid-template-columns:repeat(3, 1fr);} }
+.cadastros-grid.modo-lista{display:flex;flex-direction:column;gap:8px;}
 
 .cadastro-card{
   text-align:left;background:var(--bg-panel);border:1px solid var(--line);border-radius:10px;
-  padding:14px;cursor:pointer;transition:all .15s ease;
+  padding:14px;cursor:pointer;transition:all .15s ease;position:relative;
 }
 .cadastro-card:hover{border-color:var(--cipe-brown-l);}
+.modo-lista .cadastro-card{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 14px;
+}
 .cadastro-card .cc-nome{font-family:var(--font-display);font-size:14px;font-weight:600;color:var(--ink);}
 .cadastro-card .cc-meta{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint);margin-top:4px;}
+.modo-lista .cadastro-card .cc-meta{margin-top:1px;}
 .cadastro-card .cc-data{font-size:10.5px;color:var(--ink-muted);margin-top:8px;}
+.modo-lista .cadastro-card .cc-data{margin-top:0;flex:none;}
+.cadastro-card .cc-count{
+  display:inline-flex;align-items:center;gap:4px;margin-top:8px;
+  font-family:var(--font-mono);font-size:10px;color:var(--t-velhochico);
+}
+.modo-lista .cadastro-card .cc-count{margin-top:0;}
 .cadastros-empty{grid-column:1/-1;font-size:12.5px;color:var(--ink-faint);text-align:center;padding:30px;}
+
+/* --- lista de submissões de uma pessoa (dentro do modal) --- */
+.submissoes-list{display:flex;flex-direction:column;gap:8px;margin-top:4px;}
+.submissao-item{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 14px;
+  cursor:pointer;transition:border-color .15s ease;
+}
+.submissao-item:hover{border-color:var(--cipe-brown-l);}
+.submissao-item .si-data{font-family:var(--font-display);font-size:13px;color:var(--ink);}
+.submissao-item .si-meta{font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);}
+.submissao-item .si-arrow{color:var(--ink-faint);}
 
 /* --- modal (reaproveitado do padrão de efetivo/viaturas) --- */
 .modal-overlay{

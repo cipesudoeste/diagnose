@@ -409,8 +409,42 @@
   <section class="ef-section" id="sec-lista">
     <div class="ef-toolbar">
       <div class="ef-toolbar-info" id="lista-info">—</div>
-      <input type="text" class="ef-field" id="lista-busca" placeholder="Buscar por nome ou matrícula..." style="max-width:260px;">
+      <div class="lista-view-toggle">
+        <button class="view-btn active" id="btn-view-cards" title="Visualizar em cards">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>
+        </button>
+        <button class="view-btn" id="btn-view-lista" title="Visualizar em lista">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+      </div>
     </div>
+
+    <div class="lista-filtros">
+      <div class="filtro-field">
+        <label>Buscar</label>
+        <input type="text" class="search-input" id="lista-busca" placeholder="Nome ou matrícula...">
+      </div>
+      <div class="filtro-field">
+        <label>De</label>
+        <input type="date" class="search-input" id="lista-data-de">
+      </div>
+      <div class="filtro-field">
+        <label>Até</label>
+        <input type="date" class="search-input" id="lista-data-ate">
+      </div>
+      <div class="filtro-field">
+        <label>Ordenar por</label>
+        <select class="search-input" id="lista-ordenar">
+          <option value="recente">Mais recente primeiro</option>
+          <option value="antigo">Mais antigo primeiro</option>
+          <option value="nome-az">Nome (A-Z)</option>
+          <option value="nome-za">Nome (Z-A)</option>
+          <option value="qtd">Mais preenchimentos</option>
+        </select>
+      </div>
+      <button class="ef-btn" id="btn-limpar-filtros">Limpar filtros</button>
+    </div>
+
     <div id="lista-cadastros" class="cadastros-grid"></div>
   </section>
 
