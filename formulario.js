@@ -195,7 +195,7 @@ async function buscarMatricula() {
       const email = anteriores[0].dados.email;
       const dataEnvio = new Date(anteriores[0].created_at).toLocaleDateString("pt-BR");
       document.getElementById("busca-resultado").textContent = "";
-      await enviarCodigoParaEmail(email, `Cadastro encontrado (enviado em ${dataEnvio})! `);
+      await enviarCodigoParaEmail(email, `Cadastro de ${anteriores[0].nome} encontrado (enviado em ${dataEnvio})! `);
       return;
     }
 
@@ -245,8 +245,9 @@ async function enviarCodigoParaEmail(email, prefixoMensagem) {
       (prefixoMensagem || "") + "Código enviado! Confira sua caixa de entrada (e o spam).";
     document.getElementById("codigo-resultado").className = "wf-search-result ok";
   } catch (e) {
-    console.error(e);
-    document.getElementById("codigo-resultado").textContent = "Erro ao enviar o código: " + (e.message || "tente novamente.");
+    console.error("Erro completo do Supabase:", e);
+    const detalhe = e.message || e.error_description || e.msg || e.name || (e.status ? `status ${e.status}` : "") || "erro sem detalhes — confira Logs > Auth Logs no Supabase";
+    document.getElementById("codigo-resultado").textContent = "Erro ao enviar o código: " + detalhe;
     document.getElementById("codigo-resultado").className = "wf-search-result notfound";
   }
 }
@@ -283,9 +284,12 @@ document.getElementById("btn-verificar-codigo").addEventListener("click", async 
     if (error) throw error;
 
     // Sucesso: libera o formulário
-    if (cadastroEncontradoAnterior) {
+    const digitosAtual = (matriculaAtual || "").replace(/\D/g, "");
+    const digitosEncontrado = cadastroEncontradoAnterior ? (cadastroEncontradoAnterior.matricula || "").replace(/\D/g, "") : "";
+    if (cadastroEncontradoAnterior && digitosEncontrado === digitosAtual) {
       preencherFormularioCompleto(cadastroEncontradoAnterior);
     } else {
+      if (cadastroEncontradoAnterior) console.warn("Matrícula do cadastro encontrado não bate com a buscada — ignorando preenchimento automático por segurança.");
       document.getElementById("c-matricula").value = matriculaAtual || "";
     }
     setVal("c-email", emailParaVerificar);
@@ -403,6 +407,10 @@ function irParaEtapa(n) {
   document.getElementById("wiz-btn-voltar").disabled = currentStep === 0;
   document.getElementById("wiz-btn-proximo").style.display = currentStep === TOTAL_STEPS - 1 ? "none" : "flex";
   document.getElementById("wiz-btn-enviar").style.display = currentStep === TOTAL_STEPS - 1 ? "flex" : "none";
+  // Qualquer caminho de volta à etapa 0 (inclusive o botão "Voltar" do
+  // assistente) reinicia o fluxo de verificação do zero — nunca deixa
+  // um cadastro "encontrado" de uma busca anterior preso na memória.
+  if (n === 0) voltarParaBusca();
   window.scrollTo({ top: document.querySelector(".wiz-progress").offsetTop - 90, behavior: "smooth" });
 }
 
