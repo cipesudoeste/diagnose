@@ -39,6 +39,107 @@ function formatBytes(n) {
 /* ---------------------------------------------------------
    Busca por matrícula (consulta a base do Efetivo)
 --------------------------------------------------------- */
+function setVal(id, v) {
+  const el = document.getElementById(id);
+  if (el && v !== undefined && v !== null && v !== "") el.value = v;
+}
+function marcarChecklist(containerId, valores) {
+  const set = new Set(valores || []);
+  document.querySelectorAll(`#${containerId} input[type="checkbox"]`).forEach((cb) => {
+    cb.checked = set.has(cb.value);
+  });
+}
+function atualizarStatusArquivo(elId, arquivo) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.textContent = arquivo ? `Já enviado anteriormente: ${arquivo.nome}` : "";
+}
+
+/* Preenche TODO o formulário com um cadastro já existente (atualização) */
+function preencherFormularioCompleto(cadastro) {
+  const d = cadastro.dados || {};
+  document.getElementById("c-nome").value = cadastro.nome || "";
+  document.getElementById("c-matricula").value = cadastro.matricula || "";
+
+  setVal("c-titulo-numero", d.tituloEleitorNumero);
+  setVal("c-titulo-zona", d.tituloEleitorZona);
+  setVal("c-titulo-secao", d.tituloEleitorSecao);
+  setVal("c-cpf", d.cpf);
+  setVal("c-rg", d.rg);
+  setVal("c-orgao-expedidor", d.orgaoExpedidor);
+  setVal("c-mae", d.filiacaoMae);
+  setVal("c-pai", d.filiacaoPai);
+  setVal("c-nascimento", d.dataNascimento);
+  setVal("c-estado-civil", d.estadoCivil);
+
+  setVal("c-tel1", d.telefone1);
+  setVal("c-tel1-whats", d.telefone1Whatsapp);
+  setVal("c-tel2", d.telefone2);
+  setVal("c-tel2-whats", d.telefone2Whatsapp);
+  setVal("c-email", d.email);
+  setVal("c-end-logradouro", d.enderecoLogradouro);
+  setVal("c-end-complemento", d.enderecoComplemento);
+  setVal("c-end-cidade", d.enderecoCidade);
+  setVal("c-end-estado", d.enderecoEstado);
+  setVal("c-end-cep", d.enderecoCep);
+  setVal("c-end-pais", d.enderecoPais || "Brasil");
+
+  setVal("c-emerg1-nome", d.emergenciaPessoa1Nome);
+  setVal("c-emerg1-parentesco", d.emergenciaPessoa1Parentesco);
+  setVal("c-emerg1-tel", d.emergenciaPessoa1Telefone);
+  setVal("c-emerg1-whats", d.emergenciaPessoa1Whatsapp);
+  setVal("c-emerg2-nome", d.emergenciaPessoa2Nome);
+  setVal("c-emerg2-parentesco", d.emergenciaPessoa2Parentesco);
+  setVal("c-emerg2-tel", d.emergenciaPessoa2Telefone);
+  setVal("c-emerg2-whats", d.emergenciaPessoa2Whatsapp);
+  setVal("c-plano-saude", d.possuiPlanoSaude);
+  setVal("c-tipo-sanguineo", d.tipoSanguineo);
+  setVal("c-plano-saude-qual", d.planoSaudeQual);
+  setVal("c-plano-saude-outro", d.planoSaudeOutro);
+  setVal("c-carteirinha", d.carteirinhaNumero);
+
+  setVal("c-possui-cnh", d.possuiCnh);
+  setVal("c-cnh-vencida", d.cnhVencida);
+  setVal("c-cnh-numero", d.cnhNumero);
+  setVal("c-cnh-categoria", d.cnhCategoria);
+  setVal("c-cnh-validade", d.cnhValidade);
+  setVal("c-cnh-primeira-hab", d.cnhPrimeiraHabilitacao);
+  setVal("c-possui-ccve", d.possuiCcve);
+  setVal("c-ccve-conclusao", d.ccveConclusao);
+  uploadedCnh = d.cnhArquivo || null;
+  atualizarStatusArquivo("cnh-upload-status", uploadedCnh);
+
+  setVal("c-gh", d.gh);
+  setVal("c-local-trabalho", d.localTrabalho);
+  setVal("c-funcao", d.funcao);
+  setVal("c-nome-guerra", d.nomeGuerra);
+  setVal("c-possui-identidade", d.possuiIdentidadeFuncional);
+  setVal("c-identidade-motivo", d.identidadeMotivo);
+  setVal("c-identidade-atualizada", d.identidadeAtualizada);
+  setVal("c-identidade-ilegivel", d.identidadeIlegivel);
+  setVal("c-data-admissao", d.dataAdmissao);
+  setVal("c-data-ultima-promocao", d.dataUltimaPromocao);
+  setVal("c-possui-bgo", d.possuiBgo);
+  setVal("c-bgo-numero", d.bgoNumero);
+  setVal("c-bgo-data", d.bgoData);
+  uploadedBgo = d.bgoArquivo || null;
+  atualizarStatusArquivo("bgo-upload-status", uploadedBgo);
+
+  setVal("c-aptidao-aquatica", d.aptidaoAquatica);
+  setVal("c-possui-cursos-pmba", d.possuiCursosPmba);
+  setVal("c-formacao", d.formacaoEducacional);
+  setVal("c-formacao-completa", d.formacaoCompleta);
+  setVal("c-formacao-qual-curso", d.formacaoQualCurso);
+  marcarChecklist("c-cursos-pm-list", d.cursosPm);
+  setVal("c-cursos-pm-outros", d.cursosPmOutros);
+
+  // Pendências ficam propositalmente em branco: é sempre uma nova
+  // solicitação, reaproveitar pendências antigas poderia reabrir
+  // algo que já foi resolvido.
+
+  updateConditionals();
+}
+
 async function buscarMatricula() {
   const matricula = document.getElementById("c-busca-matricula").value.trim();
   const resultEl = document.getElementById("busca-resultado");
@@ -54,11 +155,33 @@ async function buscarMatricula() {
   }
   resultEl.textContent = "Buscando...";
   resultEl.className = "wf-search-result";
+  const digitos = matricula.replace(/\D/g, "");
+
   try {
+    // 1) Já existe cadastro anterior enviado com essa matrícula?
+    const { data: existentes, error: errExistentes } = await sb
+      .from("cadastros_ingresso")
+      .select("*");
+    if (errExistentes) throw errExistentes;
+
+    const anteriores = (existentes || [])
+      .filter((c) => (c.matricula || "").replace(/\D/g, "") === digitos)
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    if (anteriores.length) {
+      const anterior = anteriores[0];
+      preencherFormularioCompleto(anterior);
+      const dataEnvio = new Date(anterior.created_at).toLocaleDateString("pt-BR");
+      resultEl.textContent = `Encontramos um cadastro seu enviado em ${dataEnvio}. Preenchemos tudo com essas informações — revise e atualize apenas o que mudou.`;
+      resultEl.className = "wf-search-result ok";
+      return;
+    }
+
+    // 2) Sem cadastro anterior — tenta ao menos puxar Nome/GH da base do Efetivo
     const { data, error } = await sb.from("painel_data").select("roster").eq("id", 1).maybeSingle();
     if (error) throw error;
     const roster = (data && data.roster) || [];
-    const found = roster.find((r) => (r.matricula || "").replace(/\D/g, "") === matricula.replace(/\D/g, ""));
+    const found = roster.find((r) => (r.matricula || "").replace(/\D/g, "") === digitos);
     if (found) {
       document.getElementById("c-nome").value = found.nome || "";
       document.getElementById("c-matricula").value = found.matricula || matricula;
@@ -66,11 +189,11 @@ async function buscarMatricula() {
       if (found.posto && [...ghSel.options].some((o) => o.value === found.posto)) {
         ghSel.value = found.posto;
       }
-      resultEl.textContent = `Encontramos: ${found.nome} (${found.posto}). Nome e GH preenchidos automaticamente — confira e complete o restante.`;
+      resultEl.textContent = `Primeiro cadastro seu. Encontramos ${found.nome} (${found.posto}) na base do Efetivo — Nome e GH preenchidos, complete o restante.`;
       resultEl.className = "wf-search-result ok";
     } else {
       document.getElementById("c-matricula").value = matricula;
-      resultEl.textContent = "Não encontramos seus dados na base. Preencha todos os campos manualmente.";
+      resultEl.textContent = "Não encontramos seus dados em nenhuma base. Preencha todos os campos manualmente.";
       resultEl.className = "wf-search-result notfound";
     }
   } catch (e) {
