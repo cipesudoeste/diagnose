@@ -141,6 +141,26 @@ function preencherFormularioCompleto(cadastro) {
   updateConditionals();
 }
 
+/* ---------------------------------------------------------
+   Estado da verificação por e-mail
+--------------------------------------------------------- */
+let cadastroEncontradoAnterior = null; // linha de cadastros_ingresso, se existir
+let emailParaVerificar = null;
+let matriculaAtual = null;
+let reenviarCooldownAte = 0;
+
+function mostrarSubTela(id) {
+  document.querySelectorAll(".auth-view").forEach((el) => el.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+function mascararEmail(email) {
+  const [user, dominio] = (email || "").split("@");
+  if (!user || !dominio) return email || "";
+  const visivel = user.slice(0, 2);
+  return `${visivel}${"*".repeat(Math.max(3, user.length - 2))}@${dominio}`;
+}
+
 async function buscarMatricula() {
   const matricula = document.getElementById("c-busca-matricula").value.trim();
   const resultEl = document.getElementById("busca-resultado");
@@ -150,60 +170,159 @@ async function buscarMatricula() {
     return;
   }
   if (!sb) {
-    resultEl.textContent = "Busca indisponível no momento — preencha os campos manualmente.";
+    resultEl.textContent = "Busca indisponível no momento. Tente novamente mais tarde.";
     resultEl.className = "wf-search-result notfound";
     return;
   }
   resultEl.textContent = "Buscando...";
   resultEl.className = "wf-search-result";
   const digitos = matricula.replace(/\D/g, "");
+  matriculaAtual = matricula;
 
   try {
-    // 1) Já existe cadastro anterior enviado com essa matrícula?
-    const { data: existentes, error: errExistentes } = await sb
-      .from("cadastros_ingresso")
-      .select("*");
+    const { data: existentes, error: errExistentes } = await sb.from("cadastros_ingresso").select("*");
     if (errExistentes) throw errExistentes;
 
     const anteriores = (existentes || [])
       .filter((c) => (c.matricula || "").replace(/\D/g, "") === digitos)
       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-    if (anteriores.length) {
-      const anterior = anteriores[0];
-      preencherFormularioCompleto(anterior);
-      const dataEnvio = new Date(anterior.created_at).toLocaleDateString("pt-BR");
-      resultEl.textContent = `Encontramos um cadastro seu enviado em ${dataEnvio}. Preenchemos tudo com essas informações — revise e atualize apenas o que mudou.`;
-      resultEl.className = "wf-search-result ok";
+    resultEl.textContent = "";
+
+    if (anteriores.length && anteriores[0].dados && anteriores[0].dados.email) {
+      // Cadastro anterior encontrado, com e-mail salvo -> envia código direto
+      cadastroEncontradoAnterior = anteriores[0];
+      const email = anteriores[0].dados.email;
+      const dataEnvio = new Date(anteriores[0].created_at).toLocaleDateString("pt-BR");
+      document.getElementById("busca-resultado").textContent = "";
+      await enviarCodigoParaEmail(email, `Cadastro encontrado (enviado em ${dataEnvio})! `);
       return;
     }
 
-    // 2) Sem cadastro anterior — tenta ao menos puxar Nome/GH da base do Efetivo
-    const { data, error } = await sb.from("painel_data").select("roster").eq("id", 1).maybeSingle();
-    if (error) throw error;
-    const roster = (data && data.roster) || [];
-    const found = roster.find((r) => (r.matricula || "").replace(/\D/g, "") === digitos);
-    if (found) {
-      document.getElementById("c-nome").value = found.nome || "";
-      document.getElementById("c-matricula").value = found.matricula || matricula;
-      const ghSel = document.getElementById("c-gh");
-      if (found.posto && [...ghSel.options].some((o) => o.value === found.posto)) {
-        ghSel.value = found.posto;
-      }
-      resultEl.textContent = `Primeiro cadastro seu. Encontramos ${found.nome} (${found.posto}) na base do Efetivo — Nome e GH preenchidos, complete o restante.`;
-      resultEl.className = "wf-search-result ok";
-    } else {
-      document.getElementById("c-matricula").value = matricula;
-      resultEl.textContent = "Não encontramos seus dados em nenhuma base. Preencha todos os campos manualmente.";
-      resultEl.className = "wf-search-result notfound";
+    if (anteriores.length) {
+      // Achou cadastro, mas sem e-mail salvo — pede e-mail antes de liberar
+      cadastroEncontradoAnterior = anteriores[0];
+      document.getElementById("auth-pedir-email-titulo").textContent = "Encontramos seu cadastro, mas sem e-mail salvo";
+      document.getElementById("auth-pedir-email-texto").textContent =
+        "Informe um e-mail válido para recebermos um código de verificação antes de liberar a atualização.";
+      mostrarSubTela("auth-pedir-email");
+      return;
     }
+
+    // Não encontrou nenhum cadastro anterior
+    cadastroEncontradoAnterior = null;
+    document.getElementById("auth-pedir-email-titulo").textContent = "Ainda não há cadastro para essa matrícula";
+    document.getElementById("auth-pedir-email-texto").textContent =
+      "Informe um e-mail válido — vamos enviar um código de verificação para confirmar que é você antes de liberar o formulário.";
+    mostrarSubTela("auth-pedir-email");
   } catch (e) {
     console.error(e);
-    resultEl.textContent = "Erro ao buscar. Preencha os campos manualmente.";
+    resultEl.textContent = "Erro ao buscar. Tente novamente em instantes.";
     resultEl.className = "wf-search-result notfound";
   }
 }
 document.getElementById("btn-buscar-matricula").addEventListener("click", buscarMatricula);
+
+/* ---------------------------------------------------------
+   Envio e verificação do código (Supabase Auth — Email OTP)
+--------------------------------------------------------- */
+async function enviarCodigoParaEmail(email, prefixoMensagem) {
+  emailParaVerificar = email;
+  document.getElementById("auth-email-alvo").textContent = mascararEmail(email);
+  document.getElementById("codigo-resultado").textContent = "";
+  document.getElementById("c-codigo-verificacao").value = "";
+  mostrarSubTela("auth-codigo");
+
+  if (!sb) {
+    document.getElementById("codigo-resultado").textContent = "Envio de código indisponível no momento.";
+    document.getElementById("codigo-resultado").className = "wf-search-result notfound";
+    return;
+  }
+  try {
+    const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+    if (error) throw error;
+    document.getElementById("codigo-resultado").textContent =
+      (prefixoMensagem || "") + "Código enviado! Confira sua caixa de entrada (e o spam).";
+    document.getElementById("codigo-resultado").className = "wf-search-result ok";
+  } catch (e) {
+    console.error(e);
+    document.getElementById("codigo-resultado").textContent = "Erro ao enviar o código: " + (e.message || "tente novamente.");
+    document.getElementById("codigo-resultado").className = "wf-search-result notfound";
+  }
+}
+
+document.getElementById("btn-enviar-codigo").addEventListener("click", async () => {
+  const email = document.getElementById("c-email-verificacao").value.trim();
+  const resultEl = document.getElementById("pedir-email-resultado");
+  if (!email || !email.includes("@")) {
+    resultEl.textContent = "Informe um e-mail válido.";
+    resultEl.className = "wf-search-result notfound";
+    return;
+  }
+  resultEl.textContent = "";
+  await enviarCodigoParaEmail(email, "");
+});
+
+document.getElementById("btn-verificar-codigo").addEventListener("click", async () => {
+  const codigo = document.getElementById("c-codigo-verificacao").value.trim();
+  const resultEl = document.getElementById("codigo-resultado");
+  if (!codigo) {
+    resultEl.textContent = "Digite o código recebido por e-mail.";
+    resultEl.className = "wf-search-result notfound";
+    return;
+  }
+  if (!sb) {
+    resultEl.textContent = "Verificação indisponível no momento.";
+    resultEl.className = "wf-search-result notfound";
+    return;
+  }
+  resultEl.textContent = "Verificando...";
+  resultEl.className = "wf-search-result";
+  try {
+    const { error } = await sb.auth.verifyOtp({ email: emailParaVerificar, token: codigo, type: "email" });
+    if (error) throw error;
+
+    // Sucesso: libera o formulário
+    if (cadastroEncontradoAnterior) {
+      preencherFormularioCompleto(cadastroEncontradoAnterior);
+    } else {
+      document.getElementById("c-matricula").value = matriculaAtual || "";
+    }
+    setVal("c-email", emailParaVerificar);
+    irParaEtapa(1);
+  } catch (e) {
+    console.error(e);
+    resultEl.textContent = "Código inválido ou expirado. Confira e tente de novo, ou reenvie.";
+    resultEl.className = "wf-search-result notfound";
+  }
+});
+
+document.getElementById("btn-reenviar-codigo").addEventListener("click", async () => {
+  const btn = document.getElementById("btn-reenviar-codigo");
+  if (Date.now() < reenviarCooldownAte) return;
+  reenviarCooldownAte = Date.now() + 30000;
+  btn.disabled = true;
+  await enviarCodigoParaEmail(emailParaVerificar, "");
+  let restante = 30;
+  const timer = setInterval(() => {
+    restante -= 1;
+    btn.textContent = restante > 0 ? `Reenviar código (${restante}s)` : "Reenviar código";
+    if (restante <= 0) { clearInterval(timer); btn.disabled = false; }
+  }, 1000);
+});
+
+function voltarParaBusca() {
+  cadastroEncontradoAnterior = null;
+  emailParaVerificar = null;
+  document.getElementById("c-busca-matricula").value = "";
+  document.getElementById("c-email-verificacao").value = "";
+  document.getElementById("busca-resultado").textContent = "";
+  document.getElementById("pedir-email-resultado").textContent = "";
+  mostrarSubTela("auth-busca");
+}
+document.getElementById("btn-trocar-matricula-1").addEventListener("click", voltarParaBusca);
+document.getElementById("btn-trocar-matricula-2").addEventListener("click", voltarParaBusca);
+
 
 /* ---------------------------------------------------------
    Campos condicionais (data-show-if="id=valor")
@@ -280,6 +399,7 @@ function irParaEtapa(n) {
   document.querySelector(`.wiz-step[data-step="${n}"]`).classList.add("active");
   currentStep = n;
   renderProgress();
+  document.getElementById("wiz-nav").style.display = n === 0 ? "none" : "flex";
   document.getElementById("wiz-btn-voltar").disabled = currentStep === 0;
   document.getElementById("wiz-btn-proximo").style.display = currentStep === TOTAL_STEPS - 1 ? "none" : "flex";
   document.getElementById("wiz-btn-enviar").style.display = currentStep === TOTAL_STEPS - 1 ? "flex" : "none";
@@ -442,6 +562,9 @@ document.getElementById("wiz-btn-enviar").addEventListener("click", async () => 
     const { error } = await sb.from("cadastros_ingresso").insert({ matricula, nome, dados });
     if (error) throw error;
     document.getElementById("wiz-form").style.display = "none";
+    document.getElementById("sucesso-nome").textContent = nome.split(" ")[0] || nome;
+    document.getElementById("sucesso-matricula").textContent = matricula;
+    document.getElementById("sucesso-data").textContent = new Date().toLocaleString("pt-BR");
     document.getElementById("wiz-sucesso").style.display = "block";
   } catch (e) {
     console.error(e);
@@ -456,10 +579,16 @@ function resetarFormulario() {
   document.getElementById("wiz-form").style.display = "block";
   document.getElementById("wiz-sucesso").style.display = "none";
   document.getElementById("busca-resultado").textContent = "";
+  document.getElementById("pedir-email-resultado").textContent = "";
+  document.getElementById("codigo-resultado").textContent = "";
   document.getElementById("cnh-upload-status").textContent = "";
   document.getElementById("bgo-upload-status").textContent = "";
   uploadedCnh = null;
   uploadedBgo = null;
+  cadastroEncontradoAnterior = null;
+  emailParaVerificar = null;
+  matriculaAtual = null;
+  mostrarSubTela("auth-busca");
   const btnEnviar = document.getElementById("wiz-btn-enviar");
   btnEnviar.disabled = false;
   btnEnviar.textContent = "Enviar Cadastro";

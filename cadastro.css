@@ -152,6 +152,38 @@ input[type="file"].ef-field::file-selector-button{
 .wf-success-title{font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--ink);}
 .wf-success-sub{font-size:13px;color:var(--ink-muted);margin-top:6px;margin-bottom:20px;}
 
+/* --- sub-telas de autenticação (etapa 0) --- */
+.auth-view{display:none;text-align:center;max-width:440px;margin:0 auto;padding:10px 0 4px;}
+.auth-view.active{display:block;animation:wizIn .2s ease;}
+.auth-icon{
+  display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;
+  border-radius:50%;background:var(--bg-panel-2);color:var(--accent);margin-bottom:14px;
+}
+.auth-title{font-family:var(--font-display);font-size:17px;font-weight:600;color:var(--ink);margin-bottom:6px;}
+.auth-view .wf-help{text-align:center;}
+.auth-view .wf-search-row{max-width:360px;margin:0 auto;}
+.auth-links{display:flex;justify-content:center;gap:18px;margin-top:14px;}
+.link-btn{
+  background:none;border:none;color:var(--ink-faint);font-family:var(--font-mono);font-size:11px;
+  text-decoration:underline;cursor:pointer;padding:4px;
+}
+.link-btn:hover{color:var(--accent);}
+#btn-trocar-matricula-1{margin-top:14px;}
+
+/* --- selo e resumo da tela de sucesso --- */
+.success-badge{
+  display:inline-flex;align-items:center;justify-content:center;width:70px;height:70px;
+  border-radius:50%;background:rgba(74,147,168,.15);color:var(--t-velhochico);margin-bottom:16px;
+}
+.success-protocolo{
+  display:inline-block;text-align:left;background:var(--bg-panel);border:1px solid var(--line);
+  border-radius:10px;padding:14px 20px;margin:16px 0;
+}
+.sp-row{display:flex;justify-content:space-between;gap:24px;font-size:12.5px;padding:4px 0;}
+.sp-row span{color:var(--ink-faint);font-family:var(--font-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;}
+.sp-row b{color:var(--ink);}
+.success-nota{font-size:12px;color:var(--ink-faint);max-width:440px;margin:0 auto 20px;line-height:1.6;}
+
 /* --- toolbar e grid de cadastros recebidos --- */
 .ef-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
 .ef-toolbar-info{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-faint);}
