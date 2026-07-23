@@ -358,6 +358,11 @@ document.getElementById("wiz-form").addEventListener("change", (e) => {
 /* ---------------------------------------------------------
    Barra de progresso
 --------------------------------------------------------- */
+const NOMES_ETAPAS = [
+  "Verificação", "Identificação", "Contatos e Endereço", "Informações Emergenciais",
+  "CNH", "Informações Funcionais", "Competências", "Pendências",
+];
+
 function renderProgress() {
   const el = document.getElementById("wiz-progress");
   el.innerHTML = "";
@@ -365,6 +370,12 @@ function renderProgress() {
     const seg = document.createElement("div");
     seg.className = "seg" + (i < currentStep ? " done" : i === currentStep ? " current" : "");
     el.appendChild(seg);
+  }
+  const labelEl = document.getElementById("wiz-step-label");
+  if (labelEl) {
+    labelEl.innerHTML = currentStep === 0
+      ? ""
+      : `<span>Etapa ${currentStep} de ${TOTAL_STEPS - 1}</span><b>${NOMES_ETAPAS[currentStep]}</b>`;
   }
 }
 

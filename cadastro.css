@@ -146,7 +146,48 @@ input[type="file"].ef-field::file-selector-button{
   color:var(--ink);padding:6px 8px;font-size:12.5px;
 }
 
-/* --- tela de sucesso --- */
+/* --- cartão de agrupamento de campos (dentro das etapas do formulário) --- */
+.field-card{
+  background:var(--bg-panel);border:1px solid var(--line);border-radius:12px;
+  padding:16px 18px 18px;margin-bottom:16px;
+}
+.field-card-header{display:flex;align-items:center;gap:9px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--line);}
+.field-card-icon{
+  display:flex;align-items:center;justify-content:center;width:26px;height:26px;flex:none;
+  border-radius:7px;background:var(--bg-panel-2);color:var(--accent);
+}
+.field-card-title{font-family:var(--font-display);font-size:13.5px;font-weight:600;color:var(--ink);}
+.field-card-sub{font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint);margin-left:auto;text-transform:uppercase;letter-spacing:.04em;}
+.field-card .wf-grid{gap:12px;}
+.field-card + .field-card{margin-top:-4px;}
+
+/* --- indicador de etapa (texto acima da barra de progresso) --- */
+.wiz-step-label{
+  display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;
+  font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint);
+}
+.wiz-step-label b{color:var(--accent);font-weight:600;}
+
+/* --- cartão genérico de resultado (modal do gerenciador) --- */
+.detail-card{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px 16px 6px;margin-bottom:12px;}
+.detail-card-header{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.detail-card-icon{display:flex;align-items:center;justify-content:center;width:22px;height:22px;flex:none;border-radius:6px;background:var(--bg-panel-2);color:var(--accent);}
+.detail-card-title{font-family:var(--font-display);font-size:12px;font-weight:600;color:var(--ink);text-transform:uppercase;letter-spacing:.03em;}
+
+/* --- selo Sim/Não visual --- */
+.yn-badge{display:inline-flex;align-items:center;gap:4px;font-family:var(--font-mono);font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;}
+.yn-badge.yes{background:rgba(74,147,168,.18);color:#8fc9db;}
+.yn-badge.no{background:rgba(176,85,63,.12);color:#c98d7c;}
+.yn-badge.unk{background:var(--bg-panel-2);color:var(--ink-faint);}
+
+/* --- cabeçalho da etapa (com ícone) --- */
+.wiz-step-title{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
+.wiz-step-title-icon{
+  display:flex;align-items:center;justify-content:center;width:36px;height:36px;flex:none;
+  border-radius:10px;background:var(--bg-panel-2);color:var(--accent);
+}
+.wiz-step-title .section-label{margin:0;border:none;padding:0;flex:1;}
+.wiz-step-title .section-label::after{display:none;}
 .wf-success{text-align:center;padding:50px 20px;}
 .wf-success svg{color:var(--t-velhochico);margin-bottom:14px;}
 .wf-success-title{font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--ink);}
