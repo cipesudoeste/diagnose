@@ -327,6 +327,13 @@ function voltarParaBusca() {
 document.getElementById("btn-trocar-matricula-1").addEventListener("click", voltarParaBusca);
 document.getElementById("btn-trocar-matricula-2").addEventListener("click", voltarParaBusca);
 
+document.getElementById("btn-sem-acesso-email").addEventListener("click", () => {
+  mostrarSubTela("auth-sem-acesso");
+});
+document.getElementById("btn-sem-acesso-voltar").addEventListener("click", () => {
+  mostrarSubTela("auth-codigo");
+});
+
 
 /* ---------------------------------------------------------
    Campos condicionais (data-show-if="id=valor")

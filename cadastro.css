@@ -169,6 +169,17 @@ input[type="file"].ef-field::file-selector-button{
 }
 .link-btn:hover{color:var(--accent);}
 #btn-trocar-matricula-1{margin-top:14px;}
+.link-btn-alt{display:block;margin:16px auto 0;color:var(--ink-faint);}
+.link-btn-alt:hover{color:#e08a72;}
+
+.auth-icon-alert{background:rgba(176,85,63,.15);color:#e08a72;}
+.contato-srhs{
+  display:inline-block;text-align:left;background:var(--bg-panel);border:1px solid var(--line);
+  border-radius:10px;padding:14px 20px;margin:14px 0 20px;
+}
+.cs-row{display:flex;justify-content:space-between;gap:24px;font-size:12.5px;padding:5px 0;}
+.cs-row span{color:var(--ink-faint);font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.04em;}
+.cs-row b{color:var(--ink);}
 
 /* --- selo e resumo da tela de sucesso --- */
 .success-badge{
