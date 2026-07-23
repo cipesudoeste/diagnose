@@ -301,12 +301,6 @@ function abrirModalCadastro(c) {
 }
 
 /* ---------------------------------------------------------
-   Inicialização
---------------------------------------------------------- */
-updateConditionals();
-renderProgress();
-
-/* ---------------------------------------------------------
    Inicialização — carrega direto, não tem mais abas
 --------------------------------------------------------- */
 carregarCadastros();
