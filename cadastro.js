@@ -56,6 +56,7 @@ async function carregarCadastros() {
   }
   cadastrosCache = data || [];
   aplicarFiltrosERenderizar();
+  renderPainel();
 }
 
 /* Agrupa todas as submissões pela matrícula (normalizada) */
@@ -78,6 +79,20 @@ function aplicarFiltrosERenderizar() {
   const dataAte = document.getElementById("lista-data-ate").value;
   const ordem = document.getElementById("lista-ordenar").value;
 
+  const fSangue = document.getElementById("filtro-sangue").value;
+  const fGh = document.getElementById("filtro-gh").value;
+  const fLocal = document.getElementById("filtro-local").value;
+  const fFuncao = document.getElementById("filtro-funcao").value;
+  const fCnh = document.getElementById("filtro-cnh").value;
+  const fCnhCategoria = document.getElementById("filtro-cnh-categoria").value;
+  const fCnhVencida = document.getElementById("filtro-cnh-vencida").value;
+  const fCcve = document.getElementById("filtro-ccve").value;
+  const fIdentidade = document.getElementById("filtro-identidade").value;
+  const fAquatica = document.getElementById("filtro-aquatica").value;
+  const fMesAniversario = document.getElementById("filtro-mes-aniversario").value;
+  const fCurso = document.getElementById("filtro-curso").value;
+  const fPendencia = document.getElementById("filtro-pendencia").value;
+
   let grupos = agruparPorPessoa(cadastrosCache);
 
   if (termo) {
@@ -93,6 +108,28 @@ function aplicarFiltrosERenderizar() {
     const ate = new Date(dataAte + "T23:59:59");
     grupos = grupos.filter((g) => g.submissoes.some((s) => new Date(s.created_at) <= ate));
   }
+
+  const d = (g) => g.pessoa.dados || {};
+  if (fSangue) grupos = grupos.filter((g) => d(g).tipoSanguineo === fSangue);
+  if (fGh) grupos = grupos.filter((g) => d(g).gh === fGh);
+  if (fLocal) grupos = grupos.filter((g) => d(g).localTrabalho === fLocal);
+  if (fFuncao) grupos = grupos.filter((g) => d(g).funcao === fFuncao);
+  if (fCnh) grupos = grupos.filter((g) => d(g).possuiCnh === fCnh);
+  if (fCnhCategoria) grupos = grupos.filter((g) => d(g).cnhCategoria === fCnhCategoria);
+  if (fCnhVencida) grupos = grupos.filter((g) => d(g).cnhVencida === fCnhVencida);
+  if (fCcve) grupos = grupos.filter((g) => d(g).possuiCcve === fCcve);
+  if (fIdentidade) grupos = grupos.filter((g) => d(g).possuiIdentidadeFuncional === fIdentidade);
+  if (fAquatica) grupos = grupos.filter((g) => d(g).aptidaoAquatica === fAquatica);
+  if (fMesAniversario) {
+    grupos = grupos.filter((g) => {
+      const nasc = d(g).dataNascimento;
+      if (!nasc) return false;
+      const mes = Number(nasc.slice(5, 7));
+      return mes === Number(fMesAniversario);
+    });
+  }
+  if (fCurso) grupos = grupos.filter((g) => (d(g).cursosPm || []).includes(fCurso));
+  if (fPendencia) grupos = grupos.filter((g) => (d(g).pendencias || []).includes(fPendencia));
 
   grupos.sort((a, b) => {
     if (ordem === "recente") return new Date(b.pessoa.created_at) - new Date(a.pessoa.created_at);
@@ -144,11 +181,27 @@ document.getElementById("lista-busca").addEventListener("input", aplicarFiltrosE
 document.getElementById("lista-data-de").addEventListener("change", aplicarFiltrosERenderizar);
 document.getElementById("lista-data-ate").addEventListener("change", aplicarFiltrosERenderizar);
 document.getElementById("lista-ordenar").addEventListener("change", aplicarFiltrosERenderizar);
+
+const IDS_FILTROS_AVANCADOS = [
+  "filtro-sangue", "filtro-gh", "filtro-local", "filtro-funcao", "filtro-cnh",
+  "filtro-cnh-categoria", "filtro-cnh-vencida", "filtro-ccve", "filtro-identidade",
+  "filtro-aquatica", "filtro-mes-aniversario", "filtro-curso", "filtro-pendencia",
+];
+IDS_FILTROS_AVANCADOS.forEach((id) => {
+  document.getElementById(id).addEventListener("change", aplicarFiltrosERenderizar);
+});
+
+document.getElementById("btn-toggle-avancados").addEventListener("click", () => {
+  document.getElementById("filtros-avancados").classList.toggle("open");
+  document.getElementById("btn-toggle-avancados").classList.toggle("open");
+});
+
 document.getElementById("btn-limpar-filtros").addEventListener("click", () => {
   document.getElementById("lista-busca").value = "";
   document.getElementById("lista-data-de").value = "";
   document.getElementById("lista-data-ate").value = "";
   document.getElementById("lista-ordenar").value = "recente";
+  IDS_FILTROS_AVANCADOS.forEach((id) => (document.getElementById(id).value = ""));
   aplicarFiltrosERenderizar();
 });
 
@@ -163,6 +216,18 @@ document.getElementById("btn-view-lista").addEventListener("click", () => {
   document.getElementById("btn-view-lista").classList.add("active");
   document.getElementById("btn-view-cards").classList.remove("active");
   aplicarFiltrosERenderizar();
+});
+
+/* ---------------------------------------------------------
+   Abas (Painel / Cadastros)
+--------------------------------------------------------- */
+document.querySelectorAll(".ef-tab").forEach((tab) => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".ef-tab").forEach((t) => t.classList.remove("active"));
+    document.querySelectorAll(".ef-section").forEach((s) => s.classList.remove("active"));
+    tab.classList.add("active");
+    document.getElementById("sec-" + tab.dataset.tab).classList.add("active");
+  });
 });
 
 document.getElementById("lista-cadastros").addEventListener("click", (e) => {
@@ -365,6 +430,121 @@ function abrirModalCadastro(c) {
     </div>
   `);
   document.getElementById("modal-fechar-btn").addEventListener("click", closeModal);
+}
+
+/* ---------------------------------------------------------
+   Painel (dashboard) — estatísticas e roscas
+--------------------------------------------------------- */
+const PALETA_CATEGORIAS = [
+  "#8a5a35", "#4a93a8", "#c08a55", "#8a5380", "#b0553f", "#c9863f",
+  "#6b3f5c", "#3d7a6b", "#a8763f", "#d1a13a", "#5c6650", "#7a4a6e",
+];
+
+function buildDonutPainel(entries, totalLabel) {
+  const total = entries.reduce((s, e) => s + e.value, 0);
+  if (total === 0) return `<div class="donut-empty">Sem dados suficientes ainda.</div>`;
+  const size = 168, r = 62, stroke = 22, cx = size / 2, cy = size / 2;
+  const circumference = 2 * Math.PI * r;
+  let offset = 0;
+  let segments = "";
+  entries.forEach((e) => {
+    if (e.value <= 0) return;
+    const frac = e.value / total;
+    const dash = frac * circumference;
+    segments += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${e.color}" stroke-width="${stroke}"
+      stroke-dasharray="${dash} ${circumference - dash}" stroke-dashoffset="${-offset}"
+      transform="rotate(-90 ${cx} ${cy})"/>`;
+    offset += dash;
+  });
+  const svg = `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" style="flex:none;">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#3a4030" stroke-width="${stroke}"/>
+    ${segments}
+    <text x="${cx}" y="${cy - 3}" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="22" fill="#eef0e4" font-weight="600">${total}</text>
+    <text x="${cx}" y="${cy + 15}" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="8.5" fill="#7c8268">${totalLabel}</text>
+  </svg>`;
+  const legend = entries.filter((e) => e.value > 0)
+    .sort((a, b) => b.value - a.value)
+    .map((e) => {
+      const pct = Math.round((e.value / total) * 100);
+      return `<div class="donut-legend-item"><span class="donut-swatch" style="background:${e.color}"></span><span class="donut-legend-name">${escapeHtml(e.label)}</span><b>${e.value}</b><span class="donut-legend-pct">${pct}%</span></div>`;
+    }).join("");
+  return `<div class="donut-wrap">${svg}<div class="donut-legend">${legend}</div></div>`;
+}
+
+function contarPor(pessoas, campo) {
+  const contagem = {};
+  pessoas.forEach((p) => {
+    const v = (p.dados || {})[campo];
+    if (!v) return;
+    contagem[v] = (contagem[v] || 0) + 1;
+  });
+  return contagem;
+}
+
+function renderPainel() {
+  const pessoas = agruparPorPessoa(cadastrosCache).map((g) => g.pessoa);
+  const total = pessoas.length;
+
+  document.getElementById("painel-data-ref").textContent =
+    "Atualizado em " + new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+
+  const comCnh = pessoas.filter((p) => (p.dados || {}).possuiCnh === "Sim").length;
+  const semIdentidade = pessoas.filter((p) => (p.dados || {}).possuiIdentidadeFuncional === "Não").length;
+  const mesAtual = new Date().getMonth() + 1;
+  const aniversariantes = pessoas
+    .filter((p) => (p.dados || {}).dataNascimento && Number(p.dados.dataNascimento.slice(5, 7)) === mesAtual)
+    .sort((a, b) => Number(a.dados.dataNascimento.slice(8, 10)) - Number(b.dados.dataNascimento.slice(8, 10)));
+
+  document.getElementById("p-stat-total").textContent = total;
+  document.getElementById("p-stat-cnh").textContent = comCnh;
+  document.getElementById("p-stat-identidade").textContent = semIdentidade;
+  document.getElementById("p-stat-aniversario").textContent = aniversariantes.length;
+
+  // --- roscas ---
+  const sangueOrdem = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+  const contSangue = contarPor(pessoas, "tipoSanguineo");
+  document.getElementById("donut-sangue").innerHTML = buildDonutPainel(
+    sangueOrdem.map((s, i) => ({ label: s, value: contSangue[s] || 0, color: PALETA_CATEGORIAS[i] })),
+    "policiais"
+  );
+
+  const contGh = contarPor(pessoas, "gh");
+  document.getElementById("donut-gh").innerHTML = buildDonutPainel(
+    Object.keys(contGh).map((k, i) => ({ label: k, value: contGh[k], color: PALETA_CATEGORIAS[i % PALETA_CATEGORIAS.length] })),
+    "policiais"
+  );
+
+  const contLocal = contarPor(pessoas, "localTrabalho");
+  document.getElementById("donut-local").innerHTML = buildDonutPainel(
+    Object.keys(contLocal).map((k, i) => ({ label: k, value: contLocal[k], color: PALETA_CATEGORIAS[i % PALETA_CATEGORIAS.length] })),
+    "policiais"
+  );
+
+  const contCnhCat = contarPor(pessoas.filter((p) => (p.dados || {}).possuiCnh === "Sim"), "cnhCategoria");
+  document.getElementById("donut-cnh-cat").innerHTML = buildDonutPainel(
+    Object.keys(contCnhCat).map((k, i) => ({ label: "Categoria " + k, value: contCnhCat[k], color: PALETA_CATEGORIAS[i % PALETA_CATEGORIAS.length] })),
+    "com CNH"
+  );
+
+  // --- ranking de pendências ---
+  const contPend = {};
+  pessoas.forEach((p) => {
+    ((p.dados || {}).pendencias || []).forEach((pd) => { contPend[pd] = (contPend[pd] || 0) + 1; });
+  });
+  const rankingPend = Object.entries(contPend).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  document.getElementById("ranking-pendencias-tbody").innerHTML = rankingPend.length
+    ? rankingPend.map(([nome, qtd]) => `<tr><td data-label="Situação">${escapeHtml(nome)}</td><td class="num" data-label="Policiais">${qtd}</td></tr>`).join("")
+    : `<tr><td colspan="2" style="text-align:center;color:var(--ink-faint);padding:20px;">Nenhuma pendência registrada.</td></tr>`;
+
+  // --- aniversariantes do mês ---
+  document.getElementById("aniversariantes-tbody").innerHTML = aniversariantes.length
+    ? aniversariantes.map((p) => `<tr>
+        <td data-label="Nome">${escapeHtml(p.nome)}</td>
+        <td data-label="Matrícula">${escapeHtml(p.matricula)}</td>
+        <td data-label="GH">${escapeHtml((p.dados || {}).gh) || "—"}</td>
+        <td class="num" data-label="Dia">${p.dados.dataNascimento.slice(8, 10)}</td>
+      </tr>`).join("")
+    : `<tr><td colspan="4" style="text-align:center;color:var(--ink-faint);padding:20px;">Ninguém faz aniversário este mês (ou a data não foi informada).</td></tr>`;
 }
 
 /* ---------------------------------------------------------

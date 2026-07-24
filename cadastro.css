@@ -236,6 +236,42 @@ input[type="file"].ef-field::file-selector-button{
 .sp-row b{color:var(--ink);}
 .success-nota{font-size:12px;color:var(--ink-faint);max-width:440px;margin:0 auto 20px;line-height:1.6;}
 
+.hstat.alert{border-top:3px solid #b0553f;}
+
+/* --- grid 2 colunas para os gráficos do painel --- */
+.diag-grid-2{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:16px;}
+@media (min-width:720px){ .diag-grid-2{grid-template-columns:1fr 1fr;align-items:stretch;} }
+
+/* --- rosca (donut) --- */
+.donut-card{padding:20px;display:flex;align-items:center;justify-content:center;min-height:180px;}
+.donut-wrap{display:flex;align-items:center;gap:20px;width:100%;}
+.donut-legend{display:flex;flex-direction:column;gap:9px;flex:1;min-width:0;}
+.donut-legend-item{display:flex;align-items:center;gap:9px;font-size:11.5px;color:var(--ink-muted);white-space:nowrap;}
+.donut-legend-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.donut-legend-item b{color:var(--ink);font-family:var(--font-mono);font-weight:600;flex:none;}
+.donut-legend-pct{font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);flex:none;width:30px;text-align:right;}
+.donut-swatch{width:10px;height:10px;border-radius:3px;flex:none;}
+.donut-empty{font-size:12.5px;color:var(--ink-faint);text-align:center;padding:34px 10px;line-height:1.6;}
+@media (max-width:479px){
+  .donut-wrap{flex-direction:column;}
+  .donut-legend{width:100%;}
+}
+
+/* --- filtros avançados (colapsável) --- */
+.toggle-avancados{
+  margin:4px 0 12px;display:inline-flex;align-items:center;gap:8px;
+}
+.toggle-avancados .chev{transition:transform .2s ease;}
+.toggle-avancados.open .chev{transform:rotate(180deg);}
+.lista-filtros-avancados{
+  display:none;grid-template-columns:1fr;gap:10px;background:var(--bg-panel);border:1px solid var(--line);
+  border-radius:10px;padding:14px;margin-bottom:16px;
+}
+.lista-filtros-avancados.open{display:grid;}
+@media (min-width:640px){ .lista-filtros-avancados{grid-template-columns:repeat(2, 1fr);} }
+@media (min-width:960px){ .lista-filtros-avancados{grid-template-columns:repeat(4, 1fr);} }
+.lista-filtros-avancados .wf-wide{grid-column:1/-1;}
+
 /* --- toolbar e grid de cadastros recebidos --- */
 .ef-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
 .ef-toolbar-info{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-faint);}
