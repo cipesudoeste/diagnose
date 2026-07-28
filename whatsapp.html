@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CIPE Sudoeste — CRM WhatsApp</title>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" href="favicon.ico">
+<link rel="manifest" href="site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="cadastro.css">
+<link rel="stylesheet" href="whatsapp.css">
+</head>
+<body>
+
+<div class="camo-trim camo-bg"></div>
+
+<header class="site-header">
+  <div class="wrap ef-header">
+    <a class="home-btn" href="index.html" title="Voltar para a página inicial">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M3 11l9-7 9 7" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M5 10v9a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1v-9" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+    <img class="logo-cipe ef-logo-cipe" src="img/logo-cipe.png" alt="CIPE Sudoeste">
+    <div class="brand-divider ef-brand-extra"></div>
+    <div class="logo-pmba-chip ef-brand-extra"><img src="img/logo-pmba.png" alt="Polícia Militar da Bahia"></div>
+    <div class="brand-text ef-titles">
+      <div class="eyebrow ef-eyebrow">Polícia Militar · Bahia · SRHS</div>
+      <div class="title ef-title">CRM WhatsApp</div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="section-label with-rule" style="margin-top:26px;">CIPE Sudoeste</div>
+
+  <div class="ef-tabs">
+    <button class="ef-tab active" data-tab="conversas">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+      Conversas
+    </button>
+    <button class="ef-tab" data-tab="transmissao">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 11a9 9 0 019-9M4 11a9 9 0 009 9M4 11h9M4 11L1 8m3 3L1 14"/><circle cx="19" cy="5" r="2"/><circle cx="19" cy="19" r="2"/></svg>
+      Transmissão
+    </button>
+  </div>
+
+  <!-- ===================== CONVERSAS ===================== -->
+  <section class="ef-section active" id="sec-conversas">
+    <div class="chat-shell">
+      <div class="chat-list" id="chat-list">
+        <div class="chat-list-header">
+          <input type="text" class="search-input" id="chat-busca" placeholder="Buscar conversa...">
+        </div>
+        <div class="chat-list-items" id="chat-list-items"></div>
+      </div>
+      <div class="chat-thread" id="chat-thread">
+        <div class="chat-thread-empty" id="chat-thread-empty">
+          <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+          <div>Selecione uma conversa para ver as mensagens</div>
+        </div>
+        <div class="chat-thread-active" id="chat-thread-active" style="display:none;">
+          <div class="chat-thread-header">
+            <div class="ct-nome" id="ct-nome">—</div>
+            <div class="ct-telefone" id="ct-telefone">—</div>
+          </div>
+          <div class="chat-messages" id="chat-messages"></div>
+          <div class="chat-input-row">
+            <textarea id="chat-input" rows="1" placeholder="Digite uma mensagem..."></textarea>
+            <button class="ef-btn primary" id="btn-enviar-msg">Enviar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== TRANSMISSÃO ===================== -->
+  <section class="ef-section" id="sec-transmissao">
+    <div class="ef-toolbar">
+      <div class="ef-toolbar-info" id="contatos-info">—</div>
+      <button class="ef-btn" id="btn-sincronizar-contatos">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 0115-6.7L21 8M21 3v5h-5M21 12a9 9 0 01-15 6.7L3 16M3 21v-5h5"/></svg>
+        Sincronizar Contatos
+      </button>
+    </div>
+    <p class="wf-help">Sincronizar busca o telefone dos policiais que marcaram "É Whatsapp?" no cadastro e cria os contatos automaticamente. Rode isso sempre que novos cadastros chegarem.</p>
+
+    <div class="field-card">
+      <div class="field-card-header">
+        <div class="field-card-icon"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M7 12h10M10 18h4"/></svg></div>
+        <div class="field-card-title">Selecionar Destinatários</div>
+      </div>
+      <div class="wf-grid">
+        <div class="wf-row"><label class="wf-label">GH</label>
+          <select class="ef-field" id="tx-filtro-gh">
+            <option value="">Todos</option>
+            <option>SD 1ª Cl PM</option><option>AL CB PM</option><option>CB PM</option><option>AL SGT PM</option>
+            <option>1º SGT PM</option><option>SUBTEN PM</option><option>ASP OF PM</option><option>1º TEN PM</option>
+            <option>CAP PM</option><option>MAJ PM</option><option>TEN CEL PM</option><option>CEL PM</option>
+          </select>
+        </div>
+        <div class="wf-row"><label class="wf-label">Local de Trabalho</label>
+          <select class="ef-field" id="tx-filtro-local">
+            <option value="">Todos</option>
+            <option>COMANDO</option><option>SUBCOMANDO</option><option>SOINT</option><option>GOC</option>
+            <option>SSO/SRHS</option><option>SSO/SELIC</option><option>SSO/ALMOXARIFADO</option><option>SPO</option>
+            <option>1º PELOTÃO</option><option>2º PELOTÃO</option><option>3º PELOTÃO</option><option>4º PELOTÃO</option>
+          </select>
+        </div>
+        <div class="wf-row"><label class="wf-label">Função</label>
+          <select class="ef-field" id="tx-filtro-funcao">
+            <option value="">Todas</option>
+            <option>CHEFE</option><option>AUXILIAR</option><option>COMANDANTE DE GU</option><option>MOTORISTA</option>
+            <option>CMT/MOT</option><option>PATRULHEIRO</option><option>ADJUNTO</option><option>CONDUTOR DE CÃES</option>
+          </select>
+        </div>
+      </div>
+      <div class="tx-contagem" id="tx-contagem">0 destinatário(s) selecionado(s)</div>
+      <div class="tx-lista-preview" id="tx-lista-preview"></div>
+    </div>
+
+    <div class="field-card">
+      <div class="field-card-header">
+        <div class="field-card-icon"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7"/></svg></div>
+        <div class="field-card-title">Mensagem</div>
+      </div>
+      <div class="wf-row wf-wide">
+        <label class="wf-label">Nome da campanha (uso interno)</label>
+        <input type="text" class="ef-field" id="tx-nome-campanha" placeholder="Ex: Aviso de férias - Julho 2026">
+      </div>
+      <div class="wf-row wf-wide" style="margin-top:10px;">
+        <label class="wf-label">Texto da mensagem</label>
+        <textarea class="ef-field" id="tx-mensagem" rows="4" placeholder="Digite a mensagem que será enviada a todos os destinatários selecionados..."></textarea>
+      </div>
+      <button class="ef-btn primary" id="btn-enviar-transmissao" style="margin-top:14px;">Enviar Transmissão</button>
+      <div class="tx-progresso" id="tx-progresso" style="display:none;">
+        <div class="tx-progresso-bar"><div class="tx-progresso-fill" id="tx-progresso-fill"></div></div>
+        <div class="tx-progresso-texto" id="tx-progresso-texto"></div>
+      </div>
+    </div>
+
+    <div class="section-label">Campanhas Enviadas</div>
+    <div class="table-wrap">
+      <table class="ef">
+        <thead><tr><th>Campanha</th><th class="num">Destinatários</th><th class="num">Enviados</th><th class="num">Erros</th><th>Data</th></tr></thead>
+        <tbody id="campanhas-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+
+<footer class="site-footer">
+  <div class="wrap">CRM WhatsApp — Cia Ind PE/Sudoeste — SRHS</div>
+</footer>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="cadastro-config.js"></script>
+<script src="whatsapp.js"></script>
+</body>
+</html>
