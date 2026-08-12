@@ -1,0 +1,42 @@
+name: Backup diário do Supabase
+
+# Roda todo dia automaticamente às 03h UTC (00h em Brasília)
+# + permite rodar manualmente a qualquer momento pela aba "Actions" do GitHub
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o repositório
+        uses: actions/checkout@v4
+
+      - name: Instalar cliente do Postgres (pg_dump)
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Criar pasta de backups (se não existir)
+        run: mkdir -p backups
+
+      - name: Fazer o dump do banco de dados
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          DATA=$(date +'%Y-%m-%d')
+          pg_dump "$SUPABASE_DB_URL" \
+            --no-owner --no-privileges --schema=public \
+            -f "backups/backup-${DATA}.sql"
+          echo "Backup criado: backups/backup-${DATA}.sql"
+
+      - name: Apagar backups com mais de 90 dias (evita acumular pra sempre)
+        run: find backups -name "backup-*.sql" -mtime +90 -delete
+
+      - name: Enviar o backup para o repositório
+        run: |
+          git config user.name "backup-bot"
+          git config user.email "backup-bot@users.noreply.github.com"
+          git add backups/
+          git diff --staged --quiet || git commit -m "Backup automático do banco de dados"
+          git push
