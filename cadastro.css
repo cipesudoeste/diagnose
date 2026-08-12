@@ -1,8 +1,7 @@
 /* =========================================================
-   CADASTRO DE INGRESSANTES — reaproveita os componentes
-   já criados em efetivo.css/viaturas.css (cabeçalho, abas,
-   badges, modal), com os estilos específicos do assistente
-   em etapas (wizard) abaixo.
+   CADASTRO DE INGRESSANTES / FORMULÁRIO — reaproveita
+   shared.css (cabeçalho padrão, abas, botões) e styles.css.
+   Aqui só o que é específico dessas duas páginas.
 
    MOBILE-FIRST: base = tela pequena.
    ========================================================= */
@@ -19,50 +18,6 @@
   .form-title{font-size:17px;}
 }
 .form-wrap{padding-top:26px;padding-bottom:50px;max-width:880px;}
-
-/* --- cabeçalho (mesmo padrão das outras páginas) --- */
-.ef-header{display:flex;align-items:center;gap:8px;}
-.ef-logo-cipe{height:26px;}
-.ef-brand-extra{display:none;}
-.ef-titles{flex:1;min-width:0;}
-.ef-eyebrow{font-size:8.5px;}
-.ef-title{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.saved-flash{
-  display:none;align-items:center;gap:4px;flex:none;
-  font-family:var(--font-mono);font-size:10px;color:var(--t-sertao);white-space:nowrap;
-}
-.saved-flash .btn-label{display:none;}
-@media (min-width:420px){ .saved-flash{display:flex;} }
-@media (min-width:640px){
-  .ef-brand-extra{display:block;}
-  .logo-pmba-chip.ef-brand-extra{display:flex;}
-  .ef-logo-cipe{height:34px;}
-  .ef-eyebrow{font-size:9px;}
-  .ef-title{font-size:16px;}
-}
-
-/* --- abas --- */
-.ef-tabs{
-  display:flex;gap:4px;padding:0 16px 12px;
-  overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;scrollbar-width:none;
-}
-.ef-tabs::-webkit-scrollbar{display:none;}
-.ef-tab{
-  display:flex;align-items:center;gap:6px;flex:none;
-  font-family:var(--font-mono);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;
-  padding:9px 12px;border-radius:6px;border:1px solid var(--line);background:transparent;color:var(--ink-muted);
-  cursor:pointer;transition:all .15s ease;white-space:nowrap;
-}
-.ef-tab:hover{color:var(--ink);}
-.ef-tab.active{background:var(--bg-panel-2);color:var(--accent);border-color:var(--cipe-brown-l);}
-.ef-tab svg{width:13px;height:13px;flex:none;}
-.ef-section{display:none;padding:0 16px 40px;}
-.ef-section.active{display:block;}
-@media (min-width:640px){
-  .ef-tabs{padding:0 22px 14px;}
-  .ef-tab{font-size:11.5px;padding:9px 14px;}
-  .ef-section{padding:0 22px 40px;}
-}
 
 /* --- barra de progresso do assistente --- */
 .wiz-progress{display:flex;gap:4px;margin-bottom:20px;}
@@ -131,16 +86,7 @@ input[type="file"].ef-field::file-selector-button{
 .wiz-nav .ef-btn{flex:1;justify-content:center;padding:11px;}
 #wiz-btn-voltar:disabled{opacity:.35;cursor:default;}
 
-/* --- botões (mesmo padrão do resto do site) --- */
-.ef-btn{
-  display:flex;align-items:center;gap:6px;
-  font-family:var(--font-mono);font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;
-  padding:8px 14px;border-radius:6px;border:1px solid var(--line);background:var(--bg-panel);color:var(--ink-muted);
-  cursor:pointer;transition:all .15s ease;
-}
-.ef-btn:hover{border-color:var(--cipe-brown-l);color:var(--accent);}
-.ef-btn.primary{background:var(--accent-dim);color:var(--camo-black);border-color:var(--accent-dim);font-weight:600;}
-.ef-btn.primary:hover{background:var(--accent);}
+/* --- botões (base já vem de shared.css; aqui só overrides) --- */
 .ef-field{
   width:100%;background:transparent;border:1px solid transparent;border-radius:5px;
   color:var(--ink);padding:6px 8px;font-size:12.5px;
@@ -244,14 +190,9 @@ input[type="file"].ef-field::file-selector-button{
 
 /* --- rosca (donut) --- */
 .donut-card{padding:20px;display:flex;align-items:center;justify-content:center;min-height:180px;}
-.donut-wrap{display:flex;align-items:center;gap:20px;width:100%;}
 .donut-legend{display:flex;flex-direction:column;gap:9px;flex:1;min-width:0;}
 .donut-legend-item{display:flex;align-items:center;gap:9px;font-size:11.5px;color:var(--ink-muted);white-space:nowrap;}
-.donut-legend-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
-.donut-legend-item b{color:var(--ink);font-family:var(--font-mono);font-weight:600;flex:none;}
 .donut-legend-pct{font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);flex:none;width:30px;text-align:right;}
-.donut-swatch{width:10px;height:10px;border-radius:3px;flex:none;}
-.donut-empty{font-size:12.5px;color:var(--ink-faint);text-align:center;padding:34px 10px;line-height:1.6;}
 @media (max-width:479px){
   .donut-wrap{flex-direction:column;}
   .donut-legend{width:100%;}
@@ -274,7 +215,6 @@ input[type="file"].ef-field::file-selector-button{
 
 /* --- toolbar e grid de cadastros recebidos --- */
 .ef-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
-.ef-toolbar-info{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-faint);}
 
 .lista-view-toggle{display:flex;gap:4px;background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:3px;}
 .view-btn{
