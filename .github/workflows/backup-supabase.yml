@@ -14,8 +14,14 @@ jobs:
       - name: Baixar o repositório
         uses: actions/checkout@v4
 
-      - name: Instalar cliente do Postgres (pg_dump)
-        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Instalar cliente do Postgres 17 (compatível com o Postgres do Supabase)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl ca-certificates gnupg
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /usr/share/keyrings/postgresql.gpg
+          echo "deb [signed-by=/usr/share/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-17
 
       - name: Criar pasta de backups (se não existir)
         run: mkdir -p backups
@@ -25,7 +31,7 @@ jobs:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
           DATA=$(date +'%Y-%m-%d')
-          pg_dump "$SUPABASE_DB_URL" \
+          /usr/lib/postgresql/17/bin/pg_dump "$SUPABASE_DB_URL" \
             --no-owner --no-privileges --schema=public \
             -f "backups/backup-${DATA}.sql"
           echo "Backup criado: backups/backup-${DATA}.sql"
