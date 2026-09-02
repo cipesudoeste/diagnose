@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CIPE Sudoeste — Central de Ofícios</title>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" href="favicon.ico">
+<link rel="manifest" href="site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="shared.css">
+<link rel="stylesheet" href="oficios.css">
+</head>
+<body>
+
+<div class="camo-trim camo-bg"></div>
+
+<header class="site-header">
+  <div class="wrap ef-header">
+    <a class="home-btn" href="index.html" title="Voltar para a página inicial">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M3 11l9-7 9 7" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M5 10v9a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1v-9" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+    <img class="logo-cipe ef-logo-cipe" src="img/logo-cipe.png" alt="CIPE Sudoeste">
+    <div class="brand-divider ef-brand-extra"></div>
+    <div class="logo-pmba-chip ef-brand-extra"><img src="img/logo-pmba.png" alt="Polícia Militar da Bahia"></div>
+    <div class="brand-text ef-titles">
+      <div class="eyebrow ef-eyebrow">Polícia Militar · Bahia</div>
+      <div class="title ef-title">Central de Ofícios</div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="section-label with-rule" style="margin-top:26px;">CIPE Sudoeste</div>
+
+  <div class="ef-tabs">
+    <button class="ef-tab active" data-tab="pendencias">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+      Pendências <span class="tab-count" id="count-pendencias" style="display:none;"></span>
+    </button>
+    <button class="ef-tab" data-tab="historico">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 3v5h5M3.05 13a9 9 0 106.31-8.9"/><path d="M12 7v5l4 2"/></svg>
+      Histórico
+    </button>
+    <button class="ef-tab" data-tab="agenda">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+      Agenda
+    </button>
+  </div>
+
+  <!-- ===================== PENDÊNCIAS ===================== -->
+  <section class="ef-section active" id="sec-pendencias">
+    <p class="ef-hint">Policiais requisitados que não foram encontrados no efetivo. Consulte a unidade correta (via VPN) e resolva aqui — o ofício de resposta é gerado automaticamente assim que não houver mais pendência no ofício.</p>
+    <div class="table-wrap">
+      <table class="ef">
+        <thead><tr><th>Ofício (origem)</th><th>Policial citado</th><th>Matrícula</th><th style="width:120px;"></th></tr></thead>
+        <tbody id="pendencias-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===================== HISTÓRICO ===================== -->
+  <section class="ef-section" id="sec-historico">
+    <div class="ef-toolbar">
+      <div class="ef-toolbar-info" id="historico-info">—</div>
+      <input type="text" id="historico-search" class="ef-search" placeholder="Buscar por comarca, processo ou nº do ofício…">
+    </div>
+    <div class="table-wrap">
+      <table class="ef">
+        <thead><tr><th>Comarca</th><th>Processo</th><th>Data audiência</th><th>Status</th><th style="width:40px;"></th></tr></thead>
+        <tbody id="historico-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===================== AGENDA ===================== -->
+  <section class="ef-section" id="sec-agenda">
+    <div class="ef-toolbar">
+      <div class="ef-toolbar-info" id="agenda-info">—</div>
+      <input type="text" id="agenda-search" class="ef-search" placeholder="Buscar por nome ou matrícula…">
+    </div>
+    <div class="table-wrap">
+      <table class="ef" id="agenda-table">
+        <thead><tr>
+          <th class="sortable" data-sort="data">Data</th>
+          <th class="sortable" data-sort="nome">Policial</th>
+          <th>Comarca</th>
+          <th class="sortable" data-sort="status">Situação</th>
+        </tr></thead>
+        <tbody id="agenda-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<!-- Modal genérico: resolver pendência / ver texto do ofício -->
+<div class="modal-overlay" id="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <button class="modal-close" id="modal-close" title="Fechar">&times;</button>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="oficios.js"></script>
+</body>
+</html>
