@@ -205,7 +205,7 @@ function gerarOficioResposta(dadosOficio, cruzamento, unidadesDestino) {
 
   let partes = [
     "GOVERNO DO ESTADO DA BAHIA\nPOLÍCIA MILITAR DA BAHIA - PMBA\nCOMPANHIA INDEPENDENTE DE POLICIAMENTO ESPECIALIZADO SUDOESTE - PMBA/CIPE-SUDOESTE",
-    "Oficio nº [preenchido automaticamente pelo SEI]/SRHS - PMBA/CIPE-SUDOESTE",
+    "Oficio nº {{NUMERO_SEI}}/SRHS - PMBA/CIPE-SUDOESTE",
     `Vitória da Conquista/BA, ${dataPorExtenso(new Date().toISOString().slice(0, 10))}.`,
     `Assunto: ${assuntoTexto(dadosOficio)}`,
     `${vocativo},`,
