@@ -13,11 +13,82 @@ try {
 
 let oficios = [];          // linhas da tabela `oficios`
 let oficiosPoliciais = [];  // linhas da tabela `oficios_policiais`
+let filaItems = [];          // linhas da tabela `oficios_fila`
 
 let agendaFilter = "";
 let agendaSortField = "data";
 let agendaSortDir = 1;
 let historicoFilter = "";
+
+/* ---------------------------------------------------------
+   Upload de novo ofício + fila de processamento
+--------------------------------------------------------- */
+const BUCKET_OFICIOS = "oficios-anexos";
+
+document.getElementById("btn-upload").addEventListener("click", async () => {
+  const input = document.getElementById("upload-input");
+  const file = input.files[0];
+  if (!file) { alert("Escolha um arquivo PDF primeiro."); return; }
+  if (file.type !== "application/pdf") { alert("Envie um arquivo PDF."); return; }
+
+  const btn = document.getElementById("btn-upload");
+  btn.disabled = true;
+  btn.textContent = "Enviando...";
+
+  const path = `${Date.now()}_${file.name}`;
+  const { error: errUpload } = await sb.storage.from(BUCKET_OFICIOS).upload(path, file);
+  if (errUpload) {
+    console.error(errUpload);
+    alert("Erro ao enviar o arquivo. Veja o console para detalhes.");
+    btn.disabled = false;
+    btn.textContent = "Enviar";
+    return;
+  }
+
+  const { error: errFila } = await sb.from("oficios_fila").insert({
+    nome_arquivo: file.name,
+    storage_path: path,
+  });
+  if (errFila) {
+    console.error(errFila);
+    alert("Arquivo enviado, mas houve erro ao registrar na fila. Avise o suporte.");
+  }
+
+  input.value = "";
+  btn.disabled = false;
+  btn.textContent = "Enviar";
+  await carregarFila();
+});
+
+const STATUS_FILA_LABEL = {
+  aguardando: ["Aguardando processamento", "mid"],
+  processando: ["Processando…", "mid"],
+  concluido: ["Concluído", "ok"],
+  erro: ["Erro", "bad"],
+};
+
+async function carregarFila() {
+  if (!sb) return;
+  const { data, error } = await sb.from("oficios_fila").select("*").order("criado_em", { ascending: false }).limit(8);
+  if (error) { console.error(error); return; }
+  filaItems = data || [];
+  renderFila();
+}
+
+function renderFila() {
+  const el = document.getElementById("fila-lista");
+  const ativos = filaItems.filter((f) => f.status !== "concluido");
+  if (!ativos.length) { el.innerHTML = ""; return; }
+
+  el.innerHTML = ativos.map((f) => {
+    const [label, cls] = STATUS_FILA_LABEL[f.status] || [f.status, "mid"];
+    return `
+      <div class="fila-item">
+        <span class="fila-nome">${escapeHtml(f.nome_arquivo)}</span>
+        <span class="badge-status ${cls}" ${f.status === "erro" ? `title="${escapeHtml(f.mensagem_erro || "")}"` : ""}>${label}</span>
+      </div>`;
+  }).join("");
+}
 
 /* ---------------------------------------------------------
    Carregamento
@@ -493,3 +564,13 @@ document.querySelectorAll(".ef-tab").forEach((tab) => {
    Inicialização
 --------------------------------------------------------- */
 carregarTudo();
+carregarFila();
+
+// Enquanto houver algo na fila que não seja "concluido", continua
+// checando periodicamente (upload feito, aguardando o watcher.py
+// processar no seu computador).
+setInterval(async () => {
+  await carregarFila();
+  const temAtivo = filaItems.some((f) => f.status === "aguardando" || f.status === "processando");
+  if (temAtivo) await carregarTudo();
+}, 8000);
