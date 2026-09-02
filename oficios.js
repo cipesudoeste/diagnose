@@ -25,6 +25,12 @@ let historicoFilter = "";
 --------------------------------------------------------- */
 const BUCKET_OFICIOS = "oficios-anexos";
 
+function sanitizarNomeArquivo(nome) {
+  return nome
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")  // remove acentos
+    .replace(/[^a-zA-Z0-9.\-_]/g, "_");                  // troca o resto por "_"
+}
+
 document.getElementById("btn-upload").addEventListener("click", async () => {
   const input = document.getElementById("upload-input");
   const file = input.files[0];
@@ -35,7 +41,7 @@ document.getElementById("btn-upload").addEventListener("click", async () => {
   btn.disabled = true;
   btn.textContent = "Enviando...";
 
-  const path = `${Date.now()}_${file.name}`;
+  const path = `${Date.now()}_${sanitizarNomeArquivo(file.name)}`;
   const { error: errUpload } = await sb.storage.from(BUCKET_OFICIOS).upload(path, file);
   if (errUpload) {
     console.error(errUpload);
