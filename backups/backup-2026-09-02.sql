@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict L85w1NcpyeyXFHkevEFWqf2bP3MTyPnabRrjOKfJWNMUiGQyvJlhLCT7LI7e08o
+\restrict Ze6oXjq5I8Dtqceb7yBalwQJvMS9LnYa4zhbubR6MZAV3SniG0ibyt6JHIP225z
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Ubuntu 17.11-1.pgdg24.04+2)
@@ -654,5 +654,5 @@ ALTER TABLE public.whatsapp_mensagens ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict L85w1NcpyeyXFHkevEFWqf2bP3MTyPnabRrjOKfJWNMUiGQyvJlhLCT7LI7e08o
+\unrestrict Ze6oXjq5I8Dtqceb7yBalwQJvMS9LnYa4zhbubR6MZAV3SniG0ibyt6JHIP225z
 
