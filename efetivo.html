@@ -141,7 +141,7 @@
 
     <div class="table-wrap">
       <table class="ef">
-        <thead><tr><th>Posto/Graduação</th><th>Nome</th><th>Matrícula</th><th>Previsão Reserva</th><th>Pediu Reserva?</th><th style="width:40px;"></th></tr></thead>
+        <thead><tr><th>Posto/Graduação</th><th>Nome</th><th>Matrícula</th><th>Férias</th><th>Previsão Reserva</th><th>Pediu Reserva?</th><th style="width:40px;"></th><th style="width:40px;"></th></tr></thead>
         <tbody id="roster-tbody"></tbody>
       </table>
     </div>
@@ -255,6 +255,14 @@
   <div class="print-footer">
     <span>Cia Ind PE/Sudoeste — Painel de Efetivo — Documento de uso interno</span>
     <span id="print-footer-date"></span>
+  </div>
+</div>
+
+<!-- Modal genérico: usado por "Gerenciar férias" e "Ver dados do cadastro" -->
+<div class="modal-overlay" id="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <button class="modal-close" id="modal-close" title="Fechar">&times;</button>
+    <div id="modal-content"></div>
   </div>
 </div>
 

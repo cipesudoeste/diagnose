@@ -49,9 +49,11 @@ function statusInfo(dif) {
    Estado da aplicação
 --------------------------------------------------------- */
 let roster = [];
+let ferias = [];
 let qdl = { ...DEFAULT_QDL };
 let includeRRC = false;
 let saveTimer = null;
+let pendingDeletes = [];
 let projHorizonMonths = 12;
 let projOnlyConfirmed = false;
 
@@ -69,21 +71,64 @@ try {
 
 async function loadFromCloud() {
   if (!sb) return null;
-  const { data, error } = await sb.from("painel_data").select("*").eq("id", 1).maybeSingle();
-  if (error) { console.error(error); return null; }
-  return data;
+  const [{ data: painel, error: e1 }, { data: pol, error: e2 }, { data: fer, error: e3 }] = await Promise.all([
+    sb.from("painel_data").select("qdl, include_rrc").eq("id", 1).maybeSingle(),
+    sb.from("policiais").select("matricula, nome, posto, reserva_data, reserva_pedida").order("nome"),
+    sb.from("ferias").select("*"),
+  ]);
+  if (e1 || e2 || e3) { console.error(e1 || e2 || e3); return null; }
+  return {
+    painelExiste: !!painel,
+    qdl: painel && painel.qdl,
+    include_rrc: painel && painel.include_rrc,
+    roster: (pol || []).map((p, idx) => ({
+      id: idx + 1,
+      matricula: p.matricula,
+      nome: p.nome,
+      posto: p.posto,
+      reservaData: p.reserva_data || "",
+      reservaPedida: !!p.reserva_pedida,
+    })),
+    ferias: fer || [],
+  };
 }
 
-async function saveToCloud(patch) {
+// Salva tudo: metas (painel_data), linhas de policiais (upsert) e
+// remoções pendentes. Não mexe nos campos que só o formulário de
+// atualização cadastral preenche (telefone, e-mail, gh, etc.).
+async function saveToCloud() {
   if (!sb) return;
-  const { error } = await sb.from("painel_data").upsert({ id: 1, ...patch, updated_at: new Date().toISOString() });
-  if (error) console.error(error);
+
+  const { error: e1 } = await sb
+    .from("painel_data")
+    .upsert({ id: 1, qdl, include_rrc: includeRRC, updated_at: new Date().toISOString() });
+  if (e1) console.error(e1);
+
+  const rows = roster
+    .filter((r) => (r.matricula || "").trim() !== "")
+    .map((r) => ({
+      matricula: r.matricula.trim(),
+      nome: r.nome || "",
+      posto: r.posto,
+      reserva_data: r.reservaData || null,
+      reserva_pedida: !!r.reservaPedida,
+    }));
+  if (rows.length) {
+    const { error: e2 } = await sb.from("policiais").upsert(rows, { onConflict: "matricula" });
+    if (e2) console.error(e2);
+  }
+
+  if (pendingDeletes.length) {
+    const { error: e3 } = await sb.from("policiais").delete().in("matricula", pendingDeletes);
+    if (e3) console.error(e3);
+    pendingDeletes = [];
+  }
 }
 
 function persist() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
-    await saveToCloud({ roster, qdl, include_rrc: includeRRC });
+    await saveToCloud();
     flashSaved();
   }, 500);
 }
@@ -324,13 +369,22 @@ function renderRoster() {
   document.getElementById("chk-rrc").checked = includeRRC;
 
   const tbody = document.getElementById("roster-tbody");
-  tbody.innerHTML = roster.map((r) => `
+  tbody.innerHTML = roster.map((r) => {
+    const st = statusFerias(r.matricula);
+    const temMatricula = !!(r.matricula || "").trim();
+    return `
     <tr data-id="${r.id}">
       <td data-label="Posto">
         <select class="ef-field field-posto">${POSTOS.map((p) => `<option value="${p}" ${p === r.posto ? "selected" : ""}>${p}</option>`).join("")}</select>
       </td>
       <td data-label="Nome"><input class="ef-field field-nome" value="${escapeHtml(r.nome)}"></td>
       <td data-label="Matrícula"><input class="ef-field field-matricula" style="width:120px;" value="${escapeHtml(r.matricula)}"></td>
+      <td data-label="Férias">
+        <span class="badge-status ${st.ativo ? "bad" : "mid"}">${st.texto}</span>
+        <button class="icon-btn btn-ferias" title="Gerenciar férias" data-matricula="${escapeHtml(r.matricula)}" ${temMatricula ? "" : "disabled"}>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+        </button>
+      </td>
       <td data-label="Previsão Reserva"><input type="date" class="ef-field field-reserva-data" value="${r.reservaData || ""}"></td>
       <td data-label="Pediu Reserva?">
         <select class="ef-field field-reserva-pedida">
@@ -338,18 +392,184 @@ function renderRoster() {
           <option value="sim" ${r.reservaPedida ? "selected" : ""}>Sim</option>
         </select>
       </td>
+      <td class="cell-actions" data-label="">
+        <button class="icon-btn btn-detalhes" title="Ver dados do cadastro" data-matricula="${escapeHtml(r.matricula)}" ${temMatricula ? "" : "disabled"}>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 16v-5M12 8h.01"/></svg>
+        </button>
+      </td>
       <td class="cell-actions" data-label=""><button class="icon-btn btn-remove" title="Remover">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8">
           <path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m2 0v13a1 1 0 01-1 1H8a1 1 0 01-1-1V7h10z"/>
         </svg>
       </button></td>
     </tr>
-  `).join("");
+  `; }).join("");
 }
 
 function escapeHtml(s) {
   return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
+
+/* ---------------------------------------------------------
+   Férias — status por policial e modal de gestão
+--------------------------------------------------------- */
+function statusFerias(matricula) {
+  if (!matricula) return { texto: "—", ativo: false };
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+  const periodos = ferias.filter((f) => f.matricula === matricula);
+
+  const atual = periodos.find((f) => {
+    const ini = parseDate(f.data_inicio), fim = parseDate(f.data_fim);
+    return ini && fim && ini <= hoje && hoje <= fim;
+  });
+  if (atual) {
+    return { texto: `De férias até ${parseDate(atual.data_fim).toLocaleDateString("pt-BR")}`, ativo: true };
+  }
+
+  const proximo = periodos
+    .filter((f) => { const d = parseDate(f.data_inicio); return d && d > hoje; })
+    .sort((a, b) => parseDate(a.data_inicio) - parseDate(b.data_inicio))[0];
+  if (proximo) {
+    return { texto: `Férias a partir de ${parseDate(proximo.data_inicio).toLocaleDateString("pt-BR")}`, ativo: false };
+  }
+
+  return { texto: "—", ativo: false };
+}
+
+function nomeDoRoster(matricula) {
+  const item = roster.find((r) => r.matricula === matricula);
+  return item ? item.nome : "";
+}
+
+function renderFeriasModal(matricula) {
+  const nome = nomeDoRoster(matricula);
+  const periodos = [...ferias]
+    .filter((f) => f.matricula === matricula)
+    .sort((a, b) => parseDate(b.data_inicio) - parseDate(a.data_inicio));
+
+  const linhas = periodos.map((f) => `
+    <tr>
+      <td>${parseDate(f.data_inicio).toLocaleDateString("pt-BR")}</td>
+      <td>${parseDate(f.data_fim).toLocaleDateString("pt-BR")}</td>
+      <td>${escapeHtml(f.observacao || "")}</td>
+      <td><button class="icon-btn btn-ferias-del" data-fid="${f.id}" title="Remover período">&times;</button></td>
+    </tr>
+  `).join("") || `<tr><td colspan="4" style="text-align:center;color:var(--ink-faint);padding:14px;">Nenhum período cadastrado.</td></tr>`;
+
+  return `
+    <h3 style="margin:0 0 12px;">Férias — ${escapeHtml(nome)}</h3>
+    <table class="ef" style="margin-bottom:16px;">
+      <thead><tr><th>Início</th><th>Fim</th><th>Obs.</th><th style="width:36px;"></th></tr></thead>
+      <tbody>${linhas}</tbody>
+    </table>
+    <div class="ferias-form">
+      <label>Início<input type="date" id="ferias-inicio"></label>
+      <label>Fim<input type="date" id="ferias-fim"></label>
+      <label>Observação<input type="text" id="ferias-obs" placeholder="opcional"></label>
+      <button class="ef-btn primary" id="btn-ferias-add" data-matricula="${escapeHtml(matricula)}">Adicionar período</button>
+    </div>
+  `;
+}
+
+async function abrirDetalhes(matricula) {
+  const nome = nomeDoRoster(matricula);
+  openModal(`<h3 style="margin:0 0 12px;">Detalhes — ${escapeHtml(nome)}</h3><p>Carregando…</p>`);
+
+  const { data, error } = await sb
+    .from("cadastros_ingresso")
+    .select("dados, updated_at")
+    .eq("matricula", matricula)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    openModal(`<h3 style="margin:0 0 12px;">Detalhes — ${escapeHtml(nome)}</h3><p>Erro ao consultar o cadastro.</p>`);
+    return;
+  }
+  if (!data) {
+    openModal(`
+      <h3 style="margin:0 0 12px;">Detalhes — ${escapeHtml(nome)}</h3>
+      <p>Este policial ainda não enviou a atualização cadastral.</p>
+      <p><a href="formulario.html" target="_blank" rel="noopener">Abrir formulário de atualização cadastral</a></p>
+    `);
+    return;
+  }
+
+  const d = data.dados || {};
+  const campos = [
+    ["Nome de guerra", d.nomeGuerra],
+    ["GH", d.gh],
+    ["Função", d.funcao],
+    ["Local de trabalho", d.localTrabalho],
+    ["Telefone 1", d.telefone1],
+    ["Telefone 2", d.telefone2],
+    ["E-mail", d.email],
+  ];
+  const linhas = campos
+    .filter(([, v]) => v)
+    .map(([k, v]) => `<tr><td style="font-weight:600;padding:4px 14px 4px 0;white-space:nowrap;">${k}</td><td>${escapeHtml(String(v))}</td></tr>`)
+    .join("") || `<tr><td>Sem dados adicionais preenchidos.</td></tr>`;
+
+  openModal(`
+    <h3 style="margin:0 0 12px;">Detalhes — ${escapeHtml(nome)}</h3>
+    <table>${linhas}</table>
+    <p style="margin-top:14px;font-size:12px;color:var(--ink-faint);">
+      Atualização cadastral enviada em ${new Date(data.updated_at).toLocaleDateString("pt-BR")}
+    </p>
+  `);
+}
+
+/* ---------------------------------------------------------
+   Modal genérico
+--------------------------------------------------------- */
+function openModal(html) {
+  document.getElementById("modal-content").innerHTML = html;
+  document.getElementById("modal-overlay").style.display = "flex";
+}
+function closeModal() {
+  document.getElementById("modal-overlay").style.display = "none";
+}
+document.getElementById("modal-close").addEventListener("click", closeModal);
+document.getElementById("modal-overlay").addEventListener("click", (e) => {
+  if (e.target.id === "modal-overlay") closeModal();
+});
+
+document.getElementById("modal-content").addEventListener("click", async (e) => {
+  const addBtn = e.target.closest("#btn-ferias-add");
+  if (addBtn) {
+    const matricula = addBtn.dataset.matricula;
+    const inicio = document.getElementById("ferias-inicio").value;
+    const fim = document.getElementById("ferias-fim").value;
+    const obs = document.getElementById("ferias-obs").value.trim();
+    if (!inicio || !fim) { alert("Preencha início e fim do período."); return; }
+    if (fim < inicio) { alert("A data de fim não pode ser antes da data de início."); return; }
+
+    const { data, error } = await sb
+      .from("ferias")
+      .insert({ matricula, data_inicio: inicio, data_fim: fim, observacao: obs || null })
+      .select();
+    if (error) { console.error(error); alert("Erro ao salvar o período de férias."); return; }
+
+    ferias.push(data[0]);
+    openModal(renderFeriasModal(matricula));
+    renderRoster();
+    return;
+  }
+
+  const delBtn = e.target.closest(".btn-ferias-del");
+  if (delBtn) {
+    const fid = Number(delBtn.dataset.fid);
+    const item = ferias.find((f) => f.id === fid);
+    if (!item) return;
+    const { error } = await sb.from("ferias").delete().eq("id", fid);
+    if (error) { console.error(error); alert("Erro ao remover o período."); return; }
+
+    ferias = ferias.filter((f) => f.id !== fid);
+    openModal(renderFeriasModal(item.matricula));
+    renderRoster();
+  }
+});
 
 /* ---------------------------------------------------------
    Render — Metas (QO)
@@ -483,21 +703,40 @@ document.getElementById("roster-tbody").addEventListener("change", (e) => {
   if (e.target.classList.contains("field-reserva-data")) item.reservaData = e.target.value;
   if (e.target.classList.contains("field-reserva-pedida")) item.reservaPedida = e.target.value === "sim";
   persist();
-  renderDiagnose();
-  renderProjecao();
-  document.getElementById("roster-info").textContent = `${roster.length} registros · ${roster.filter((r) => isRRC(r.posto)).length} em RR/C`;
-});
-
-document.getElementById("roster-tbody").addEventListener("click", (e) => {
-  const btn = e.target.closest(".btn-remove");
-  if (!btn) return;
-  const tr = btn.closest("tr");
-  const id = Number(tr.dataset.id);
-  roster = roster.filter((r) => r.id !== id);
-  persist();
   renderRoster();
   renderDiagnose();
   renderProjecao();
+});
+
+document.getElementById("roster-tbody").addEventListener("click", (e) => {
+  const removeBtn = e.target.closest(".btn-remove");
+  if (removeBtn) {
+    const tr = removeBtn.closest("tr");
+    const id = Number(tr.dataset.id);
+    const item = roster.find((r) => r.id === id);
+    if (item && (item.matricula || "").trim()) pendingDeletes.push(item.matricula.trim());
+    roster = roster.filter((r) => r.id !== id);
+    persist();
+    renderRoster();
+    renderDiagnose();
+    renderProjecao();
+    return;
+  }
+
+  const feriasBtn = e.target.closest(".btn-ferias");
+  if (feriasBtn) {
+    const matricula = feriasBtn.dataset.matricula;
+    if (!matricula) return;
+    openModal(renderFeriasModal(matricula));
+    return;
+  }
+
+  const detBtn = e.target.closest(".btn-detalhes");
+  if (detBtn) {
+    const matricula = detBtn.dataset.matricula;
+    if (!matricula) return;
+    abrirDetalhes(matricula);
+  }
 });
 
 document.getElementById("btn-add-row").addEventListener("click", () => {
@@ -596,21 +835,33 @@ document.getElementById("btn-print").addEventListener("click", () => {
 (async function init() {
   try {
     const cloud = await loadFromCloud();
-    if (cloud) {
-      roster = cloud.roster || SEED_ROSTER;
+    if (cloud && cloud.roster.length) {
+      // já existem policiais migrados/cadastrados na nuvem
+      roster = cloud.roster;
       qdl = cloud.qdl || DEFAULT_QDL;
       includeRRC = !!cloud.include_rrc;
+      ferias = cloud.ferias;
+    } else if (cloud) {
+      // Supabase acessível, mas `policiais` ainda vazia — usa a
+      // semente local e já persiste (primeira carga do módulo).
+      roster = SEED_ROSTER;
+      qdl = cloud.qdl || DEFAULT_QDL;
+      includeRRC = !!cloud.include_rrc;
+      ferias = [];
+      await saveToCloud();
     } else {
+      // Sem Supabase configurado — roda "offline" com dados de exemplo.
       roster = SEED_ROSTER;
       qdl = { ...DEFAULT_QDL };
       includeRRC = false;
-      await saveToCloud({ roster, qdl, include_rrc: includeRRC });
+      ferias = [];
     }
   } catch (e) {
     console.error("Erro ao carregar dados:", e);
     roster = SEED_ROSTER;
     qdl = { ...DEFAULT_QDL };
     includeRRC = false;
+    ferias = [];
   }
   renderAll();
 })();
