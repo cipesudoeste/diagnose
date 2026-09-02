@@ -117,7 +117,9 @@
   <section class="ef-section" id="sec-efetivo">
     <div class="ef-toolbar">
       <div class="ef-toolbar-info" id="roster-info">—</div>
+      <input type="text" id="roster-search" class="ef-search" placeholder="Buscar por nome, matrícula ou posto…">
       <label class="check-rrc"><input type="checkbox" id="chk-rrc"> Considerar RR/C no efetivo real</label>
+      <label class="check-rrc"><input type="checkbox" id="chk-only-ferias"> Somente de férias agora</label>
       <div style="display:flex;gap:8px;">
         <button class="ef-btn" id="btn-bulk-toggle">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v14M6 11l6 6 6-6M4 21h16"/></svg>
@@ -140,8 +142,17 @@
     </div>
 
     <div class="table-wrap">
-      <table class="ef">
-        <thead><tr><th>Posto/Graduação</th><th>Nome</th><th>Matrícula</th><th>Férias</th><th>Previsão Reserva</th><th>Pediu Reserva?</th><th style="width:40px;"></th><th style="width:40px;"></th></tr></thead>
+      <table class="ef" id="roster-table">
+        <thead><tr>
+          <th class="sortable" data-sort="posto">Posto/Graduação</th>
+          <th class="sortable" data-sort="nome">Nome</th>
+          <th class="sortable" data-sort="matricula">Matrícula</th>
+          <th class="sortable" data-sort="ferias">Férias</th>
+          <th class="sortable" data-sort="reserva">Previsão Reserva</th>
+          <th>Pediu Reserva?</th>
+          <th style="width:40px;"></th>
+          <th style="width:40px;"></th>
+        </tr></thead>
         <tbody id="roster-tbody"></tbody>
       </table>
     </div>

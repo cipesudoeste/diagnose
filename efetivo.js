@@ -54,6 +54,10 @@ let qdl = { ...DEFAULT_QDL };
 let includeRRC = false;
 let saveTimer = null;
 let pendingDeletes = [];
+let rosterFilter = "";
+let rosterOnlyFerias = false;
+let rosterSortField = null;   // "posto" | "nome" | "matricula" | "ferias" | "reserva"
+let rosterSortDir = 1;        // 1 = asc, -1 = desc
 let projHorizonMonths = 12;
 let projOnlyConfirmed = false;
 
@@ -360,16 +364,83 @@ function renderDiagnose() {
   document.getElementById("p-diag-callout").innerHTML = calloutHtml;
 }
 
+function normalizeStr(s) {
+  return (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+function getVisibleRoster() {
+  let list = roster;
+
+  if (rosterFilter.trim()) {
+    const q = normalizeStr(rosterFilter);
+    list = list.filter((r) =>
+      normalizeStr(r.nome).includes(q) ||
+      normalizeStr(r.matricula).includes(q) ||
+      normalizeStr(r.posto).includes(q)
+    );
+  }
+
+  if (rosterOnlyFerias) {
+    list = list.filter((r) => statusFerias(r.matricula).ativo);
+  }
+
+  if (rosterSortField) {
+    list = [...list].sort((a, b) => {
+      let va, vb;
+      switch (rosterSortField) {
+        case "posto":
+          va = POSTOS.indexOf(a.posto); vb = POSTOS.indexOf(b.posto); break;
+        case "nome":
+          va = normalizeStr(a.nome); vb = normalizeStr(b.nome); break;
+        case "matricula":
+          va = a.matricula || ""; vb = b.matricula || ""; break;
+        case "reserva":
+          va = a.reservaData || "9999-99-99"; vb = b.reservaData || "9999-99-99"; break;
+        case "ferias":
+          va = statusFerias(a.matricula).ativo ? 0 : 1;
+          vb = statusFerias(b.matricula).ativo ? 0 : 1;
+          break;
+        default:
+          va = vb = 0;
+      }
+      if (va < vb) return -1 * rosterSortDir;
+      if (va > vb) return 1 * rosterSortDir;
+      return 0;
+    });
+  }
+
+  return list;
+}
+
+function updateSortIndicators() {
+  document.querySelectorAll("#roster-table th.sortable").forEach((th) => {
+    th.classList.remove("sort-asc", "sort-desc");
+    if (th.dataset.sort === rosterSortField) {
+      th.classList.add(rosterSortDir === 1 ? "sort-asc" : "sort-desc");
+    }
+  });
+}
+
 /* ---------------------------------------------------------
    Render — Efetivo (tabela editável)
 --------------------------------------------------------- */
 function renderRoster() {
+  const visible = getVisibleRoster();
   const rrcCount = roster.filter((r) => isRRC(r.posto)).length;
-  document.getElementById("roster-info").textContent = `${roster.length} registros · ${rrcCount} em RR/C`;
+  const filtrando = rosterFilter.trim() !== "" || rosterOnlyFerias;
+  document.getElementById("roster-info").textContent = filtrando
+    ? `${visible.length} de ${roster.length} registros · ${rrcCount} em RR/C`
+    : `${roster.length} registros · ${rrcCount} em RR/C`;
   document.getElementById("chk-rrc").checked = includeRRC;
+  document.getElementById("chk-only-ferias").checked = rosterOnlyFerias;
+  updateSortIndicators();
 
   const tbody = document.getElementById("roster-tbody");
-  tbody.innerHTML = roster.map((r) => {
+  if (!visible.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--ink-faint);padding:20px;">Nenhum registro encontrado.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = visible.map((r) => {
     const st = statusFerias(r.matricula);
     const temMatricula = !!(r.matricula || "").trim();
     return `
@@ -752,6 +823,29 @@ document.getElementById("chk-rrc").addEventListener("change", (e) => {
   includeRRC = e.target.checked;
   persist();
   renderDiagnose();
+});
+
+document.getElementById("roster-search").addEventListener("input", (e) => {
+  rosterFilter = e.target.value;
+  renderRoster();
+});
+
+document.getElementById("chk-only-ferias").addEventListener("change", (e) => {
+  rosterOnlyFerias = e.target.checked;
+  renderRoster();
+});
+
+document.querySelector("#roster-table thead").addEventListener("click", (e) => {
+  const th = e.target.closest("th.sortable");
+  if (!th) return;
+  const field = th.dataset.sort;
+  if (rosterSortField === field) {
+    rosterSortDir *= -1;
+  } else {
+    rosterSortField = field;
+    rosterSortDir = 1;
+  }
+  renderRoster();
 });
 
 document.getElementById("btn-bulk-toggle").addEventListener("click", () => {
