@@ -276,7 +276,7 @@ app.get('/api/logs', authRequired, (req, res) => {
 const MIRROR_DIR = path.join(__dirname, 'mirror');
 
 // Índice de itens espelhados — consumido pelo painel
-app.get('/i/index.json', authRequired, (req, res) => {
+app.get('/i/index.json', (req, res) => {
   const indexPath = path.join(MIRROR_DIR, 'index.json');
   if (!fs.existsSync(indexPath)) return res.json([]);
   try {
