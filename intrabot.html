@@ -10,12 +10,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --ib-bg:      var(--bg,         #211f1c);
-      --ib-panel:   var(--bg-panel,   #2f3326);
-      --ib-panel2:  var(--bg-panel-2, #3a4030);
-      --ib-brown:   var(--cipe-brown, #8a5a35);
+      --ib-bg:      var(--bg,          #211f1c);
+      --ib-panel:   var(--bg-panel,    #2f3326);
+      --ib-panel2:  var(--bg-panel-2,  #3a4030);
+      --ib-brown:   var(--cipe-brown,  #8a5a35);
       --ib-brownl:  var(--cipe-brown-l,#c08a55);
-      --ib-accent:  var(--accent,     #bfae8c);
+      --ib-accent:  var(--accent,      #bfae8c);
       --ib-blue:    var(--t-velhochico,#4a93a8);
       --ib-text:    #e8e4dc;
       --ib-muted:   #8a8578;
@@ -26,7 +26,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: var(--ib-bg); color: var(--ib-text); font-family: 'Inter', sans-serif; font-size: 14px; min-height: 100vh; }
 
-    /* ── LOGIN ── */
+    /* LOGIN */
     #login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 1rem; }
     .login-card { background: var(--ib-panel); border: 1px solid var(--ib-border); border-radius: 8px; padding: 2.5rem 2rem; width: 100%; max-width: 360px; }
     .login-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; }
@@ -44,7 +44,7 @@
     .btn-login:hover { opacity: .85; }
     .btn-login:disabled { opacity: .5; cursor: not-allowed; }
 
-    /* ── APP ── */
+    /* APP */
     #app { display: none; }
     #app.visible { display: flex; flex-direction: column; min-height: 100vh; }
 
@@ -100,9 +100,9 @@
     .ib-switch input:checked + .ib-switch-track::before { background: var(--ib-blue); transform: translateX(16px); }
 
     .ib-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-family: 'JetBrains Mono', monospace; padding: 3px 9px; border-radius: 20px; }
-    .ib-badge.ok   { background: rgba(74,147,168,.15); color: var(--ib-blue);   border: 1px solid rgba(74,147,168,.3); }
-    .ib-badge.warn { background: rgba(212,160,23,.12); color: var(--ib-warn);   border: 1px solid rgba(212,160,23,.3); }
-    .ib-badge.err  { background: rgba(192,57,43,.12);  color: #e07070;          border: 1px solid rgba(192,57,43,.3); }
+    .ib-badge.ok   { background: rgba(74,147,168,.15);  color: var(--ib-blue); border: 1px solid rgba(74,147,168,.3); }
+    .ib-badge.warn { background: rgba(212,160,23,.12);  color: var(--ib-warn); border: 1px solid rgba(212,160,23,.3); }
+    .ib-badge.err  { background: rgba(192,57,43,.12);   color: #e07070;        border: 1px solid rgba(192,57,43,.3); }
 
     .ib-btn { background: var(--ib-panel2); border: 1px solid var(--ib-border); border-radius: 4px; color: var(--ib-text); cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px; padding: 7px 14px; transition: border-color .2s, color .2s; display: inline-flex; align-items: center; gap: 6px; }
     .ib-btn:hover { border-color: var(--ib-accent); color: var(--ib-accent); }
@@ -111,6 +111,7 @@
     .ib-btn.danger  { border-color: rgba(192,57,43,.4); color: #e07070; }
     .ib-btn.danger:hover { background: rgba(192,57,43,.1); }
     .ib-btn-sm { padding: 4px 9px; font-size: 11px; }
+    .ib-btn:disabled { opacity: .45; cursor: not-allowed; }
 
     .ib-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr)); gap: 10px; margin-bottom: 1rem; }
     .ib-metric { background: var(--ib-panel); border: 1px solid var(--ib-border); border-radius: 6px; padding: .875rem 1rem; text-align: center; }
@@ -119,11 +120,23 @@
 
     .ib-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: .875rem; }
     .ib-list-item { display: flex; align-items: center; gap: 8px; background: var(--ib-panel2); border: 1px solid var(--ib-border); border-radius: 4px; padding: 7px 10px; }
-    .ib-item-text { flex: 1; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ib-text); }
-    .ib-item-role { font-size: 10px; padding: 2px 7px; border-radius: 20px; }
+    .ib-item-text { flex: 1; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ib-text); word-break: break-all; }
+    .ib-item-sub { font-size: 11px; color: var(--ib-muted); margin-top: 2px; font-family: 'Inter', sans-serif; }
+    .ib-item-role { font-size: 10px; padding: 2px 7px; border-radius: 20px; flex-shrink: 0; }
     .role-admin { background: rgba(138,90,53,.25); color: var(--ib-brownl); border: 1px solid rgba(138,90,53,.4); }
     .role-group { background: rgba(74,147,168,.12); color: var(--ib-blue);   border: 1px solid rgba(74,147,168,.3); }
-    .role-page  { background: rgba(191,174,140,.1); color: var(--ib-accent); border: 1px solid rgba(191,174,140,.2); }
+
+    /* Seletor de grupos */
+    .ib-group-picker { border: 1px solid var(--ib-border); border-radius: 4px; overflow: hidden; margin-bottom: .875rem; max-height: 280px; overflow-y: auto; }
+    .ib-group-option { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-bottom: 1px solid var(--ib-border); cursor: pointer; transition: background .15s; }
+    .ib-group-option:last-child { border-bottom: none; }
+    .ib-group-option:hover { background: var(--ib-panel2); }
+    .ib-group-option.selected { background: rgba(74,147,168,.1); }
+    .ib-group-check { width: 16px; height: 16px; border: 1px solid var(--ib-border); border-radius: 3px; background: var(--ib-panel2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; transition: all .15s; }
+    .ib-group-option.selected .ib-group-check { background: var(--ib-blue); border-color: var(--ib-blue); color: #fff; }
+    .ib-group-name { font-size: 13px; color: var(--ib-text); flex: 1; }
+    .ib-group-jid { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--ib-muted); margin-top: 1px; }
+    .ib-picker-empty { padding: 1rem; text-align: center; color: var(--ib-muted); font-size: 13px; }
 
     .ib-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: .5rem 0 .875rem; }
     .ib-chip { display: flex; align-items: center; gap: 5px; background: var(--ib-panel2); border: 1px solid var(--ib-border); border-radius: 20px; font-size: 12px; color: var(--ib-accent); padding: 3px 10px; }
@@ -144,7 +157,6 @@
     .ib-approval-info strong { color: var(--ib-blue); }
     .ib-hint { font-size: 11px; color: var(--ib-muted); margin-top: 5px; line-height: 1.5; }
 
-    /* QR */
     .qr-wrapper { background: #fff; border-radius: 6px; padding: 10px; display: inline-block; }
     .qr-wrapper img { display: block; border-radius: 4px; }
 
@@ -196,9 +208,9 @@
 
   <nav class="ib-nav">
     <button class="ib-tab-btn active" onclick="showPane('dashboard',this)">Painel</button>
-    <button class="ib-tab-btn" onclick="showPane('vpn',this)">VPN / Acesso</button>
-    <button class="ib-tab-btn" onclick="showPane('agendamento',this)">Agendamento</button>
+    <button class="ib-tab-btn" onclick="showPane('acesso',this)">Acesso</button>
     <button class="ib-tab-btn" onclick="showPane('whatsapp',this)">WhatsApp</button>
+    <button class="ib-tab-btn" onclick="showPane('agendamento',this)">Agendamento</button>
     <button class="ib-tab-btn" onclick="showPane('aprovacao',this)">Aprovação</button>
     <button class="ib-tab-btn" onclick="showPane('filtros',this)">Filtros</button>
     <button class="ib-tab-btn" onclick="showPane('logs',this)">Logs</button>
@@ -218,10 +230,6 @@
       <div class="ib-card">
         <div class="ib-card-title">Status dos serviços</div>
         <div class="ib-toggle-row">
-          <div class="ib-toggle-info"><div class="ib-toggle-label">VPN FortiClient</div><div class="ib-toggle-desc" id="vpn-status-desc">—</div></div>
-          <span class="ib-badge" id="vpn-badge">—</span>
-        </div>
-        <div class="ib-toggle-row">
           <div class="ib-toggle-info"><div class="ib-toggle-label">WhatsApp</div><div class="ib-toggle-desc" id="wa-status-desc">—</div></div>
           <span class="ib-badge" id="wa-badge">—</span>
         </div>
@@ -236,31 +244,95 @@
       </div>
     </div>
 
-    <!-- VPN -->
-    <div class="ib-pane" id="pane-vpn">
-      <div class="ib-section-title">VPN e acesso à intranet</div>
+    <!-- ACESSO -->
+    <div class="ib-pane" id="pane-acesso">
+      <div class="ib-section-title">Acesso à intranet</div>
       <div class="ib-card">
-        <div class="ib-card-title">Credenciais FortiClient VPN</div>
+        <div class="ib-card-title">Credenciais da intranet PM-BA</div>
+        <p style="font-size:12px;color:var(--ib-muted);margin-bottom:.875rem;line-height:1.5">
+          Use o mesmo usuário e senha do proxy (matrícula sem dígito). O acesso é feito via proxy
+          <code style="font-family:'JetBrains Mono',monospace">proxy.servicos.pm.ba.gov.br:8081</code>.
+        </p>
         <div class="ib-row">
-          <div class="ib-field"><label>Servidor VPN</label><input type="text" id="vpn-host" placeholder="vpn.pm.ba.gov.br" /></div>
-          <div class="ib-field" style="max-width:90px"><label>Porta</label><input type="text" id="vpn-port" placeholder="443" /></div>
+          <div class="ib-field"><label>Usuário (matrícula)</label><input type="text" id="intra-user" autocomplete="off" placeholder="30505913" /></div>
+          <div class="ib-field"><label>Senha</label><input type="password" id="intra-pass" autocomplete="new-password" /></div>
         </div>
-        <div class="ib-row">
-          <div class="ib-field"><label>Usuário</label><input type="text" id="vpn-user" autocomplete="off" /></div>
-          <div class="ib-field"><label>Senha VPN</label><input type="password" id="vpn-pass" autocomplete="new-password" /></div>
-        </div>
-        <div class="ib-row">
-          <div class="ib-field"><label>URL base da intranet</label><input type="text" id="intranet-url" placeholder="https://intranet.pm.ba.gov.br" /></div>
-        </div>
-        <button class="ib-btn primary" onclick="saveVpn()">Salvar credenciais</button>
+        <button class="ib-btn primary" onclick="saveIntranet()">Salvar credenciais</button>
       </div>
+    </div>
+
+    <!-- WHATSAPP -->
+    <div class="ib-pane" id="pane-whatsapp">
+      <div class="ib-section-title">WhatsApp</div>
+
       <div class="ib-card">
-        <div class="ib-card-title">Páginas monitoradas</div>
-        <div class="ib-list" id="pages-list"></div>
-        <div class="ib-row" style="margin-bottom:0">
-          <div class="ib-field"><input type="text" id="new-page" placeholder="/caminho/da/pagina" /></div>
-          <button class="ib-btn" style="flex-shrink:0;align-self:flex-end" onclick="addPage()">+ Adicionar</button>
+        <div class="ib-card-title">Sessão</div>
+        <div id="wa-state-disconnected">
+          <div class="ib-toggle-row" style="border:none;padding:0;margin-bottom:.875rem">
+            <div class="ib-toggle-info"><div class="ib-toggle-label">Status</div><div class="ib-toggle-desc">Nenhuma sessão ativa</div></div>
+            <span class="ib-badge err">Desconectado</span>
+          </div>
+          <button class="ib-btn primary" onclick="waConnect()">▶ Conectar</button>
         </div>
+        <div id="wa-state-qr" style="display:none">
+          <div class="ib-toggle-row" style="border:none;padding:0;margin-bottom:.875rem">
+            <div class="ib-toggle-info"><div class="ib-toggle-label">Status</div><div class="ib-toggle-desc">Aguardando escaneamento do QR</div></div>
+            <span class="ib-badge warn">Aguardando QR</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-start;gap:.75rem">
+            <div class="qr-wrapper"><img id="wa-qr-img" src="" alt="QR Code" width="240" height="240" /></div>
+            <p style="font-size:12px;color:var(--ib-muted);max-width:280px;line-height:1.5">
+              Abra o WhatsApp → Dispositivos conectados → Conectar dispositivo → aponte a câmera para o QR.
+            </p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="ib-btn" onclick="loadStatus()">↺ Atualizar</button>
+              <button class="ib-btn danger" onclick="waReset()">↺ Novo QR</button>
+            </div>
+          </div>
+        </div>
+        <div id="wa-state-connected" style="display:none">
+          <div class="ib-toggle-row">
+            <div class="ib-toggle-info"><div class="ib-toggle-label">Status</div><div class="ib-toggle-desc">Sessão Baileys ativa</div></div>
+            <span class="ib-badge ok">Conectado</span>
+          </div>
+          <div class="ib-toggle-row" style="border:none;padding-bottom:0">
+            <div class="ib-toggle-info">
+              <div class="ib-toggle-label">Número conectado</div>
+              <div id="wa-phone-desc" style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ib-text);margin-top:3px">—</div>
+            </div>
+          </div>
+          <div style="margin-top:.875rem;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="ib-btn danger" onclick="waDisconnect()">⏹ Desconectar</button>
+            <button class="ib-btn" onclick="waReset()">↺ Trocar conta</button>
+            <button class="ib-btn" onclick="loadStatus()">↺ Atualizar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin -->
+      <div class="ib-card">
+        <div class="ib-card-title">Administrador — recebe as prévias de aprovação</div>
+        <div class="ib-list" id="admin-list"></div>
+        <div class="ib-row" style="margin-bottom:0">
+          <div class="ib-field"><input type="text" id="new-admin" placeholder="5577999990000" /></div>
+          <button class="ib-btn" style="flex-shrink:0;align-self:flex-end" onclick="setAdmin()">Definir</button>
+        </div>
+        <div class="ib-hint">Número no formato internacional sem + (ex: 5577999990000). O admin responde "1 3", "todos" ou "ignorar" para publicar.</div>
+      </div>
+
+      <!-- Grupos -->
+      <div class="ib-card">
+        <div class="ib-card-title">Grupos de destino</div>
+        <div id="groups-selected" class="ib-list"></div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:.75rem;flex-wrap:wrap">
+          <button class="ib-btn" id="btn-load-groups" onclick="loadGroups()">↺ Carregar grupos do WhatsApp</button>
+          <span id="groups-load-status" style="font-size:11px;color:var(--ib-muted)"></span>
+        </div>
+        <div id="group-picker-wrap" style="display:none">
+          <div class="ib-group-picker" id="group-picker"></div>
+          <button class="ib-btn primary" style="margin-top:.5rem" onclick="confirmGroups()">Confirmar seleção</button>
+        </div>
+        <div class="ib-hint">Selecione os grupos onde o bot vai publicar as atualizações aprovadas.</div>
       </div>
     </div>
 
@@ -300,83 +372,6 @@
       <button class="ib-btn primary" onclick="saveSchedule()">Salvar agendamento</button>
     </div>
 
-    <!-- WHATSAPP -->
-    <div class="ib-pane" id="pane-whatsapp">
-      <div class="ib-section-title">WhatsApp</div>
-
-      <!-- Card de sessão -->
-      <div class="ib-card">
-        <div class="ib-card-title">Sessão</div>
-
-        <!-- Estado: desconectado -->
-        <div id="wa-state-disconnected">
-          <div class="ib-toggle-row" style="border:none;padding:0;margin-bottom:.875rem">
-            <div class="ib-toggle-info"><div class="ib-toggle-label">Status</div><div class="ib-toggle-desc">Nenhuma sessão ativa</div></div>
-            <span class="ib-badge err">Desconectado</span>
-          </div>
-          <button class="ib-btn primary" onclick="waConnect()">▶ Conectar</button>
-        </div>
-
-        <!-- Estado: aguardando QR -->
-        <div id="wa-state-qr" style="display:none">
-          <div class="ib-toggle-row" style="border:none;padding:0;margin-bottom:.875rem">
-            <div class="ib-toggle-info"><div class="ib-toggle-label">Status</div><div class="ib-toggle-desc">Aguardando escaneamento do QR</div></div>
-            <span class="ib-badge warn">Aguardando QR</span>
-          </div>
-          <div style="display:flex;flex-direction:column;align-items:flex-start;gap:.75rem">
-            <div class="qr-wrapper"><img id="wa-qr-img" src="" alt="QR Code" width="240" height="240" /></div>
-            <p style="font-size:12px;color:var(--ib-muted);max-width:280px;line-height:1.5">
-              Abra o WhatsApp no celular → Dispositivos conectados → Conectar dispositivo → aponte a câmera para o QR acima.
-            </p>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="ib-btn" onclick="loadStatus()">↺ Atualizar</button>
-              <button class="ib-btn danger" onclick="waReset()">↺ Novo QR</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Estado: conectado -->
-        <div id="wa-state-connected" style="display:none">
-          <div class="ib-toggle-row">
-            <div class="ib-toggle-info"><div class="ib-toggle-label">Status</div><div class="ib-toggle-desc">Sessão Baileys ativa</div></div>
-            <span class="ib-badge ok">Conectado</span>
-          </div>
-          <div class="ib-toggle-row" style="border:none;padding-bottom:0">
-            <div class="ib-toggle-info">
-              <div class="ib-toggle-label">Número conectado</div>
-              <div id="wa-phone-desc" style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ib-text);margin-top:3px">—</div>
-            </div>
-          </div>
-          <div style="margin-top:.875rem;display:flex;gap:8px;flex-wrap:wrap">
-            <button class="ib-btn danger" onclick="waDisconnect()">⏹ Desconectar</button>
-            <button class="ib-btn" onclick="waReset()">↺ Trocar conta</button>
-            <button class="ib-btn" onclick="loadStatus()">↺ Atualizar</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Admin -->
-      <div class="ib-card">
-        <div class="ib-card-title">Administrador — recebe perguntas de aprovação</div>
-        <div class="ib-list" id="admin-list"></div>
-        <div class="ib-row" style="margin-bottom:0">
-          <div class="ib-field"><input type="text" id="new-admin" placeholder="+55 77 9 9999-0000" /></div>
-          <button class="ib-btn" style="flex-shrink:0;align-self:flex-end" onclick="setAdmin()">Definir admin</button>
-        </div>
-      </div>
-
-      <!-- Grupos -->
-      <div class="ib-card">
-        <div class="ib-card-title">Grupos de destino</div>
-        <div class="ib-list" id="groups-list"></div>
-        <div class="ib-row" style="margin-bottom:0">
-          <div class="ib-field"><input type="text" id="new-group" placeholder="ID do grupo (120363...@g.us) ou número" /></div>
-          <button class="ib-btn" style="flex-shrink:0;align-self:flex-end" onclick="addGroup()">+ Adicionar</button>
-        </div>
-        <div class="ib-hint">O ID do grupo aparece nos logs quando o bot recebe a primeira mensagem do grupo.</div>
-      </div>
-    </div>
-
     <!-- APROVAÇÃO -->
     <div class="ib-pane" id="pane-aprovacao">
       <div class="ib-section-title">Fluxo de aprovação</div>
@@ -408,7 +403,7 @@
 
 Responda com os números para publicar (ex: "1 2"), "todos" ou "ignorar".</textarea>
         </div>
-        <div class="ib-hint">Variáveis: {itens} · {data} · {hora}</div>
+        <div class="ib-hint">Variáveis: {itens}</div>
       </div>
       <button class="ib-btn primary" onclick="saveApproval()">Salvar</button>
     </div>
@@ -434,7 +429,7 @@ Responda com os números para publicar (ex: "1 2"), "todos" ou "ignorar".</texta
       </div>
       <div class="ib-card">
         <div class="ib-toggle-row">
-          <div class="ib-toggle-info"><div class="ib-toggle-label">Evitar reenvio de conteúdo já publicado</div><div class="ib-toggle-desc">Compara hash do conteúdo com histórico dos últimos 30 dias</div></div>
+          <div class="ib-toggle-info"><div class="ib-toggle-label">Evitar reenvio de conteúdo já publicado</div><div class="ib-toggle-desc">Compara links com histórico já visto</div></div>
           <label class="ib-switch"><input type="checkbox" id="filter-dedup" checked /><span class="ib-switch-track"></span></label>
         </div>
       </div>
@@ -458,19 +453,14 @@ Responda com os números para publicar (ex: "1 2"), "todos" ou "ignorar".</texta
 <div class="ib-toast" id="toast"></div>
 
 <script>
-/* ══════════════════════════════════════
-   CONFIGURAÇÃO — ajuste o IP/porta aqui
-══════════════════════════════════════ */
-const API_BASE  = '/intrabot-api';   // local: localhost | VPS: http://IP:3001
+const API_BASE  = '/intrabot-api';
 const TOKEN_KEY = 'ib_token';
 
-/* ══════════════════════════════════════
-   AUTH
-══════════════════════════════════════ */
 const getToken   = () => localStorage.getItem(TOKEN_KEY);
 const setToken   = t  => localStorage.setItem(TOKEN_KEY, t);
 const clearToken = () => localStorage.removeItem(TOKEN_KEY);
 
+/* AUTH */
 async function doLogin() {
   const user = document.getElementById('login-user').value.trim();
   const pass = document.getElementById('login-pass').value;
@@ -481,29 +471,18 @@ async function doLogin() {
   err.classList.remove('visible');
   try {
     const res = await fetch(`${API_BASE}/api/auth`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user, pass })
     });
     if (!res.ok) throw new Error();
     const { token } = await res.json();
-    setToken(token);
-    enterApp();
+    setToken(token); enterApp();
   } catch { showErr('Usuário ou senha incorretos.'); }
   finally { btn.disabled = false; btn.textContent = 'Entrar'; }
 }
 
-function showErr(msg) {
-  const el = document.getElementById('login-error');
-  el.textContent = msg; el.classList.add('visible');
-}
-
-function doLogout() {
-  clearToken();
-  document.getElementById('app').classList.remove('visible');
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('login-screen').style.display = 'flex';
-}
+function showErr(msg) { const el=document.getElementById('login-error'); el.textContent=msg; el.classList.add('visible'); }
+function doLogout() { clearToken(); document.getElementById('app').classList.remove('visible'); document.getElementById('app').style.display='none'; document.getElementById('login-screen').style.display='flex'; }
 
 function enterApp() {
   document.getElementById('login-screen').style.display = 'none';
@@ -516,20 +495,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const t = getToken();
   if (t) {
     fetch(`${API_BASE}/api/status`, { headers: { Authorization: `Bearer ${t}` } })
-      .then(r => { if (r.ok) enterApp(); else clearToken(); })
-      .catch(() => {});
+      .then(r => { if (r.ok) enterApp(); else clearToken(); }).catch(() => {});
   }
   ['login-user','login-pass'].forEach(id =>
-    document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); })
+    document.getElementById(id).addEventListener('keydown', e => { if (e.key==='Enter') doLogin(); })
   );
   document.querySelectorAll('.ib-day-btn').forEach(b =>
     b.addEventListener('click', () => b.classList.toggle('on'))
   );
 });
 
-/* ══════════════════════════════════════
-   NAVEGAÇÃO
-══════════════════════════════════════ */
+/* NAVEGAÇÃO */
 function showPane(id, btn) {
   document.querySelectorAll('.ib-pane').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.ib-tab-btn').forEach(b => b.classList.remove('active'));
@@ -538,9 +514,7 @@ function showPane(id, btn) {
   if (id === 'logs') loadLogs();
 }
 
-/* ══════════════════════════════════════
-   API HELPERS
-══════════════════════════════════════ */
+/* API HELPERS */
 async function apiFetch(path, opts = {}) {
   const res = await fetch(API_BASE + path, {
     ...opts,
@@ -555,33 +529,22 @@ async function apiAction(path) {
   catch { showToast('Erro ao enviar comando.'); }
 }
 
-/* ══════════════════════════════════════
-   STATUS
-══════════════════════════════════════ */
+/* STATUS */
 async function loadAll() { await loadStatus(); await loadConfig(); }
 
 async function loadStatus() {
   try {
     const d = await apiFetch('/api/status');
-
     setEl('m-checks',  d.checks_today  ?? '—');
     setEl('m-updates', d.updates_today ?? '—');
     setEl('m-pending', d.pending       ?? '—');
     setEl('m-sent',    d.sent_today    ?? '—');
-
-    setBadge('vpn-badge', d.vpn_connected ? 'ok':'err', d.vpn_connected ? 'Conectada':'Desconectada');
-    setEl('vpn-status-desc', d.vpn_ip || '—');
-
     setBadge('wa-badge', d.wa_connected ? 'ok':'err', d.wa_connected ? 'Online':'Offline');
     setEl('wa-status-desc', d.wa_connected ? (d.wa_phone ? `+${d.wa_phone}` : 'Sessão ativa') : 'Sessão inativa');
-
     setBadge('next-check-badge', 'warn', 'Aguardando');
     setEl('next-check-desc', d.next_check ? `Em ${d.next_check}` : '—');
-
-    const ok = d.vpn_connected && d.wa_connected;
-    document.getElementById('status-dot').className = 'ib-status-dot' + (ok ? '' : ' offline');
-    setEl('status-label', ok ? 'operacional' : 'atenção necessária');
-
+    document.getElementById('status-dot').className = 'ib-status-dot' + (d.wa_connected ? '' : ' offline');
+    setEl('status-label', d.wa_connected ? 'operacional' : 'atenção necessária');
     renderWaState(d);
   } catch {
     setEl('status-label', 'sem conexão com o backend');
@@ -589,41 +552,30 @@ async function loadStatus() {
   }
 }
 
-/* ══════════════════════════════════════
-   WHATSAPP — estado visual
-══════════════════════════════════════ */
+/* WHATSAPP — estado visual */
 function renderWaState(d) {
   const elDisc = document.getElementById('wa-state-disconnected');
   const elQR   = document.getElementById('wa-state-qr');
   const elConn = document.getElementById('wa-state-connected');
   if (!elDisc) return;
-
   const hasQR  = !!d.wa_qr;
   const isConn = !!d.wa_connected;
-
   elDisc.style.display = (!isConn && !hasQR) ? 'block' : 'none';
   elQR.style.display   = (!isConn &&  hasQR) ? 'block' : 'none';
   elConn.style.display = ( isConn           ) ? 'block' : 'none';
-
   if (hasQR && !isConn) {
     document.getElementById('wa-qr-img').src = d.wa_qr;
-    // Polling automático a cada 20s enquanto aguarda escaneamento
     if (!window._qrPoll) {
       window._qrPoll = setInterval(async () => {
         const fresh = await apiFetch('/api/status').catch(() => null);
         if (!fresh) return;
-        if (fresh.wa_connected || !fresh.wa_qr) {
-          clearInterval(window._qrPoll); window._qrPoll = null;
-          renderWaState(fresh);
-        } else {
-          document.getElementById('wa-qr-img').src = fresh.wa_qr;
-        }
+        if (fresh.wa_connected || !fresh.wa_qr) { clearInterval(window._qrPoll); window._qrPoll = null; renderWaState(fresh); }
+        else { document.getElementById('wa-qr-img').src = fresh.wa_qr; }
       }, 20000);
     }
   } else {
     if (window._qrPoll) { clearInterval(window._qrPoll); window._qrPoll = null; }
   }
-
   if (isConn) {
     const phone = d.wa_phone ? `+${d.wa_phone}` : '—';
     const name  = d.wa_name  ? ` (${d.wa_name})` : '';
@@ -632,40 +584,92 @@ function renderWaState(d) {
 }
 
 async function waConnect() {
-  try {
-    await apiFetch('/api/whatsapp/connect', { method: 'POST' });
-    showToast('Iniciando conexão — aguarde o QR...');
-    setTimeout(loadStatus, 3000);
-    setInterval(loadStatus, 30000);
-  } catch { showToast('Erro ao conectar.'); }
+  try { await apiFetch('/api/whatsapp/connect', { method:'POST' }); showToast('Iniciando conexão — aguarde o QR...'); setTimeout(loadStatus, 3000); }
+  catch { showToast('Erro ao conectar.'); }
 }
-
 async function waDisconnect() {
   if (!confirm('Desconectar o WhatsApp?')) return;
-  try {
-    await apiFetch('/api/whatsapp/disconnect', { method: 'POST' });
-    showToast('WhatsApp desconectado.');
-    setTimeout(loadStatus, 2000);
-  } catch { showToast('Erro ao desconectar.'); }
+  try { await apiFetch('/api/whatsapp/disconnect', { method:'POST' }); showToast('WhatsApp desconectado.'); setTimeout(loadStatus, 2000); }
+  catch { showToast('Erro ao desconectar.'); }
 }
-
 async function waReset() {
   if (!confirm('Isso apaga a sessão atual e gera um novo QR. Continuar?')) return;
-  try {
-    await apiFetch('/api/whatsapp/reset', { method: 'POST' });
-    showToast('Sessão resetada — aguarde o novo QR...');
-    setTimeout(loadStatus, 4000);
-  } catch { showToast('Erro ao resetar.'); }
+  try { await apiFetch('/api/whatsapp/reset', { method:'POST' }); showToast('Sessão resetada — aguarde o novo QR...'); setTimeout(loadStatus, 4000); }
+  catch { showToast('Erro ao resetar.'); }
 }
 
-/* ══════════════════════════════════════
-   CONFIG — carrega e salva
-══════════════════════════════════════ */
+/* SELETOR DE GRUPOS */
+let _allGroups = [];
+let _selectedGroups = new Set();
+
+async function loadGroups() {
+  const btn = document.getElementById('btn-load-groups');
+  const status = document.getElementById('groups-load-status');
+  btn.disabled = true; status.textContent = 'Carregando...';
+  try {
+    const data = await apiFetch('/api/whatsapp/groups');
+    if (!data.groups || !data.groups.length) { status.textContent = 'Nenhum grupo encontrado.'; btn.disabled = false; return; }
+    _allGroups = data.groups;
+    status.textContent = `${data.groups.length} grupos encontrados.`;
+    renderGroupPicker();
+    document.getElementById('group-picker-wrap').style.display = 'block';
+  } catch { status.textContent = 'Erro ao carregar grupos.'; }
+  btn.disabled = false;
+}
+
+function renderGroupPicker() {
+  const el = document.getElementById('group-picker');
+  if (!_allGroups.length) { el.innerHTML = '<div class="ib-picker-empty">Nenhum grupo disponível.</div>'; return; }
+  el.innerHTML = _allGroups.map(g => {
+    const sel = _selectedGroups.has(g.id);
+    return `<div class="ib-group-option${sel?' selected':''}" onclick="toggleGroup('${g.id}')" data-id="${g.id}">
+      <div class="ib-group-check">${sel?'✓':''}</div>
+      <div>
+        <div class="ib-group-name">${escHtml(g.name)}</div>
+        <div class="ib-group-jid">${g.id}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleGroup(id) {
+  if (_selectedGroups.has(id)) _selectedGroups.delete(id);
+  else _selectedGroups.add(id);
+  renderGroupPicker();
+}
+
+function confirmGroups() {
+  const selected = _allGroups.filter(g => _selectedGroups.has(g.id));
+  renderSelectedGroups(selected);
+  document.getElementById('group-picker-wrap').style.display = 'none';
+  document.getElementById('groups-load-status').textContent = `${selected.length} grupo(s) selecionado(s).`;
+  // Salva imediatamente
+  saveApproval();
+}
+
+function renderSelectedGroups(groups) {
+  const el = document.getElementById('groups-selected');
+  el.innerHTML = '';
+  groups.forEach(g => {
+    const d = document.createElement('div');
+    d.className = 'ib-list-item'; d.dataset.value = g.id;
+    d.innerHTML = `<div style="flex:1"><div class="ib-item-text">${escHtml(g.name)}</div><div class="ib-item-sub">${g.id}</div></div><span class="ib-item-role role-group">grupo</span><button class="ib-btn ib-btn-sm danger" onclick="removeGroup('${g.id}',this)">✕</button>`;
+    el.appendChild(d);
+    _selectedGroups.add(g.id);
+  });
+}
+
+function removeGroup(id, btn) {
+  _selectedGroups.delete(id);
+  btn.closest('.ib-list-item').remove();
+  saveApproval();
+}
+
+/* CONFIG */
 async function loadConfig() {
   try {
     const cfg = await apiFetch('/api/config');
-    if (cfg.vpn) { setVal('vpn-host', cfg.vpn.host); setVal('vpn-port', cfg.vpn.port); setVal('vpn-user', cfg.vpn.user); setVal('intranet-url', cfg.vpn.intranet_url); }
-    renderList('pages-list', cfg.pages||[], 'page');
+    if (cfg.intranet) { setVal('intra-user', cfg.intranet.user); }
     if (cfg.schedule) {
       setVal('sched-start', cfg.schedule.start); setVal('sched-end', cfg.schedule.end); setVal('sched-interval', cfg.schedule.interval);
       document.getElementById('sched-force-send').checked    = !!cfg.schedule.force_send;
@@ -673,7 +677,13 @@ async function loadConfig() {
       document.querySelectorAll('.ib-day-btn').forEach(b => b.classList.toggle('on', (cfg.schedule.days||[]).includes(parseInt(b.dataset.day))));
     }
     renderList('admin-list', cfg.admin ? [cfg.admin] : [], 'admin');
-    renderList('groups-list', cfg.groups||[], 'group');
+    // Grupos salvos
+    _selectedGroups = new Set(cfg.groups || []);
+    const savedGroups = (cfg.groups || []).map(id => {
+      const found = _allGroups.find(g => g.id === id);
+      return found || { id, name: id };
+    });
+    renderSelectedGroups(savedGroups);
     if (cfg.approval) {
       document.getElementById('aprov-manual').checked = !!cfg.approval.manual;
       document.getElementById('aprov-auto').checked   = !!cfg.approval.auto_publish;
@@ -686,11 +696,9 @@ async function loadConfig() {
   } catch {}
 }
 
-async function saveVpn() {
-  await apiFetch('/api/config/vpn', { method:'POST', body: JSON.stringify({
-    host: getVal('vpn-host'), port: getVal('vpn-port'), user: getVal('vpn-user'),
-    pass: getVal('vpn-pass'), intranet_url: getVal('intranet-url'),
-    pages: collectList('pages-list')
+async function saveIntranet() {
+  await apiFetch('/api/config/intranet', { method:'POST', body: JSON.stringify({
+    user: getVal('intra-user'), pass: getVal('intra-pass')
   })});
   showToast('Credenciais salvas.');
 }
@@ -707,12 +715,12 @@ async function saveSchedule() {
 
 async function saveApproval() {
   await apiFetch('/api/config/approval', { method:'POST', body: JSON.stringify({
-    manual: document.getElementById('aprov-manual').checked,
+    manual:       document.getElementById('aprov-manual').checked,
     auto_publish: document.getElementById('aprov-auto').checked,
-    timeout_min: parseInt(getVal('aprov-timeout')),
-    template: getVal('aprov-template'),
-    admin: collectList('admin-list')[0] || null,
-    groups: collectList('groups-list')
+    timeout_min:  parseInt(getVal('aprov-timeout')),
+    template:     getVal('aprov-template'),
+    admin:        collectList('admin-list')[0] || null,
+    groups:       [..._selectedGroups]
   })});
   showToast('Aprovação salva.');
 }
@@ -726,72 +734,50 @@ async function saveFilters() {
   showToast('Filtros salvos.');
 }
 
-/* ══════════════════════════════════════
-   LISTAS E CHIPS
-══════════════════════════════════════ */
-function renderList(cid, items, role) {
-  const el = document.getElementById(cid);
-  el.innerHTML = '';
-  items.forEach(v => el.appendChild(makeListItem(v, role)));
-}
+/* LISTAS */
+function renderList(cid, items, role) { const el=document.getElementById(cid); el.innerHTML=''; items.forEach(v=>el.appendChild(makeListItem(v,role))); }
 function makeListItem(v, role) {
-  const d = document.createElement('div');
-  d.className = 'ib-list-item'; d.dataset.value = v;
-  const label = role === 'admin' ? 'admin' : role === 'group' ? 'grupo' : 'monitorada';
-  d.innerHTML = `<span class="ib-item-text">${v}</span><span class="ib-item-role role-${role}">${label}</span><button class="ib-btn ib-btn-sm danger" onclick="this.closest('.ib-list-item').remove()">✕</button>`;
+  const d=document.createElement('div'); d.className='ib-list-item'; d.dataset.value=v;
+  const label = role==='admin' ? 'admin' : 'grupo';
+  d.innerHTML=`<span class="ib-item-text">${v}</span><span class="ib-item-role role-${role}">${label}</span><button class="ib-btn ib-btn-sm danger" onclick="this.closest('.ib-list-item').remove()">✕</button>`;
   return d;
 }
-function collectList(cid) { return [...document.querySelectorAll(`#${cid} .ib-list-item`)].map(e => e.dataset.value); }
+function collectList(cid) { return [...document.querySelectorAll(`#${cid} .ib-list-item`)].map(e=>e.dataset.value); }
+function setAdmin() { const i=document.getElementById('new-admin'); if(!i.value.trim()) return; document.getElementById('admin-list').innerHTML=''; document.getElementById('admin-list').appendChild(makeListItem(i.value.trim(),'admin')); i.value=''; saveApproval(); }
 
-function addPage()  { const i=document.getElementById('new-page');  if(!i.value.trim()) return; document.getElementById('pages-list').appendChild(makeListItem(i.value.trim(),'page'));  i.value=''; }
-function setAdmin() { const i=document.getElementById('new-admin'); if(!i.value.trim()) return; document.getElementById('admin-list').innerHTML=''; document.getElementById('admin-list').appendChild(makeListItem(i.value.trim(),'admin')); i.value=''; }
-function addGroup() { const i=document.getElementById('new-group'); if(!i.value.trim()) return; document.getElementById('groups-list').appendChild(makeListItem(i.value.trim(),'group')); i.value=''; }
-
-function renderChips(cid, items) {
-  const el = document.getElementById(cid); el.innerHTML = '';
-  items.forEach(kw => el.appendChild(makeChip(kw)));
-}
-function makeChip(kw) {
-  const d = document.createElement('div');
-  d.className = 'ib-chip'; d.dataset.value = kw;
-  d.innerHTML = `${kw}<button onclick="this.parentElement.remove()">×</button>`;
-  return d;
-}
-function collectChips(cid) { return [...document.querySelectorAll(`#${cid} .ib-chip`)].map(e => e.dataset.value); }
+/* CHIPS */
+function renderChips(cid, items) { const el=document.getElementById(cid); el.innerHTML=''; items.forEach(kw=>el.appendChild(makeChip(kw))); }
+function makeChip(kw) { const d=document.createElement('div'); d.className='ib-chip'; d.dataset.value=kw; d.innerHTML=`${kw}<button onclick="this.parentElement.remove()">×</button>`; return d; }
+function collectChips(cid) { return [...document.querySelectorAll(`#${cid} .ib-chip`)].map(e=>e.dataset.value); }
 function addChip(type) { const i=document.getElementById(`kw-${type}-input`); if(!i.value.trim()) return; document.getElementById(`chips-${type}`).appendChild(makeChip(i.value.trim())); i.value=''; }
 
-/* ══════════════════════════════════════
-   LOGS
-══════════════════════════════════════ */
+/* LOGS */
 async function loadLogs() {
   try {
     const { logs } = await apiFetch('/api/logs?limit=40');
     const el = document.getElementById('log-list');
-    if (!logs?.length) { el.innerHTML = '<div style="color:var(--ib-muted);font-size:13px">Nenhum log ainda.</div>'; return; }
-    el.innerHTML = logs.map(l => `
+    if (!logs?.length) { el.innerHTML='<div style="color:var(--ib-muted);font-size:13px">Nenhum log ainda.</div>'; return; }
+    el.innerHTML = logs.map(l=>`
       <div class="ib-log-entry">
         <span class="ib-log-time">${l.time}</span>
         <span class="ib-badge ${l.level==='ok'?'ok':l.level==='warn'?'warn':'err'}" style="flex-shrink:0">${l.level.toUpperCase()}</span>
         <span class="ib-log-msg">${l.msg}</span>
       </div>`).join('');
-  } catch {
-    document.getElementById('log-list').innerHTML = '<div style="color:var(--ib-muted);font-size:13px">Erro ao carregar — backend inacessível.</div>';
-  }
+  } catch { document.getElementById('log-list').innerHTML='<div style="color:var(--ib-muted);font-size:13px">Erro ao carregar.</div>'; }
 }
 
-/* ══════════════════════════════════════
-   UTILITÁRIOS
-══════════════════════════════════════ */
+/* UTILITÁRIOS */
 function setEl(id, v)  { const e=document.getElementById(id); if(e) e.textContent=v; }
-function getVal(id)    { return document.getElementById(id).value; }
-function setVal(id, v) { if(v!=null) document.getElementById(id).value=v; }
+function getVal(id)    { return document.getElementById(id)?.value || ''; }
+function setVal(id, v) { const e=document.getElementById(id); if(e&&v!=null) e.value=v; }
 function setBadge(id, type, text) { const e=document.getElementById(id); if(e){e.className='ib-badge '+type; e.textContent=text;} }
+function escHtml(s)    { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 let _toastTimer;
-function showToast(msg) {
-  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
-  clearTimeout(_toastTimer); _toastTimer=setTimeout(()=>t.classList.remove('show'),2500);
-}
+function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(_toastTimer); _toastTimer=setTimeout(()=>t.classList.remove('show'),2500); }
+
+/* Poll automático de status */
+setInterval(loadStatus, 30000);
 </script>
 </body>
 </html>

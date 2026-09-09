@@ -21,7 +21,6 @@ const AUTH_DIR   = path.join(BASE, 'auth_info_baileys');
 
 app.use(express.json());
 
-// ── Estado em memória ──────────────────────────────────────────
 let sock            = null;
 let waConnected     = false;
 let waPhone         = null;
@@ -29,7 +28,6 @@ let waName          = null;
 let shouldReconnect = true;
 let reconnectTimer  = null;
 
-// ── Helpers ───────────────────────────────────────────────────
 function loadConfig() {
   return fs.existsSync(CFG_FILE) ? JSON.parse(fs.readFileSync(CFG_FILE)) : {};
 }
@@ -50,7 +48,6 @@ function toJid(num) {
   return `${num.replace(/\D/g,'')}@s.whatsapp.net`;
 }
 
-// ── Derruba socket sem reconectar ─────────────────────────────
 async function destroySocket() {
   if (sock) {
     try { await sock.logout(); } catch {}
@@ -66,7 +63,6 @@ function clearAuth() {
   if (fs.existsSync(AUTH_DIR)) fs.rmSync(AUTH_DIR, { recursive: true, force: true });
 }
 
-// ── Inicia Baileys ────────────────────────────────────────────
 async function startBaileys() {
   if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
 
@@ -84,8 +80,6 @@ async function startBaileys() {
   sock.ev.on('creds.update', saveCreds);
 
   sock.ev.on('connection.update', async ({ connection, lastDisconnect, qr }) => {
-
-    // QR disponível
     if (qr) {
       try {
         const png = await QRCode.toDataURL(qr, { width: 280, margin: 2 });
@@ -96,7 +90,6 @@ async function startBaileys() {
       }
     }
 
-    // Conectado
     if (connection === 'open') {
       waConnected = true;
       try {
@@ -108,7 +101,6 @@ async function startBaileys() {
       log('ok', `Conectado — ${waPhone} (${waName})`);
     }
 
-    // Desconectado
     if (connection === 'close') {
       waConnected = false;
       waPhone     = null;
@@ -132,7 +124,6 @@ async function startBaileys() {
     }
   });
 
-  // ── Recebe mensagens do admin ─────────────────────────────
   sock.ev.on('messages.upsert', async ({ messages }) => {
     const cfg      = loadConfig();
     const adminNum = (cfg.admin || '').replace(/\D/g, '');
@@ -159,9 +150,8 @@ async function startBaileys() {
 }
 
 /* ════════════════════════════════════════
-   ENDPOINTS LOCAIS (usados pelo server.js e scraper.py)
+   ENDPOINTS
 ════════════════════════════════════════ */
-
 app.post('/connect', async (req, res) => {
   shouldReconnect = true;
   if (waConnected) return res.json({ ok: true, already: true });
@@ -206,6 +196,16 @@ app.post('/send-approval', async (req, res) => {
     await sock.sendMessage(toJid(to), { text: msg });
     log('ok', `Aprovação enviada para ${to}`);
     res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/groups', async (req, res) => {
+  if (!waConnected || !sock) return res.status(503).json({ error: 'WA desconectado' });
+  try {
+    const grupos = await sock.groupFetchAllParticipating();
+    const lista  = Object.values(grupos).map(g => ({ id: g.id, name: g.subject }));
+    lista.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+    res.json({ groups: lista });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

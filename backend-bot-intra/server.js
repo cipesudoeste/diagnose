@@ -14,15 +14,14 @@ const PORT = process.env.PORT || 3001;
 const CONFIG_FILE = path.join(__dirname, 'config.json');
 const LOG_FILE    = path.join(__dirname, 'bot.log');
 
-// ── Config padrão ─────────────────────────────────────────────
 const DEFAULT_CONFIG = {
   auth: {
     user: 'operador',
-    // senha padrão: cipe2024 — troque após o primeiro login
     pass_hash: crypto.createHash('sha256').update('cipe2024').digest('hex')
   },
   jwt_secret: crypto.randomBytes(32).toString('hex'),
   vpn: { host: '', port: '443', user: '', pass: '', intranet_url: '' },
+  intranet: { user: '', pass: '' },
   pages: [],
   schedule: {
     start: '08:00', end: '20:00', interval: 4,
@@ -55,7 +54,6 @@ function appendLog(level, msg) {
   console.log(`[${level.toUpperCase()}] ${msg}`);
 }
 
-// ── Proxy interno para o serviço WA (porta 3002) ──────────────
 function callWA(method, endpoint, body) {
   return new Promise((resolve, reject) => {
     const data = body ? JSON.stringify(body) : null;
@@ -78,7 +76,6 @@ function callWA(method, endpoint, body) {
   });
 }
 
-// ── Middlewares ───────────────────────────────────────────────
 app.use(cors({
   origin: [
     'https://cipesudoeste.vercel.app',
@@ -148,7 +145,8 @@ app.get('/api/config', authRequired, (req, res) => {
   const safe = { ...cfg };
   delete safe.auth;
   delete safe.jwt_secret;
-  if (safe.vpn) safe.vpn = { ...safe.vpn, pass: '' };
+  if (safe.vpn)      safe.vpn      = { ...safe.vpn, pass: '' };
+  if (safe.intranet) safe.intranet = { ...safe.intranet, pass: '' };
   res.json(safe);
 });
 
@@ -159,6 +157,18 @@ app.post('/api/config/vpn', authRequired, (req, res) => {
   if (Array.isArray(pages)) cfg.pages = pages;
   saveConfig(cfg);
   appendLog('ok', 'Config VPN salva');
+  res.json({ ok: true });
+});
+
+app.post('/api/config/intranet', authRequired, (req, res) => {
+  const cfg = loadConfig();
+  const { user, pass } = req.body;
+  cfg.intranet = {
+    user: user || cfg.intranet?.user || '',
+    pass: pass || cfg.intranet?.pass || ''
+  };
+  saveConfig(cfg);
+  appendLog('ok', 'Credenciais da intranet salvas');
   res.json({ ok: true });
 });
 
@@ -224,6 +234,16 @@ app.post('/api/whatsapp/reset', authRequired, async (req, res) => {
     res.json(r);
   } catch (e) {
     appendLog('err', `Erro ao resetar WA: ${e.message}`);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/whatsapp/groups', authRequired, async (req, res) => {
+  try {
+    const r = await callWA('GET', '/groups');
+    res.json(r);
+  } catch (e) {
+    appendLog('err', `Erro ao listar grupos: ${e.message}`);
     res.status(500).json({ error: e.message });
   }
 });
