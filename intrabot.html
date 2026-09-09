@@ -198,6 +198,24 @@
     .kw-add-row input:focus { border-color: var(--ib-blue); }
     .kw-empty { color: var(--ib-muted); font-size: 13px; text-align: center; padding: 2rem 0; }
 
+    /* Log de publicações */
+    .pub-log-wrap { margin-top: 2rem; }
+    .pub-log-title { font-size: 11px; color: var(--ib-muted); text-transform: uppercase; letter-spacing: .07em; padding-bottom: .625rem; border-bottom: 1px solid var(--ib-border); margin-bottom: .75rem; display: flex; align-items: center; justify-content: space-between; }
+    .pub-entry { background: var(--ib-panel); border: 1px solid var(--ib-border); border-radius: 6px; padding: .75rem 1rem; margin-bottom: .5rem; }
+    .pub-entry.com-erro { border-color: rgba(192,57,43,.35); }
+    .pub-entry-top { display: flex; align-items: flex-start; gap: 10px; }
+    .pub-entry-titulo { flex: 1; font-size: 13px; color: var(--ib-text); line-height: 1.4; }
+    .pub-entry-ts { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--ib-muted); white-space: nowrap; padding-top: 2px; flex-shrink: 0; }
+    .pub-entry-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 5px; }
+    .pub-entry-destino { font-size: 11px; color: var(--ib-muted); }
+    .pub-entry-cat { font-size: 10px; color: var(--ib-blue); background: rgba(74,147,168,.12); padding: 1px 7px; border-radius: 3px; text-transform: uppercase; letter-spacing: .04em; }
+    .pub-entry-reenv { font-size: 10px; color: var(--ib-muted); font-style: italic; }
+    .pub-entry-link { font-size: 11px; color: var(--ib-blue); text-decoration: none; font-family: 'JetBrains Mono', monospace; }
+    .pub-entry-link:hover { text-decoration: underline; }
+    .pub-entry-actions { display: flex; gap: 6px; margin-top: .625rem; flex-wrap: wrap; align-items: center; }
+    .pub-entry-erros { font-size: 11px; color: #e07070; font-family: 'JetBrains Mono', monospace; margin-top: 5px; line-height: 1.5; }
+    .pub-empty { color: var(--ib-muted); font-size: 13px; text-align: center; padding: 1.5rem 0; }
+
     /* Aprovação web */
     .aprov-card { background: var(--ib-panel); border: 1px solid var(--ib-border); border-radius: 6px; padding: 1rem 1.25rem; margin-bottom: .75rem; }
     .aprov-card-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: .5rem; }
@@ -522,6 +540,17 @@ Responda com os números para publicar (ex: "1 2"), "todos" ou "ignorar".</texta
       </div>
       <div id="aprov-web-lista">
         <div class="aprov-empty">Carregando...</div>
+      </div>
+
+      <!-- LOG DE PUBLICAÇÕES -->
+      <div class="pub-log-wrap" id="pub-log-wrap" style="display:none">
+        <div class="pub-log-title">
+          <span>Publicações recentes</span>
+          <button class="ib-btn ib-btn-sm" onclick="loadPublicacoes()">↺ Atualizar</button>
+        </div>
+        <div id="pub-log-lista">
+          <div class="pub-empty">Carregando...</div>
+        </div>
       </div>
     </div>
 
@@ -1104,6 +1133,7 @@ async function loadPendentes() {
   } catch {
     lista.innerHTML = '<div class="aprov-empty" style="color:var(--ib-danger)">Erro ao carregar pendentes.</div>';
   }
+  loadPublicacoes(); // carrega histórico junto
 }
 
 function itemId(item) { return String(item.id || item.link); }
@@ -1162,9 +1192,17 @@ async function publicarItem(id) {
   try {
     const r = await apiFetch('/api/aprovar', { method: 'POST', body: JSON.stringify({ ids: [id], destino, matriculas }) });
     if (r.ok) {
-      document.getElementById(`aprov-${id}`)?.remove();
-      _pendentes = _pendentes.filter(i => itemId(i) !== id);
-      showToast(r.erros?.length ? `Publicado com ${r.erros.length} erro(s).` : 'Publicado.');
+      // remove da lista SÓ se foi sem erro (servidor já faz isso, refletimos aqui)
+      if (!r.ids_com_erro?.includes(id)) {
+        document.getElementById(`aprov-${id}`)?.remove();
+        _pendentes = _pendentes.filter(i => itemId(i) !== id);
+      }
+      if (r.erros?.length) {
+        showToast(`⚠ Falha ao enviar — item permanece pendente.`);
+      } else {
+        showToast('Publicado com sucesso.');
+        loadPublicacoes();
+      }
     } else { showToast('Erro: ' + (r.erro || '?')); }
   } catch { showToast('Erro de comunicação.'); }
 }
@@ -1187,10 +1225,20 @@ async function aprovacaoEmLote() {
   try {
     const r = await apiFetch('/api/aprovar', { method: 'POST', body: JSON.stringify({ ids, destino, matriculas }) });
     if (r.ok) {
-      ids.forEach(id => { document.getElementById(`aprov-${id}`)?.remove(); });
-      _pendentes = _pendentes.filter(i => !ids.includes(itemId(i)));
+      const comErro = new Set(r.ids_com_erro || []);
+      ids.forEach(id => {
+        if (!comErro.has(id)) {
+          document.getElementById(`aprov-${id}`)?.remove();
+          _pendentes = _pendentes.filter(i => itemId(i) !== id);
+        }
+      });
       _selecionados.clear();
-      showToast(r.erros?.length ? `${r.publicados} publicado(s), ${r.erros.length} erro(s).` : `${r.publicados} publicado(s).`);
+      if (comErro.size) {
+        showToast(`${r.publicados} publicado(s). ${comErro.size} com falha — permanece(m) na lista.`);
+      } else {
+        showToast(`${r.publicados} publicado(s).`);
+      }
+      if (r.publicados > 0) loadPublicacoes();
     } else { showToast('Erro: ' + (r.erro || '?')); }
   } catch { showToast('Erro de comunicação.'); }
 }
@@ -1207,6 +1255,70 @@ async function rejeicaoEmLote() {
       showToast(`${ids.length} item(ns) rejeitado(s).`);
     } else { showToast('Erro: ' + (r.erro || '?')); }
   } catch { showToast('Erro de comunicação.'); }
+}
+
+/* ════════════════════════════════════════
+   LOG DE PUBLICAÇÕES
+════════════════════════════════════════ */
+async function loadPublicacoes() {
+  const wrap  = document.getElementById('pub-log-wrap');
+  const lista = document.getElementById('pub-log-lista');
+  if (!wrap || !lista) return;
+  try {
+    const data = await apiFetch('/api/publicacoes');
+    const pubs = data.publicacoes || [];
+    wrap.style.display = 'block';
+    if (!pubs.length) {
+      lista.innerHTML = '<div class="pub-empty">Nenhuma publicação ainda.</div>';
+      return;
+    }
+    lista.innerHTML = pubs.map(p => {
+      const ts  = new Date(p.ts).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+      const mirror = p.mirrorId
+        ? `https://diagnose-kvrl.vercel.app/i/${p.mirrorId}`
+        : p.link;
+      const destLabel = p.destino === 'grupos' ? 'Grupos' : `Matrículas: ${(p.matriculas||[]).join(', ')}`;
+      const reenvLabel = p.reenvios?.length
+        ? `<span class="pub-entry-reenv">${p.reenvios.length} reenvio(s)</span>` : '';
+      const catHtml = p.categoria
+        ? `<span class="pub-entry-cat">${escHtml(p.categoria)}</span>` : '';
+      return `<div class="pub-entry" id="pub-${escHtml(p.id)}">
+        <div class="pub-entry-top">
+          <div class="pub-entry-titulo">${escHtml(p.titulo || '(sem título)')}</div>
+          <div class="pub-entry-ts">${ts}</div>
+        </div>
+        <div class="pub-entry-meta">
+          ${catHtml}
+          <span class="pub-entry-destino">${escHtml(destLabel)}</span>
+          ${reenvLabel}
+          ${mirror ? `<a class="pub-entry-link" href="${escHtml(mirror)}" target="_blank">ver ↗</a>` : ''}
+        </div>
+        <div class="pub-entry-actions">
+          <button class="ib-btn ib-btn-sm" onclick="reenviarPublicacao('${escHtml(p.id)}')">↺ Reenviar</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch {
+    // falha silenciosa — log é secundário
+  }
+}
+
+async function reenviarPublicacao(id) {
+  const { destino, matriculas } = getDestinoAtual();
+  const btn = event.currentTarget;
+  btn.disabled = true; btn.textContent = 'Enviando...';
+  try {
+    const r = await apiFetch('/api/reenviar', { method: 'POST', body: JSON.stringify({ id, destino, matriculas }) });
+    if (r.ok) {
+      if (r.erros?.length) {
+        showToast(`Reenvio com ${r.erros.length} erro(s).`);
+      } else {
+        showToast('Reenviado com sucesso.');
+      }
+      loadPublicacoes(); // atualiza contador de reenvios
+    } else { showToast('Erro: ' + (r.erro || '?')); }
+  } catch { showToast('Erro de comunicação.'); }
+  btn.disabled = false; btn.textContent = '↺ Reenviar';
 }
 
 /* Poll automático de status */

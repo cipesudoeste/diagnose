@@ -444,8 +444,8 @@ app.post('/api/aprovar', authRequired, async (req, res) => {
 
   if (!itens.length) return res.status(404).json({ ok: false, erro: 'Nenhum item encontrado' });
 
-  const erros       = [];
-  const publicados  = [];
+  // resultados por item: { item, ok: bool, erros: [] }
+  const resultados = [];
 
   for (const item of itens) {
     const linkExibir = item.mirrorId
@@ -453,32 +453,129 @@ app.post('/api/aprovar', authRequired, async (req, res) => {
       : item.link;
     const msg = `📌 *${item.titulo}*\n${item.categoria ? `_${item.categoria}_\n` : ''}${item.data ? `${item.data}\n` : ''}${linkExibir}`;
 
+    const errosItem = [];
+
     if (destino === 'grupos') {
       const cfg    = loadConfig();
       const grupos = cfg.groups || [];
       for (const gid of grupos) {
-        try { await callWA('POST', '/send', { to: gid, msg }); publicados.push(gid); }
-        catch (e) { erros.push(`grupo ${gid}: ${e.message}`); }
+        try { await callWA('POST', '/send', { to: gid, msg }); }
+        catch (e) { errosItem.push(`grupo ${gid}: ${e.message}`); }
       }
     } else if (destino === 'matriculas' && Array.isArray(matriculas) && matriculas.length) {
       try {
-        const mats = matriculas.map(m => `"${m}"`).join(',');
+        const mats     = matriculas.map(m => `"${m}"`).join(',');
         const contatos = await supabaseReq('GET', 'whatsapp_contatos',
           `select=matricula,telefone&matricula=in.(${mats})`);
         for (const c of (Array.isArray(contatos) ? contatos : [])) {
-          try { await callWA('POST', '/send', { to: c.telefone, msg }); publicados.push(c.matricula); }
-          catch (e) { erros.push(`${c.matricula}: ${e.message}`); }
+          try { await callWA('POST', '/send', { to: c.telefone, msg }); }
+          catch (e) { errosItem.push(`${c.matricula}: ${e.message}`); }
         }
-      } catch (e) { erros.push(`Supabase: ${e.message}`); }
+      } catch (e) { errosItem.push(`Supabase: ${e.message}`); }
     }
+
+    resultados.push({ item, erros: errosItem });
   }
 
-  // remove aprovados do estado
-  const novoPending = pending.filter(i => !ids.includes(String(i.id || i.link)));
+  // Remove do pending APENAS os itens sem nenhum erro
+  const idsOk      = resultados.filter(r => r.erros.length === 0).map(r => String(r.item.id || r.item.link));
+  const idsComErro = resultados.filter(r => r.erros.length  > 0).map(r => String(r.item.id || r.item.link));
+  const novoPending = pending.filter(i => !idsOk.includes(String(i.id || i.link)));
   gravarEstado({ pending_items: novoPending, pending: novoPending.length });
-  appendLog('ok', `Painel aprovou ${publicados.length} publicação(ões) via ${destino}`);
 
-  res.json({ ok: true, publicados: publicados.length, erros });
+  // Salva histórico de publicações bem-sucedidas
+  if (idsOk.length) {
+    const PUB_FILE  = path.join(__dirname, 'publicacoes.json');
+    let historico   = [];
+    try { historico = JSON.parse(fs.readFileSync(PUB_FILE, 'utf8')); } catch {}
+    const novas = resultados
+      .filter(r => r.erros.length === 0)
+      .map(r => ({
+        ts:        new Date().toISOString(),
+        id:        String(r.item.id || r.item.link),
+        titulo:    r.item.titulo    || '',
+        categoria: r.item.categoria || '',
+        data:      r.item.data      || '',
+        mirrorId:  r.item.mirrorId  || null,
+        link:      r.item.link      || '',
+        destino,
+        matriculas: matriculas || [],
+        reenvios:  [],
+      }));
+    historico = [...novas, ...historico].slice(0, 200);
+    fs.writeFileSync(PUB_FILE, JSON.stringify(historico, null, 2));
+  }
+
+  const todosErros = resultados.flatMap(r => r.erros);
+  appendLog('ok', `Aprovação: ${idsOk.length} ok, ${idsComErro.length} com erro`);
+  res.json({ ok: true, publicados: idsOk.length, erros: todosErros, ids_com_erro: idsComErro });
+});
+
+// GET /api/publicacoes — histórico das últimas publicações
+app.get('/api/publicacoes', authRequired, (req, res) => {
+  const PUB_FILE = path.join(__dirname, 'publicacoes.json');
+  try {
+    const historico = fs.existsSync(PUB_FILE)
+      ? JSON.parse(fs.readFileSync(PUB_FILE, 'utf8'))
+      : [];
+    res.json({ ok: true, publicacoes: historico });
+  } catch (e) {
+    res.status(500).json({ ok: false, erro: e.message });
+  }
+});
+
+// POST /api/reenviar — reenvia uma publicação do histórico
+// body: { id: string, destino: "grupos"|"matriculas", matriculas?: [...] }
+app.post('/api/reenviar', authRequired, async (req, res) => {
+  const { id, destino, matriculas } = req.body || {};
+  if (!id || !destino) return res.status(400).json({ ok: false, erro: 'id e destino obrigatórios' });
+
+  const PUB_FILE = path.join(__dirname, 'publicacoes.json');
+  let historico  = [];
+  try { historico = JSON.parse(fs.readFileSync(PUB_FILE, 'utf8')); } catch {}
+
+  const entrada = historico.find(p => p.id === id);
+  if (!entrada) return res.status(404).json({ ok: false, erro: 'Publicação não encontrada no histórico' });
+
+  const linkExibir = entrada.mirrorId
+    ? `https://diagnose-kvrl.vercel.app/i/${entrada.mirrorId}`
+    : entrada.link;
+  const msg = `📌 *${entrada.titulo}*\n${entrada.categoria ? `_${entrada.categoria}_\n` : ''}${entrada.data ? `${entrada.data}\n` : ''}${linkExibir}`;
+
+  const erros = [];
+
+  if (destino === 'grupos') {
+    const cfg    = loadConfig();
+    const grupos = cfg.groups || [];
+    for (const gid of grupos) {
+      try { await callWA('POST', '/send', { to: gid, msg }); }
+      catch (e) { erros.push(`${gid}: ${e.message}`); }
+    }
+  } else if (destino === 'matriculas' && Array.isArray(matriculas) && matriculas.length) {
+    try {
+      const mats     = matriculas.map(m => `"${m}"`).join(',');
+      const contatos = await supabaseReq('GET', 'whatsapp_contatos',
+        `select=matricula,telefone&matricula=in.(${mats})`);
+      for (const c of (Array.isArray(contatos) ? contatos : [])) {
+        try { await callWA('POST', '/send', { to: c.telefone, msg }); }
+        catch (e) { erros.push(`${c.matricula}: ${e.message}`); }
+      }
+    } catch (e) { erros.push(`Supabase: ${e.message}`); }
+  }
+
+  // Registra reenvio no histórico
+  const idx = historico.findIndex(p => p.id === id);
+  if (idx !== -1) {
+    historico[idx].reenvios = historico[idx].reenvios || [];
+    historico[idx].reenvios.push({
+      ts: new Date().toISOString(), destino,
+      matriculas: matriculas || [], erros
+    });
+    fs.writeFileSync(PUB_FILE, JSON.stringify(historico, null, 2));
+  }
+
+  appendLog('ok', `Reenvio: "${entrada.titulo?.slice(0,40)}" — ${erros.length ? erros.length + ' erro(s)' : 'ok'}`);
+  res.json({ ok: true, erros });
 });
 
 // POST /api/rejeitar
