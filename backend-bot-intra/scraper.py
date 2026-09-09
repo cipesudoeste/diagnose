@@ -228,15 +228,26 @@ def executar(usuario: str, senha: str, headless: bool = True) -> list[dict]:
 if __name__ == "__main__":
     import sys
 
-    if len(sys.argv) < 3:
+    args = sys.argv[1:]
+
+    # Modo --json: chamado pelo ciclo.js para obter metadados completos
+    if args and args[0] == "--json":
+        if len(args) < 3:
+            print("[]")
+            sys.exit(1)
+        main_json(args[1], args[2])
+        sys.exit(0)
+
+    # Modo normal
+    if len(args) < 2:
         print("Uso: python scraper.py <usuario> <senha> [1=headless]")
         sys.exit(1)
 
-    usuario  = sys.argv[1]
-    senha    = sys.argv[2]
-    headless = (sys.argv[3] == "1") if len(sys.argv) > 3 else False
+    usuario  = args[0]
+    senha    = args[1]
+    headless = (args[2] == "1") if len(args) > 2 else False
 
-    print("Executando scraper" + (" (headless)" if headless else " (visível)") + "...")
+    print("Executando scraper" + (" (headless)" if headless else " (visivel)") + "...")
     novos = executar(usuario, senha, headless=headless)
 
     if novos:
@@ -246,3 +257,24 @@ if __name__ == "__main__":
             print(f"    {item['data']} — {item['link']}")
     else:
         print("Nenhum item novo encontrado.")
+
+
+# ---------------------------------------------------------------------------
+# Modo --json (chamado pelo ciclo.js)
+# ---------------------------------------------------------------------------
+def main_json(usuario: str, senha: str):
+    """Roda o scraper completo e imprime JSON no stdout com TODOS os itens da página."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page    = browser.new_page()
+        try:
+            if not fazer_login(page, usuario, senha):
+                print("[]")
+                return
+            itens = extrair_itens(page)
+            print(json.dumps(itens, ensure_ascii=False))
+        except Exception as e:
+            log.error(f"Erro no modo --json: {e}")
+            print("[]")
+        finally:
+            browser.close()

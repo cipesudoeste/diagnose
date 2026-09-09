@@ -44,5 +44,9 @@
     "teste",
     "draft"
   ],
-  "dedup": true
+  "dedup": true,
+  "intranet": {
+    "user": "",
+    "pass": ""
+  }
 }
