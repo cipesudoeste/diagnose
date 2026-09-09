@@ -1,0 +1,10 @@
+{"time":"21:14:10","level":"ok","msg":"API iniciada na porta 3001"}
+{"time":"21:14:51","level":"ok","msg":"Serviço WhatsApp porta 3002"}
+{"time":"21:14:53","level":"warn","msg":"QR gerado — aguardando escaneamento no painel"}
+{"time":"21:15:49","level":"ok","msg":"Login: operador"}
+{"time":"21:15:53","level":"warn","msg":"QR gerado — aguardando escaneamento no painel"}
+{"time":"21:16:13","level":"warn","msg":"QR gerado — aguardando escaneamento no painel"}
+{"time":"21:16:33","level":"warn","msg":"QR gerado — aguardando escaneamento no painel"}
+{"time":"21:16:50","level":"warn","msg":"Conexão encerrada (código 515)"}
+{"time":"21:16:50","level":"ok","msg":"Reconectando em 6s..."}
+{"time":"21:16:59","level":"ok","msg":"Conectado — 557797010134 (Divina Pechincha)"}

@@ -1,0 +1,48 @@
+{
+  "auth": {
+    "user": "operador",
+    "pass_hash": "76936cea11ba6033721c1d46195e14e0e19872c978a660029275b92a78ff166a"
+  },
+  "jwt_secret": "825fd1e6fa6d443c4f2f455ec2470f2ce41bc00b9d3d72dbe970ecf7079e31fc",
+  "vpn": {
+    "host": "",
+    "port": "443",
+    "user": "",
+    "pass": "",
+    "intranet_url": ""
+  },
+  "pages": [],
+  "schedule": {
+    "start": "08:00",
+    "end": "20:00",
+    "interval": 4,
+    "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "force_send": false,
+    "notify_period": true
+  },
+  "approval": {
+    "manual": true,
+    "auto_publish": false,
+    "timeout_min": 30,
+    "template": "📋 *IntraBot · CIPE Sudoeste* — nova atualização detectada\n\n{itens}\n\nResponda com os números para publicar (ex: \"1 2\"), \"todos\" ou \"ignorar\"."
+  },
+  "admin": null,
+  "groups": [],
+  "keywords_include": [
+    "portaria",
+    "aviso",
+    "escala",
+    "boletim"
+  ],
+  "keywords_exclude": [
+    "teste",
+    "draft"
+  ],
+  "dedup": true
+}

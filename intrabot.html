@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IntraBot — CIPE Sudoeste</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="shared.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ib-bg:      var(--bg,         #211f1c);
+      --ib-panel:   var(--bg-panel,   #2f3326);
+      --ib-panel2:  var(--bg-panel-2, #3a4030);
+      --ib-brown:   var(--cipe-brown, #8a5a35);
+      --ib-brownl:  var(--cipe-brown-l,#c08a55);
+      --ib-accent:  var(--accent,     #bfae8c);
+      --ib-blue:    var(--t-velhochico,#4a93a8);
+      --ib-text:    #e8e4dc;
+      --ib-muted:   #8a8578;
+      --ib-border:  rgba(191,174,140,.15);
+      --ib-danger:  #c0392b;
+      --ib-warn:    #d4a017;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--ib-bg); color: var(--ib-text); font-family: 'Inter', sans-serif; font-size: 14px; min-height: 100vh; }
+
+    /* ── LOGIN ── */
+    #login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 1rem; }
+    .login-card { background: var(--ib-panel); border: 1px solid var(--ib-border); border-radius: 8px; padding: 2.5rem 2rem; width: 100%; max-width: 360px; }
+    .login-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; }
+    .login-logo-icon { width: 40px; height: 40px; background: var(--ib-brown); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-family: 'Oswald', sans-serif; font-size: 18px; font-weight: 600; color: var(--ib-accent); }
+    .login-logo-text strong { display: block; font-family: 'Oswald', sans-serif; font-size: 15px; font-weight: 600; color: var(--ib-accent); }
+    .login-logo-text span { font-size: 11px; color: var(--ib-muted); }
+    .login-card h2 { font-family: 'Oswald', sans-serif; font-size: 20px; font-weight: 400; margin-bottom: 1.5rem; }
+    .login-field { margin-bottom: 1rem; }
+    .login-field label { display: block; font-size: 11px; color: var(--ib-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .06em; }
+    .login-field input { width: 100%; background: var(--ib-panel2); border: 1px solid var(--ib-border); border-radius: 4px; color: var(--ib-text); font-family: 'JetBrains Mono', monospace; font-size: 13px; padding: 9px 12px; outline: none; transition: border-color .2s; }
+    .login-field input:focus { border-color: var(--ib-blue); }
+    .login-error { display: none; background: rgba(192,57,43,.15); border: 1px solid rgba(192,57,43,.4); border-radius: 4px; color: #e07070; font-size: 12px; padding: 8px 12px; margin-bottom: 1rem; }
+    .login-error.visible { display: block; }
+    .btn-login { width: 100%; background: var(--ib-blue); border: none; border-radius: 4px; color: #fff; cursor: pointer; font-family: 'Oswald', sans-serif; font-size: 15px; padding: 10px; transition: opacity .2s; }
+    .btn-login:hover { opacity: .85; }
+    .btn-login:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* ── APP ── */
+    #app { display: none; }
+    #app.visible { display: flex; flex-direction: column; min-height: 100vh; }
+
+    .ib-header { background: var(--ib-panel); border-bottom: 1px solid var(--ib-border); padding: 0 1.5rem; height: 52px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+    .ib-header-left { display: flex; align-items: center; gap: 10px; }
+    .ib-header-badge { background: var(--ib-brown); border-radius: 4px; color: var(--ib-accent); font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; padding: 2px 8px; letter-spacing: .04em; }
+    .ib-header-title { font-family: 'Oswald', sans-serif; font-size: 16px; font-weight: 400; color: var(--ib-accent); letter-spacing: .04em; }
+    .ib-header-right { display: flex; align-items: center; gap: 12px; }
+    .ib-status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ib-blue); animation: pulse 2.5s ease-in-out infinite; }
+    .ib-status-dot.offline { background: var(--ib-danger); animation: none; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+    .ib-status-label { font-size: 12px; color: var(--ib-muted); }
+    .btn-logout { background: none; border: 1px solid var(--ib-border); border-radius: 4px; color: var(--ib-muted); cursor: pointer; font-size: 12px; padding: 4px 10px; transition: color .2s, border-color .2s; }
+    .btn-logout:hover { color: var(--ib-text); border-color: var(--ib-accent); }
+
+    .ib-nav { background: var(--ib-panel); border-bottom: 1px solid var(--ib-border); display: flex; gap: 2px; padding: 0 1.5rem; overflow-x: auto; scrollbar-width: none; }
+    .ib-nav::-webkit-scrollbar { display: none; }
+    .ib-tab-btn { background: none; border: none; border-bottom: 2px solid transparent; color: var(--ib-muted); cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px; padding: 12px 16px; white-space: nowrap; transition: color .2s, border-color .2s; }
+    .ib-tab-btn:hover { color: var(--ib-text); }
+    .ib-tab-btn.active { color: var(--ib-blue); border-bottom-color: var(--ib-blue); }
+
+    .ib-content { padding: 1.5rem; max-width: 860px; }
+    .ib-pane { display: none; }
+    .ib-pane.active { display: block; }
+
+    .ib-section-title { font-family: 'Oswald', sans-serif; font-size: 16px; font-weight: 400; color: var(--ib-accent); letter-spacing: .04em; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px; }
+    .ib-section-title::before { content: ''; display: inline-block; width: 3px; height: 16px; background: var(--ib-blue); border-radius: 2px; }
+
+    .ib-card { background: var(--ib-panel); border: 1px solid var(--ib-border); border-radius: 6px; padding: 1.25rem; margin-bottom: 1rem; }
+    .ib-card-title { font-size: 11px; color: var(--ib-muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: .875rem; }
+
+    .ib-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: .875rem; }
+    .ib-row:last-child { margin-bottom: 0; }
+    .ib-field { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 140px; }
+    .ib-field label { font-size: 11px; color: var(--ib-muted); }
+    .ib-field input, .ib-field select, .ib-field textarea { background: var(--ib-panel2); border: 1px solid var(--ib-border); border-radius: 4px; color: var(--ib-text); font-family: 'Inter', sans-serif; font-size: 13px; padding: 7px 10px; outline: none; transition: border-color .2s; width: 100%; }
+    .ib-field input[type=password] { font-family: 'JetBrains Mono', monospace; letter-spacing: .1em; }
+    .ib-field input:focus, .ib-field select:focus, .ib-field textarea:focus { border-color: var(--ib-blue); }
+    .ib-field textarea { resize: vertical; min-height: 90px; }
+
+    .ib-toggle-row { display: flex; align-items: center; justify-content: space-between; padding: .625rem 0; border-bottom: 1px solid var(--ib-border); }
+    .ib-toggle-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .ib-toggle-row:first-child { padding-top: 0; }
+    .ib-toggle-info { flex: 1; padding-right: 1rem; }
+    .ib-toggle-label { font-size: 13px; color: var(--ib-text); }
+    .ib-toggle-desc { font-size: 11px; color: var(--ib-muted); margin-top: 2px; }
+
+    .ib-switch { position: relative; width: 38px; height: 22px; flex-shrink: 0; }
+    .ib-switch input { opacity: 0; width: 0; height: 0; }
+    .ib-switch-track { position: absolute; inset: 0; background: var(--ib-panel2); border: 1px solid var(--ib-border); border-radius: 22px; cursor: pointer; transition: background .2s, border-color .2s; }
+    .ib-switch-track::before { content: ''; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; background: var(--ib-muted); border-radius: 50%; transition: transform .2s, background .2s; }
+    .ib-switch input:checked + .ib-switch-track { background: rgba(74,147,168,.25); border-color: var(--ib-blue); }
+    .ib-switch input:checked + .ib-switch-track::before { background: var(--ib-blue); transform: translateX(16px); }
+
+    .ib-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-family: 'JetBrains Mono', monospace; padding: 3px 9px; border-radius: 20px; }
+    .ib-badge.ok   { background: rgba(74,147,168,.15); color: var(--ib-blue);   border: 1px solid rgba(74,147,168,.3); }
+    .ib-badge.warn { background: rgba(212,160,23,.12); color: var(--ib-warn);   border: 1px solid rgba(212,160,23,.3); }
+    .ib-badge.err  { background: rgba(192,57,43,.12);  color: #e07070;          border: 1px solid rgba(192,57,43,.3); }
+
+    .ib-btn { background: var(--ib-panel2); border: 1px solid var(--ib-border); border-radius: 4px; color: var(--ib-text); cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px; padding: 7px 14px; transition: border-color .2s, color .2s; display: inline-flex; align-items: center; gap: 6px; }
+    .ib-btn:hover { border-color: var(--ib-accent); color: var(--ib-accent); }
+    .ib-btn.primary { background: rgba(74,147,168,.2); border-color: var(--ib-blue); color: var(--ib-blue); }
+    .ib-btn.primary:hover { background: rgba(74,147,168,.3); }
+    .ib-btn.danger  { border-color: rgba(192,57,43,.4); color: #e07070; }
+    .ib-btn.danger:hover { background: rgba(192,57,43,.1); }
+    .ib-btn-sm { padding: 4px 9px; font-size: 11px; }
+
+    .ib-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr)); gap: 10px; margin-bottom: 1rem; }
+    .ib-metric { background: var(--ib-panel); border: 1px solid var(--ib-border); border-radius: 6px; padding: .875rem 1rem; text-align: center; }
+    .ib-metric-val { font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 500; color: var(--ib-blue); }
+    .ib-metric-lbl { font-size: 11px; color: var(--ib-muted); margin-top: 3px; }
+
+    .ib-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: .875rem; }
+    .ib-list-item { display: flex; align-items: center; gap: 8px; background: var(--ib-panel2); border: 1px solid var(--ib-border); border-radius: 4px; padding: 7px 10px; }
+    .ib-item-text { flex: 1; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ib-text); }
+    .ib-item-role { font-size: 10px; padding: 2px 7px; border-radius: 20px; }
+    .role-admin { background: rgba(138,90,53,.25); color: var(--ib-brownl); border: 1px solid rgba(138,90,53,.4); }
+    .role-group { background: rgba(74,147,168,.12); color: var(--ib-blue);   border: 1px solid rgba(74,147,168,.3); }
+    .role-page  { background: rgba(191,174,140,.1); color: var(--ib-accent); border: 1px solid rgba(191,174,140,.2); }
+
+    .ib-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: .5rem 0 .875rem; }
+    .ib-chip { display: flex; align-items: center; gap: 5px; background: var(--ib-panel2); border: 1px solid var(--ib-border); border-radius: 20px; font-size: 12px; color: var(--ib-accent); padding: 3px 10px; }
+    .ib-chip button { background: none; border: none; color: var(--ib-muted); cursor: pointer; font-size: 15px; line-height: 1; padding: 0; }
+    .ib-chip button:hover { color: #e07070; }
+
+    .ib-days { display: flex; gap: 6px; flex-wrap: wrap; }
+    .ib-day-btn { background: var(--ib-panel2); border: 1px solid var(--ib-border); border-radius: 4px; color: var(--ib-muted); cursor: pointer; font-size: 12px; min-width: 42px; padding: 5px 8px; text-align: center; transition: all .2s; }
+    .ib-day-btn.on { background: rgba(74,147,168,.2); border-color: var(--ib-blue); color: var(--ib-blue); }
+
+    .ib-log { display: flex; flex-direction: column; }
+    .ib-log-entry { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--ib-border); font-size: 12px; }
+    .ib-log-entry:last-child { border-bottom: none; }
+    .ib-log-time { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ib-muted); flex-shrink: 0; padding-top: 1px; }
+    .ib-log-msg { color: var(--ib-text); line-height: 1.5; }
+
+    .ib-approval-info { background: rgba(74,147,168,.08); border: 1px solid rgba(74,147,168,.25); border-radius: 6px; padding: 1rem 1.25rem; margin-bottom: 1rem; font-size: 13px; color: var(--ib-text); line-height: 1.6; }
+    .ib-approval-info strong { color: var(--ib-blue); }
+    .ib-hint { font-size: 11px; color: var(--ib-muted); margin-top: 5px; line-height: 1.5; }
+
+    /* QR */
+    .qr-wrapper { background: #fff; border-radius: 6px; padding: 10px; display: inline-block; }
+    .qr-wrapper img { display: block; border-radius: 4px; }
+
+    .ib-toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--ib-panel); border: 1px solid rgba(74,147,168,.4); border-radius: 6px; color: var(--ib-blue); font-size: 13px; padding: 10px 18px; opacity: 0; pointer-events: none; transition: opacity .3s; z-index: 999; }
+    .ib-toast.show { opacity: 1; }
+
+    @media (max-width: 600px) { .ib-content { padding: 1rem; } .ib-header { padding: 0 1rem; } .ib-nav { padding: 0 1rem; } }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icon">IB</div>
+      <div class="login-logo-text">
+        <strong>IntraBot</strong>
+        <span>CIPE Sudoeste · PM-BA</span>
+      </div>
+    </div>
+    <h2>Acesso restrito</h2>
+    <div class="login-error" id="login-error">Usuário ou senha incorretos.</div>
+    <div class="login-field">
+      <label>Usuário</label>
+      <input type="text" id="login-user" autocomplete="username" placeholder="operador" />
+    </div>
+    <div class="login-field">
+      <label>Senha</label>
+      <input type="password" id="login-pass" autocomplete="current-password" placeholder="••••••••" />
+    </div>
+    <button class="btn-login" id="btn-login" onclick="doLogin()">Entrar</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header class="ib-header">
+    <div class="ib-header-left">
+      <span class="ib-header-badge">CIPE-SO</span>
+      <span class="ib-header-title">IntraBot</span>
+    </div>
+    <div class="ib-header-right">
+      <span class="ib-status-dot" id="status-dot"></span>
+      <span class="ib-status-label" id="status-label">verificando...</span>
+      <button class="btn-logout" onclick="doLogout()">Sair</button>
+    </div>
+  </header>
+
+  <nav class="ib-nav">
+    <button class="ib-tab-btn active" onclick="showPane('dashboard',this)">Painel</button>
+    <button class="ib-tab-btn" onclick="showPane('vpn',this)">VPN / Acesso</button>
+    <button class="ib-tab-btn" onclick="showPane('agendamento',this)">Agendamento</button>
+    <button class="ib-tab-btn" onclick="showPane('whatsapp',this)">WhatsApp</button>
+    <button class="ib-tab-btn" onclick="showPane('aprovacao',this)">Aprovação</button>
+    <button class="ib-tab-btn" onclick="showPane('filtros',this)">Filtros</button>
+    <button class="ib-tab-btn" onclick="showPane('logs',this)">Logs</button>
+  </nav>
+
+  <main class="ib-content">
+
+    <!-- PAINEL -->
+    <div class="ib-pane active" id="pane-dashboard">
+      <div class="ib-section-title">Visão geral</div>
+      <div class="ib-metrics">
+        <div class="ib-metric"><div class="ib-metric-val" id="m-checks">—</div><div class="ib-metric-lbl">verificações hoje</div></div>
+        <div class="ib-metric"><div class="ib-metric-val" id="m-updates">—</div><div class="ib-metric-lbl">atualizações detectadas</div></div>
+        <div class="ib-metric"><div class="ib-metric-val" id="m-pending">—</div><div class="ib-metric-lbl">aguardando aprovação</div></div>
+        <div class="ib-metric"><div class="ib-metric-val" id="m-sent">—</div><div class="ib-metric-lbl">mensagens enviadas</div></div>
+      </div>
+      <div class="ib-card">
+        <div class="ib-card-title">Status dos serviços</div>
+        <div class="ib-toggle-row">
+          <div class="ib-toggle-info"><div class="ib-toggle-label">VPN FortiClient</div><div class="ib-toggle-desc" id="vpn-status-desc">—</div></div>
+          <span class="ib-badge" id="vpn-badge">—</span>
+        </div>
+        <div class="ib-toggle-row">
+          <div class="ib-toggle-info"><div class="ib-toggle-label">WhatsApp</div><div class="ib-toggle-desc" id="wa-status-desc">—</div></div>
+          <span class="ib-badge" id="wa-badge">—</span>
+        </div>
+        <div class="ib-toggle-row">
+          <div class="ib-toggle-info"><div class="ib-toggle-label">Próxima verificação</div><div class="ib-toggle-desc" id="next-check-desc">—</div></div>
+          <span class="ib-badge" id="next-check-badge">—</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="ib-btn primary" onclick="apiAction('/api/scraper/run-now')">▶ Verificar agora</button>
+        <button class="ib-btn" onclick="loadStatus()">↺ Atualizar</button>
+      </div>
+    </div>
+
+    <!-- VPN -->
+    <div class="ib-pane" id="pane-vpn">
+      <div class="ib-section-title">VPN e acesso à intranet</div>
+      <div class="ib-card">
+        <div class="ib-card-title">Credenciais FortiClient VPN</div>
+        <div class="ib-row">
+          <div class="ib-field"><label>Servidor VPN</label><input type="text" id="vpn-host" placeholder="vpn.pm.ba.gov.br" /></div>
+          <div class="ib-field" style="max-width:90px"><label>Porta</label><input type="text" id="vpn-port" placeholder="443" /></div>
+        </div>
+        <div class="ib-row">
+          <div class="ib-field"><label>Usuário</label><input type="text" id="vpn-user" autocomplete="off" /></div>
+          <div class="ib-field"><label>Senha VPN</label><input type="password" id="vpn-pass" autocomplete="new-password" /></div>
+        </div>
+        <div class="ib-row">
+          <div class="ib-field"><label>URL base da intranet</label><input type="text" id="intranet-url" placeholder="https://intranet.pm.ba.gov.br" /></div>
+        </div>
+        <button class="ib-btn primary" onclick="saveVpn()">Salvar credenciais</button>
+      </div>
+      <div class="ib-card">
+        <div class="ib-card-title">Páginas monitoradas</div>
+        <div class="ib-list" id="pages-list"></div>
+        <div class="ib-row" style="margin-bottom:0">
+          <div class="ib-field"><input type="text" id="new-page" placeholder="/caminho/da/pagina" /></div>
+          <button class="ib-btn" style="flex-shrink:0;align-self:flex-end" onclick="addPage()">+ Adicionar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- AGENDAMENTO -->
+    <div class="ib-pane" id="pane-agendamento">
+      <div class="ib-section-title">Agendamento</div>
+      <div class="ib-card">
+        <div class="ib-card-title">Período de observação</div>
+        <div class="ib-row">
+          <div class="ib-field" style="max-width:120px"><label>Início</label><input type="time" id="sched-start" value="08:00" /></div>
+          <div class="ib-field" style="max-width:120px"><label>Fim</label><input type="time" id="sched-end" value="20:00" /></div>
+          <div class="ib-field" style="max-width:130px"><label>Intervalo (horas)</label><input type="number" id="sched-interval" value="4" min="1" max="12" /></div>
+        </div>
+      </div>
+      <div class="ib-card">
+        <div class="ib-card-title">Dias ativos</div>
+        <div class="ib-days">
+          <button class="ib-day-btn on" data-day="1">Seg</button>
+          <button class="ib-day-btn on" data-day="2">Ter</button>
+          <button class="ib-day-btn on" data-day="3">Qua</button>
+          <button class="ib-day-btn on" data-day="4">Qui</button>
+          <button class="ib-day-btn on" data-day="5">Sex</button>
+          <button class="ib-day-btn" data-day="6">Sáb</button>
+          <button class="ib-day-btn" data-day="0">Dom</button>
+        </div>
+      </div>
+      <div class="ib-card">
+        <div class="ib-toggle-row">
+          <div class="ib-toggle-info"><div class="ib-toggle-label">Enviar mesmo sem atualizações</div><div class="ib-toggle-desc">Envia relatório "sem novidades" a cada ciclo</div></div>
+          <label class="ib-switch"><input type="checkbox" id="sched-force-send" /><span class="ib-switch-track"></span></label>
+        </div>
+        <div class="ib-toggle-row">
+          <div class="ib-toggle-info"><div class="ib-toggle-label">Notificar início/fim do período</div><div class="ib-toggle-desc">Admin recebe aviso quando o bot ativa ou desativa</div></div>
+          <label class="ib-switch"><input type="checkbox" id="sched-notify-period" checked /><span class="ib-switch-track"></span></label>
+        </div>
+      </div>
+      <button class="ib-btn primary" onclick="saveSchedule()">Salvar agendamento</button>
+    </div>
+
+    <!-- WHATSAPP -->
+    <div class="ib-pane" id="pane-whatsapp">
+      <div class="ib-section-title">WhatsApp</div>
+
+      <!-- Card de sessão -->
+      <div class="ib-card">
+        <div class="ib-card-title">Sessão</div>
+
+        <!-- Estado: desconectado -->
+        <div id="wa-state-disconnected">
+          <div class="ib-toggle-row" style="border:none;padding:0;margin-bottom:.875rem">
+            <div class="ib-toggle-info"><div class="ib-toggle-label">Status</div><div class="ib-toggle-desc">Nenhuma sessão ativa</div></div>
+            <span class="ib-badge err">Desconectado</span>
+          </div>
+          <button class="ib-btn primary" onclick="waConnect()">▶ Conectar</button>
+        </div>
+
+        <!-- Estado: aguardando QR -->
+        <div id="wa-state-qr" style="display:none">
+          <div class="ib-toggle-row" style="border:none;padding:0;margin-bottom:.875rem">
+            <div class="ib-toggle-info"><div class="ib-toggle-label">Status</div><div class="ib-toggle-desc">Aguardando escaneamento do QR</div></div>
+            <span class="ib-badge warn">Aguardando QR</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-start;gap:.75rem">
+            <div class="qr-wrapper"><img id="wa-qr-img" src="" alt="QR Code" width="240" height="240" /></div>
+            <p style="font-size:12px;color:var(--ib-muted);max-width:280px;line-height:1.5">
+              Abra o WhatsApp no celular → Dispositivos conectados → Conectar dispositivo → aponte a câmera para o QR acima.
+            </p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="ib-btn" onclick="loadStatus()">↺ Atualizar</button>
+              <button class="ib-btn danger" onclick="waReset()">↺ Novo QR</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Estado: conectado -->
+        <div id="wa-state-connected" style="display:none">
+          <div class="ib-toggle-row">
+            <div class="ib-toggle-info"><div class="ib-toggle-label">Status</div><div class="ib-toggle-desc">Sessão Baileys ativa</div></div>
+            <span class="ib-badge ok">Conectado</span>
+          </div>
+          <div class="ib-toggle-row" style="border:none;padding-bottom:0">
+            <div class="ib-toggle-info">
+              <div class="ib-toggle-label">Número conectado</div>
+              <div id="wa-phone-desc" style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ib-text);margin-top:3px">—</div>
+            </div>
+          </div>
+          <div style="margin-top:.875rem;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="ib-btn danger" onclick="waDisconnect()">⏹ Desconectar</button>
+            <button class="ib-btn" onclick="waReset()">↺ Trocar conta</button>
+            <button class="ib-btn" onclick="loadStatus()">↺ Atualizar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin -->
+      <div class="ib-card">
+        <div class="ib-card-title">Administrador — recebe perguntas de aprovação</div>
+        <div class="ib-list" id="admin-list"></div>
+        <div class="ib-row" style="margin-bottom:0">
+          <div class="ib-field"><input type="text" id="new-admin" placeholder="+55 77 9 9999-0000" /></div>
+          <button class="ib-btn" style="flex-shrink:0;align-self:flex-end" onclick="setAdmin()">Definir admin</button>
+        </div>
+      </div>
+
+      <!-- Grupos -->
+      <div class="ib-card">
+        <div class="ib-card-title">Grupos de destino</div>
+        <div class="ib-list" id="groups-list"></div>
+        <div class="ib-row" style="margin-bottom:0">
+          <div class="ib-field"><input type="text" id="new-group" placeholder="ID do grupo (120363...@g.us) ou número" /></div>
+          <button class="ib-btn" style="flex-shrink:0;align-self:flex-end" onclick="addGroup()">+ Adicionar</button>
+        </div>
+        <div class="ib-hint">O ID do grupo aparece nos logs quando o bot recebe a primeira mensagem do grupo.</div>
+      </div>
+    </div>
+
+    <!-- APROVAÇÃO -->
+    <div class="ib-pane" id="pane-aprovacao">
+      <div class="ib-section-title">Fluxo de aprovação</div>
+      <div class="ib-approval-info">
+        Quando o bot detecta uma atualização, envia uma prévia para o <strong>administrador</strong> via WhatsApp.
+        O admin responde com os <strong>números dos itens</strong> (ex: <code style="font-family:'JetBrains Mono',monospace;font-size:12px">1 3</code>),
+        <strong>"todos"</strong> ou <strong>"ignorar"</strong>.
+      </div>
+      <div class="ib-card">
+        <div class="ib-card-title">Modo</div>
+        <div class="ib-toggle-row">
+          <div class="ib-toggle-info"><div class="ib-toggle-label">Aprovação manual obrigatória</div><div class="ib-toggle-desc">Todo relatório precisa de confirmação antes de ser enviado</div></div>
+          <label class="ib-switch"><input type="checkbox" id="aprov-manual" checked /><span class="ib-switch-track"></span></label>
+        </div>
+        <div class="ib-toggle-row">
+          <div class="ib-toggle-info"><div class="ib-toggle-label">Publicar automaticamente se admin não responder</div><div class="ib-toggle-desc">Publica após o tempo limite abaixo</div></div>
+          <label class="ib-switch"><input type="checkbox" id="aprov-auto" /><span class="ib-switch-track"></span></label>
+        </div>
+        <div class="ib-row" style="margin-top:.875rem;margin-bottom:0">
+          <div class="ib-field" style="max-width:200px"><label>Tempo limite sem resposta (min)</label><input type="number" id="aprov-timeout" value="30" min="5" max="240" /></div>
+        </div>
+      </div>
+      <div class="ib-card">
+        <div class="ib-card-title">Mensagem enviada ao admin</div>
+        <div class="ib-field">
+          <textarea id="aprov-template" rows="6">📋 *IntraBot · CIPE Sudoeste* — nova atualização detectada
+
+{itens}
+
+Responda com os números para publicar (ex: "1 2"), "todos" ou "ignorar".</textarea>
+        </div>
+        <div class="ib-hint">Variáveis: {itens} · {data} · {hora}</div>
+      </div>
+      <button class="ib-btn primary" onclick="saveApproval()">Salvar</button>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="ib-pane" id="pane-filtros">
+      <div class="ib-section-title">Filtros de conteúdo</div>
+      <div class="ib-card">
+        <div class="ib-card-title">Palavras obrigatórias — publica só se contiver ao menos uma</div>
+        <div class="ib-chips" id="chips-include"></div>
+        <div class="ib-row" style="margin-bottom:0">
+          <div class="ib-field"><input type="text" id="kw-include-input" placeholder="palavra-chave..." /></div>
+          <button class="ib-btn" style="flex-shrink:0;align-self:flex-end" onclick="addChip('include')">+ Adicionar</button>
+        </div>
+      </div>
+      <div class="ib-card">
+        <div class="ib-card-title">Palavras ignoradas — bloqueia publicação se contiver</div>
+        <div class="ib-chips" id="chips-exclude"></div>
+        <div class="ib-row" style="margin-bottom:0">
+          <div class="ib-field"><input type="text" id="kw-exclude-input" placeholder="palavra ignorada..." /></div>
+          <button class="ib-btn" style="flex-shrink:0;align-self:flex-end" onclick="addChip('exclude')">+ Adicionar</button>
+        </div>
+      </div>
+      <div class="ib-card">
+        <div class="ib-toggle-row">
+          <div class="ib-toggle-info"><div class="ib-toggle-label">Evitar reenvio de conteúdo já publicado</div><div class="ib-toggle-desc">Compara hash do conteúdo com histórico dos últimos 30 dias</div></div>
+          <label class="ib-switch"><input type="checkbox" id="filter-dedup" checked /><span class="ib-switch-track"></span></label>
+        </div>
+      </div>
+      <button class="ib-btn primary" onclick="saveFilters()">Salvar filtros</button>
+    </div>
+
+    <!-- LOGS -->
+    <div class="ib-pane" id="pane-logs">
+      <div class="ib-section-title">Logs de execução</div>
+      <div class="ib-card">
+        <div class="ib-log" id="log-list">
+          <div style="color:var(--ib-muted);font-size:13px">Carregando...</div>
+        </div>
+      </div>
+      <button class="ib-btn" onclick="loadLogs()">↺ Atualizar logs</button>
+    </div>
+
+  </main>
+</div>
+
+<div class="ib-toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════
+   CONFIGURAÇÃO — ajuste o IP/porta aqui
+══════════════════════════════════════ */
+const API_BASE  = 'http://localhost:3001';   // local: localhost | VPS: http://IP:3001
+const TOKEN_KEY = 'ib_token';
+
+/* ══════════════════════════════════════
+   AUTH
+══════════════════════════════════════ */
+const getToken   = () => localStorage.getItem(TOKEN_KEY);
+const setToken   = t  => localStorage.setItem(TOKEN_KEY, t);
+const clearToken = () => localStorage.removeItem(TOKEN_KEY);
+
+async function doLogin() {
+  const user = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const btn  = document.getElementById('btn-login');
+  const err  = document.getElementById('login-error');
+  if (!user || !pass) { showErr('Preencha usuário e senha.'); return; }
+  btn.disabled = true; btn.textContent = 'Entrando...';
+  err.classList.remove('visible');
+  try {
+    const res = await fetch(`${API_BASE}/api/auth`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user, pass })
+    });
+    if (!res.ok) throw new Error();
+    const { token } = await res.json();
+    setToken(token);
+    enterApp();
+  } catch { showErr('Usuário ou senha incorretos.'); }
+  finally { btn.disabled = false; btn.textContent = 'Entrar'; }
+}
+
+function showErr(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent = msg; el.classList.add('visible');
+}
+
+function doLogout() {
+  clearToken();
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+function enterApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('app').classList.add('visible');
+  loadAll();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const t = getToken();
+  if (t) {
+    fetch(`${API_BASE}/api/status`, { headers: { Authorization: `Bearer ${t}` } })
+      .then(r => { if (r.ok) enterApp(); else clearToken(); })
+      .catch(() => {});
+  }
+  ['login-user','login-pass'].forEach(id =>
+    document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); })
+  );
+  document.querySelectorAll('.ib-day-btn').forEach(b =>
+    b.addEventListener('click', () => b.classList.toggle('on'))
+  );
+});
+
+/* ══════════════════════════════════════
+   NAVEGAÇÃO
+══════════════════════════════════════ */
+function showPane(id, btn) {
+  document.querySelectorAll('.ib-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.ib-tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('pane-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'logs') loadLogs();
+}
+
+/* ══════════════════════════════════════
+   API HELPERS
+══════════════════════════════════════ */
+async function apiFetch(path, opts = {}) {
+  const res = await fetch(API_BASE + path, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}`, ...(opts.headers||{}) }
+  });
+  if (res.status === 401) { clearToken(); location.reload(); }
+  return res.json();
+}
+
+async function apiAction(path) {
+  try { await apiFetch(path, { method: 'POST' }); showToast('Comando enviado.'); setTimeout(loadStatus, 2000); }
+  catch { showToast('Erro ao enviar comando.'); }
+}
+
+/* ══════════════════════════════════════
+   STATUS
+══════════════════════════════════════ */
+async function loadAll() { await loadStatus(); await loadConfig(); }
+
+async function loadStatus() {
+  try {
+    const d = await apiFetch('/api/status');
+
+    setEl('m-checks',  d.checks_today  ?? '—');
+    setEl('m-updates', d.updates_today ?? '—');
+    setEl('m-pending', d.pending       ?? '—');
+    setEl('m-sent',    d.sent_today    ?? '—');
+
+    setBadge('vpn-badge', d.vpn_connected ? 'ok':'err', d.vpn_connected ? 'Conectada':'Desconectada');
+    setEl('vpn-status-desc', d.vpn_ip || '—');
+
+    setBadge('wa-badge', d.wa_connected ? 'ok':'err', d.wa_connected ? 'Online':'Offline');
+    setEl('wa-status-desc', d.wa_connected ? (d.wa_phone ? `+${d.wa_phone}` : 'Sessão ativa') : 'Sessão inativa');
+
+    setBadge('next-check-badge', 'warn', 'Aguardando');
+    setEl('next-check-desc', d.next_check ? `Em ${d.next_check}` : '—');
+
+    const ok = d.vpn_connected && d.wa_connected;
+    document.getElementById('status-dot').className = 'ib-status-dot' + (ok ? '' : ' offline');
+    setEl('status-label', ok ? 'operacional' : 'atenção necessária');
+
+    renderWaState(d);
+  } catch {
+    setEl('status-label', 'sem conexão com o backend');
+    document.getElementById('status-dot').className = 'ib-status-dot offline';
+  }
+}
+
+/* ══════════════════════════════════════
+   WHATSAPP — estado visual
+══════════════════════════════════════ */
+function renderWaState(d) {
+  const elDisc = document.getElementById('wa-state-disconnected');
+  const elQR   = document.getElementById('wa-state-qr');
+  const elConn = document.getElementById('wa-state-connected');
+  if (!elDisc) return;
+
+  const hasQR  = !!d.wa_qr;
+  const isConn = !!d.wa_connected;
+
+  elDisc.style.display = (!isConn && !hasQR) ? 'block' : 'none';
+  elQR.style.display   = (!isConn &&  hasQR) ? 'block' : 'none';
+  elConn.style.display = ( isConn           ) ? 'block' : 'none';
+
+  if (hasQR && !isConn) {
+    document.getElementById('wa-qr-img').src = d.wa_qr;
+    // Polling automático a cada 20s enquanto aguarda escaneamento
+    if (!window._qrPoll) {
+      window._qrPoll = setInterval(async () => {
+        const fresh = await apiFetch('/api/status').catch(() => null);
+        if (!fresh) return;
+        if (fresh.wa_connected || !fresh.wa_qr) {
+          clearInterval(window._qrPoll); window._qrPoll = null;
+          renderWaState(fresh);
+        } else {
+          document.getElementById('wa-qr-img').src = fresh.wa_qr;
+        }
+      }, 20000);
+    }
+  } else {
+    if (window._qrPoll) { clearInterval(window._qrPoll); window._qrPoll = null; }
+  }
+
+  if (isConn) {
+    const phone = d.wa_phone ? `+${d.wa_phone}` : '—';
+    const name  = d.wa_name  ? ` (${d.wa_name})` : '';
+    setEl('wa-phone-desc', phone + name);
+  }
+}
+
+async function waConnect() {
+  try {
+    await apiFetch('/api/whatsapp/connect', { method: 'POST' });
+    showToast('Iniciando conexão — aguarde o QR...');
+    setTimeout(loadStatus, 3000);
+  } catch { showToast('Erro ao conectar.'); }
+}
+
+async function waDisconnect() {
+  if (!confirm('Desconectar o WhatsApp?')) return;
+  try {
+    await apiFetch('/api/whatsapp/disconnect', { method: 'POST' });
+    showToast('WhatsApp desconectado.');
+    setTimeout(loadStatus, 2000);
+  } catch { showToast('Erro ao desconectar.'); }
+}
+
+async function waReset() {
+  if (!confirm('Isso apaga a sessão atual e gera um novo QR. Continuar?')) return;
+  try {
+    await apiFetch('/api/whatsapp/reset', { method: 'POST' });
+    showToast('Sessão resetada — aguarde o novo QR...');
+    setTimeout(loadStatus, 4000);
+  } catch { showToast('Erro ao resetar.'); }
+}
+
+/* ══════════════════════════════════════
+   CONFIG — carrega e salva
+══════════════════════════════════════ */
+async function loadConfig() {
+  try {
+    const cfg = await apiFetch('/api/config');
+    if (cfg.vpn) { setVal('vpn-host', cfg.vpn.host); setVal('vpn-port', cfg.vpn.port); setVal('vpn-user', cfg.vpn.user); setVal('intranet-url', cfg.vpn.intranet_url); }
+    renderList('pages-list', cfg.pages||[], 'page');
+    if (cfg.schedule) {
+      setVal('sched-start', cfg.schedule.start); setVal('sched-end', cfg.schedule.end); setVal('sched-interval', cfg.schedule.interval);
+      document.getElementById('sched-force-send').checked    = !!cfg.schedule.force_send;
+      document.getElementById('sched-notify-period').checked = !!cfg.schedule.notify_period;
+      document.querySelectorAll('.ib-day-btn').forEach(b => b.classList.toggle('on', (cfg.schedule.days||[]).includes(parseInt(b.dataset.day))));
+    }
+    renderList('admin-list', cfg.admin ? [cfg.admin] : [], 'admin');
+    renderList('groups-list', cfg.groups||[], 'group');
+    if (cfg.approval) {
+      document.getElementById('aprov-manual').checked = !!cfg.approval.manual;
+      document.getElementById('aprov-auto').checked   = !!cfg.approval.auto_publish;
+      setVal('aprov-timeout', cfg.approval.timeout_min);
+      setVal('aprov-template', cfg.approval.template);
+    }
+    renderChips('chips-include', cfg.keywords_include||[]);
+    renderChips('chips-exclude', cfg.keywords_exclude||[]);
+    document.getElementById('filter-dedup').checked = cfg.dedup !== false;
+  } catch {}
+}
+
+async function saveVpn() {
+  await apiFetch('/api/config/vpn', { method:'POST', body: JSON.stringify({
+    host: getVal('vpn-host'), port: getVal('vpn-port'), user: getVal('vpn-user'),
+    pass: getVal('vpn-pass'), intranet_url: getVal('intranet-url'),
+    pages: collectList('pages-list')
+  })});
+  showToast('Credenciais salvas.');
+}
+
+async function saveSchedule() {
+  const days = [...document.querySelectorAll('.ib-day-btn.on')].map(b => parseInt(b.dataset.day));
+  await apiFetch('/api/config/schedule', { method:'POST', body: JSON.stringify({
+    start: getVal('sched-start'), end: getVal('sched-end'), interval: parseInt(getVal('sched-interval')),
+    days, force_send: document.getElementById('sched-force-send').checked,
+    notify_period: document.getElementById('sched-notify-period').checked
+  })});
+  showToast('Agendamento salvo.');
+}
+
+async function saveApproval() {
+  await apiFetch('/api/config/approval', { method:'POST', body: JSON.stringify({
+    manual: document.getElementById('aprov-manual').checked,
+    auto_publish: document.getElementById('aprov-auto').checked,
+    timeout_min: parseInt(getVal('aprov-timeout')),
+    template: getVal('aprov-template'),
+    admin: collectList('admin-list')[0] || null,
+    groups: collectList('groups-list')
+  })});
+  showToast('Aprovação salva.');
+}
+
+async function saveFilters() {
+  await apiFetch('/api/config/filters', { method:'POST', body: JSON.stringify({
+    keywords_include: collectChips('chips-include'),
+    keywords_exclude: collectChips('chips-exclude'),
+    dedup: document.getElementById('filter-dedup').checked
+  })});
+  showToast('Filtros salvos.');
+}
+
+/* ══════════════════════════════════════
+   LISTAS E CHIPS
+══════════════════════════════════════ */
+function renderList(cid, items, role) {
+  const el = document.getElementById(cid);
+  el.innerHTML = '';
+  items.forEach(v => el.appendChild(makeListItem(v, role)));
+}
+function makeListItem(v, role) {
+  const d = document.createElement('div');
+  d.className = 'ib-list-item'; d.dataset.value = v;
+  const label = role === 'admin' ? 'admin' : role === 'group' ? 'grupo' : 'monitorada';
+  d.innerHTML = `<span class="ib-item-text">${v}</span><span class="ib-item-role role-${role}">${label}</span><button class="ib-btn ib-btn-sm danger" onclick="this.closest('.ib-list-item').remove()">✕</button>`;
+  return d;
+}
+function collectList(cid) { return [...document.querySelectorAll(`#${cid} .ib-list-item`)].map(e => e.dataset.value); }
+
+function addPage()  { const i=document.getElementById('new-page');  if(!i.value.trim()) return; document.getElementById('pages-list').appendChild(makeListItem(i.value.trim(),'page'));  i.value=''; }
+function setAdmin() { const i=document.getElementById('new-admin'); if(!i.value.trim()) return; document.getElementById('admin-list').innerHTML=''; document.getElementById('admin-list').appendChild(makeListItem(i.value.trim(),'admin')); i.value=''; }
+function addGroup() { const i=document.getElementById('new-group'); if(!i.value.trim()) return; document.getElementById('groups-list').appendChild(makeListItem(i.value.trim(),'group')); i.value=''; }
+
+function renderChips(cid, items) {
+  const el = document.getElementById(cid); el.innerHTML = '';
+  items.forEach(kw => el.appendChild(makeChip(kw)));
+}
+function makeChip(kw) {
+  const d = document.createElement('div');
+  d.className = 'ib-chip'; d.dataset.value = kw;
+  d.innerHTML = `${kw}<button onclick="this.parentElement.remove()">×</button>`;
+  return d;
+}
+function collectChips(cid) { return [...document.querySelectorAll(`#${cid} .ib-chip`)].map(e => e.dataset.value); }
+function addChip(type) { const i=document.getElementById(`kw-${type}-input`); if(!i.value.trim()) return; document.getElementById(`chips-${type}`).appendChild(makeChip(i.value.trim())); i.value=''; }
+
+/* ══════════════════════════════════════
+   LOGS
+══════════════════════════════════════ */
+async function loadLogs() {
+  try {
+    const { logs } = await apiFetch('/api/logs?limit=40');
+    const el = document.getElementById('log-list');
+    if (!logs?.length) { el.innerHTML = '<div style="color:var(--ib-muted);font-size:13px">Nenhum log ainda.</div>'; return; }
+    el.innerHTML = logs.map(l => `
+      <div class="ib-log-entry">
+        <span class="ib-log-time">${l.time}</span>
+        <span class="ib-badge ${l.level==='ok'?'ok':l.level==='warn'?'warn':'err'}" style="flex-shrink:0">${l.level.toUpperCase()}</span>
+        <span class="ib-log-msg">${l.msg}</span>
+      </div>`).join('');
+  } catch {
+    document.getElementById('log-list').innerHTML = '<div style="color:var(--ib-muted);font-size:13px">Erro ao carregar — backend inacessível.</div>';
+  }
+}
+
+/* ══════════════════════════════════════
+   UTILITÁRIOS
+══════════════════════════════════════ */
+function setEl(id, v)  { const e=document.getElementById(id); if(e) e.textContent=v; }
+function getVal(id)    { return document.getElementById(id).value; }
+function setVal(id, v) { if(v!=null) document.getElementById(id).value=v; }
+function setBadge(id, type, text) { const e=document.getElementById(id); if(e){e.className='ib-badge '+type; e.textContent=text;} }
+
+let _toastTimer;
+function showToast(msg) {
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(_toastTimer); _toastTimer=setTimeout(()=>t.classList.remove('show'),2500);
+}
+</script>
+</body>
+</html>
