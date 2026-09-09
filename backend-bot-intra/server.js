@@ -35,7 +35,9 @@ const DEFAULT_CONFIG = {
   groups: [],
   keywords_include: ['portaria','aviso','escala','boletim'],
   keywords_exclude: ['teste','draft'],
-  dedup: true
+  dedup: true,
+  supabase_url: process.env.SUPABASE_URL || '',
+  supabase_key: process.env.SUPABASE_KEY || ''
 };
 
 function loadConfig() {
@@ -191,6 +193,16 @@ app.post('/api/config/approval', authRequired, (req, res) => {
   res.json({ ok: true });
 });
 
+app.post('/api/config/supabase', authRequired, (req, res) => {
+  const cfg = loadConfig();
+  const { supabase_url, supabase_key } = req.body;
+  if (supabase_url !== undefined) cfg.supabase_url = supabase_url;
+  if (supabase_key !== undefined) cfg.supabase_key = supabase_key;
+  saveConfig(cfg);
+  appendLog('ok', 'Config Supabase salva');
+  res.json({ ok: true });
+});
+
 app.post('/api/config/filters', authRequired, (req, res) => {
   const cfg = loadConfig();
   const { keywords_include, keywords_exclude, dedup } = req.body;
@@ -321,6 +333,167 @@ app.use('/i', (req, res) => {
   res.setHeader('Content-Type', mimeTypes[ext] || 'application/octet-stream');
   res.setHeader('Cache-Control', 'public, max-age=86400');
   fs.createReadStream(filePath).pipe(res);
+});
+
+/* ════════════════════════════════════════
+   KEYWORDS POR POLICIAL
+════════════════════════════════════════ */
+
+// Supabase REST simples (evita adicionar dependência de SDK)
+function supabaseReq(method, table, params, body) {
+  const cfg = loadConfig();
+  const supaUrl = cfg.supabase_url || process.env.SUPABASE_URL || '';
+  const supaKey = cfg.supabase_key || process.env.SUPABASE_KEY || '';
+  if (!supaUrl || !supaKey) return Promise.reject(new Error('Supabase não configurado'));
+
+  let url = `${supaUrl}/rest/v1/${table}`;
+  if (params) url += `?${params}`;
+
+  return new Promise((resolve, reject) => {
+    const u   = new URL(url);
+    const data = body ? JSON.stringify(body) : null;
+    const opts = {
+      hostname: u.hostname,
+      port:     u.port || 443,
+      path:     u.pathname + u.search,
+      method,
+      headers: {
+        'apikey':         supaKey,
+        'Authorization':  `Bearer ${supaKey}`,
+        'Content-Type':   'application/json',
+        'Prefer':         'return=representation',
+        ...(data ? { 'Content-Length': Buffer.byteLength(data) } : {})
+      }
+    };
+    const lib = require(u.protocol === 'https:' ? 'https' : 'http');
+    const req = lib.request(opts, res => {
+      let raw = '';
+      res.on('data', c => raw += c);
+      res.on('end', () => { try { resolve(JSON.parse(raw || '[]')); } catch { resolve([]); } });
+    });
+    req.on('error', reject);
+    if (data) req.write(data);
+    req.end();
+  });
+}
+
+// GET /api/contatos — lista contatos com keywords
+app.get('/api/contatos', authRequired, async (req, res) => {
+  const q = req.query.q ? `&or=(nome.ilike.*${req.query.q}*,matricula.ilike.*${req.query.q}*)` : '';
+  try {
+    const data = await supabaseReq('GET', 'whatsapp_contatos',
+      `select=matricula,nome,telefone,keywords&order=nome${q}`);
+    res.json({ ok: true, contatos: Array.isArray(data) ? data : [] });
+  } catch (e) {
+    appendLog('err', `Erro ao listar contatos: ${e.message}`);
+    res.status(500).json({ ok: false, erro: e.message });
+  }
+});
+
+// POST /api/contatos/:matricula/keywords — salva keywords (substitui)
+app.post('/api/contatos/:matricula/keywords', authRequired, async (req, res) => {
+  const { matricula } = req.params;
+  const { keywords }  = req.body;
+  if (!Array.isArray(keywords)) {
+    return res.status(400).json({ ok: false, erro: 'keywords deve ser array' });
+  }
+  const kws = keywords.map(k => k.trim().toLowerCase()).filter(Boolean);
+  try {
+    await supabaseReq('PATCH', 'whatsapp_contatos',
+      `matricula=eq.${encodeURIComponent(matricula)}`,
+      { keywords: kws });
+    appendLog('ok', `Keywords atualizadas: ${matricula} → [${kws.join(', ')}]`);
+    res.json({ ok: true });
+  } catch (e) {
+    appendLog('err', `Erro ao salvar keywords (${matricula}): ${e.message}`);
+    res.status(500).json({ ok: false, erro: e.message });
+  }
+});
+
+/* ════════════════════════════════════════
+   APROVAÇÃO DUPLA (painel web)
+════════════════════════════════════════ */
+
+const STATE_FILE_PATH = path.join(__dirname, 'estado.json');
+
+function lerEstado() {
+  try { return JSON.parse(fs.readFileSync(STATE_FILE_PATH, 'utf8')); } catch { return {}; }
+}
+function gravarEstado(obj) {
+  const s = lerEstado();
+  fs.writeFileSync(STATE_FILE_PATH, JSON.stringify({ ...s, ...obj }, null, 2));
+}
+
+// GET /api/pendentes — itens aguardando aprovação
+app.get('/api/pendentes', authRequired, (req, res) => {
+  const s = lerEstado();
+  res.json({ ok: true, pendentes: s.pending_items || [] });
+});
+
+// POST /api/aprovar
+// body: { ids: [...], destino: "grupos" | "matriculas", matriculas?: [...] }
+app.post('/api/aprovar', authRequired, async (req, res) => {
+  const { ids, destino, matriculas } = req.body || {};
+  if (!Array.isArray(ids) || !ids.length || !destino) {
+    return res.status(400).json({ ok: false, erro: 'ids e destino são obrigatórios' });
+  }
+
+  const estado  = lerEstado();
+  const pending = estado.pending_items || [];
+  const itens   = pending.filter(i => ids.includes(String(i.id || i.link)));
+
+  if (!itens.length) return res.status(404).json({ ok: false, erro: 'Nenhum item encontrado' });
+
+  const erros       = [];
+  const publicados  = [];
+
+  for (const item of itens) {
+    const linkExibir = item.mirrorId
+      ? `https://diagnose-kvrl.vercel.app/i/${item.mirrorId}`
+      : item.link;
+    const msg = `📌 *${item.titulo}*\n${item.categoria ? `_${item.categoria}_\n` : ''}${item.data ? `${item.data}\n` : ''}${linkExibir}`;
+
+    if (destino === 'grupos') {
+      const cfg    = loadConfig();
+      const grupos = cfg.groups || [];
+      for (const gid of grupos) {
+        try { await callWA('POST', '/send', { to: gid, msg }); publicados.push(gid); }
+        catch (e) { erros.push(`grupo ${gid}: ${e.message}`); }
+      }
+    } else if (destino === 'matriculas' && Array.isArray(matriculas) && matriculas.length) {
+      try {
+        const mats = matriculas.map(m => `"${m}"`).join(',');
+        const contatos = await supabaseReq('GET', 'whatsapp_contatos',
+          `select=matricula,telefone&matricula=in.(${mats})`);
+        for (const c of (Array.isArray(contatos) ? contatos : [])) {
+          try { await callWA('POST', '/send', { to: c.telefone, msg }); publicados.push(c.matricula); }
+          catch (e) { erros.push(`${c.matricula}: ${e.message}`); }
+        }
+      } catch (e) { erros.push(`Supabase: ${e.message}`); }
+    }
+  }
+
+  // remove aprovados do estado
+  const novoPending = pending.filter(i => !ids.includes(String(i.id || i.link)));
+  gravarEstado({ pending_items: novoPending, pending: novoPending.length });
+  appendLog('ok', `Painel aprovou ${publicados.length} publicação(ões) via ${destino}`);
+
+  res.json({ ok: true, publicados: publicados.length, erros });
+});
+
+// POST /api/rejeitar
+// body: { ids: [...] }
+app.post('/api/rejeitar', authRequired, (req, res) => {
+  const { ids } = req.body || {};
+  if (!Array.isArray(ids) || !ids.length) {
+    return res.status(400).json({ ok: false, erro: 'ids é obrigatório' });
+  }
+  const estado     = lerEstado();
+  const pending    = estado.pending_items || [];
+  const novoPending = pending.filter(i => !ids.includes(String(i.id || i.link)));
+  gravarEstado({ pending_items: novoPending, pending: novoPending.length });
+  appendLog('ok', `Painel rejeitou ${ids.length} item(ns)`);
+  res.json({ ok: true });
 });
 
 /* ════════════════════════════════════════

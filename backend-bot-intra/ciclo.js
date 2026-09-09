@@ -1,10 +1,11 @@
 'use strict';
 
 const { execFile } = require('child_process');
-const fs   = require('fs');
-const path = require('path');
-const http = require('http');
-const vpn  = require('./vpn');
+const fs    = require('fs');
+const path  = require('path');
+const http  = require('http');
+const https = require('https');
+const vpn   = require('./vpn');
 
 const BASE       = __dirname;
 const LOG_FILE   = path.join(BASE, 'bot.log');
@@ -46,6 +47,54 @@ function callWA(endpoint, body) {
     req.write(data);
     req.end();
   });
+}
+
+// Busca contatos com keywords no Supabase e notifica matches 1:1
+async function notificarKeywords(item) {
+  const cfg     = loadConfig();
+  const supaUrl = cfg.supabase_url || process.env.SUPABASE_URL || '';
+  const supaKey = cfg.supabase_key || process.env.SUPABASE_KEY || '';
+  if (!supaUrl || !supaKey) return;
+
+  // busca contatos que têm ao menos 1 keyword
+  const contatos = await new Promise((resolve) => {
+    const url  = new URL(`${supaUrl}/rest/v1/whatsapp_contatos?select=matricula,nome,telefone,keywords&keywords=not.eq.{}`);
+    const lib  = url.protocol === 'https:' ? https : http;
+    const opts = {
+      hostname: url.hostname, port: url.port || 443,
+      path: url.pathname + url.search, method: 'GET',
+      headers: { 'apikey': supaKey, 'Authorization': `Bearer ${supaKey}` }
+    };
+    const req = lib.request(opts, res => {
+      let raw = '';
+      res.on('data', c => raw += c);
+      res.on('end', () => { try { resolve(JSON.parse(raw)); } catch { resolve([]); } });
+    });
+    req.on('error', () => resolve([]));
+    req.end();
+  });
+
+  if (!Array.isArray(contatos) || !contatos.length) return;
+
+  const haystack = `${item.titulo || ''} ${item.corpo || ''}`.toLowerCase();
+
+  for (const c of contatos) {
+    if (!c.keywords || !c.keywords.length) continue;
+    const match = c.keywords.some(kw => haystack.includes(kw.toLowerCase()));
+    if (!match) continue;
+
+    const linkExibir = item.mirrorId
+      ? `https://diagnose-kvrl.vercel.app/i/${item.mirrorId}`
+      : item.link;
+    const msg = `🔔 *Alerta de palavra-chave*\n\n📌 *${item.titulo}*\n${linkExibir}`;
+
+    try {
+      await callWA('/send', { to: c.telefone, msg });
+      log(`[keyword] notificado ${c.nome} (${c.matricula})`);
+    } catch (e) {
+      log(`[keyword] erro ao notificar ${c.matricula}: ${e.message}`);
+    }
+  }
 }
 
 // Roda scraper.py e retorna lista de novos itens
@@ -196,6 +245,11 @@ async function executar() {
     if (!novos.length) { ciclando = false; log('=== Fim do ciclo (sem novidades) ==='); return; }
 
     saveState({ updates_today: (hoje.updates_today || 0) + novos.length });
+
+    // Notificações 1:1 por keyword — independente do fluxo de aprovação
+    for (const item of novos) {
+      await notificarKeywords(item).catch(e => log(`[keyword] ${e.message}`));
+    }
 
     const manual = cfg.approval?.manual !== false;
     if (manual) {

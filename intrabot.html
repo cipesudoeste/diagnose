@@ -175,6 +175,47 @@
     .ib-toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--ib-panel); border: 1px solid rgba(74,147,168,.4); border-radius: 6px; color: var(--ib-blue); font-size: 13px; padding: 10px 18px; opacity: 0; pointer-events: none; transition: opacity .3s; z-index: 999; }
     .ib-toast.show { opacity: 1; }
 
+    /* Sub-abas dentro de um pane */
+    .ib-subnav { display: flex; gap: 2px; border-bottom: 1px solid var(--ib-border); margin-bottom: 1.25rem; }
+    .ib-subtab-btn { background: none; border: none; border-bottom: 2px solid transparent; color: var(--ib-muted); cursor: pointer; font-family: 'Inter', sans-serif; font-size: 12px; padding: 8px 14px; white-space: nowrap; transition: color .2s, border-color .2s; }
+    .ib-subtab-btn:hover { color: var(--ib-text); }
+    .ib-subtab-btn.active { color: var(--ib-blue); border-bottom-color: var(--ib-blue); }
+    .ib-subpane { display: none; }
+    .ib-subpane.active { display: block; }
+
+    /* Keywords */
+    .kw-contato-card { background: var(--ib-panel2); border: 1px solid var(--ib-border); border-radius: 6px; padding: .875rem 1rem; margin-bottom: .625rem; }
+    .kw-contato-header { display: flex; align-items: center; gap: 10px; margin-bottom: .625rem; }
+    .kw-contato-nome { font-size: 13px; color: var(--ib-text); flex: 1; }
+    .kw-contato-mat { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ib-muted); }
+    .kw-contato-tel { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ib-muted); }
+    .kw-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: .625rem; min-height: 24px; }
+    .kw-tag { display: flex; align-items: center; gap: 4px; background: rgba(74,147,168,.12); border: 1px solid rgba(74,147,168,.3); border-radius: 20px; font-size: 11px; color: var(--ib-blue); padding: 2px 9px; }
+    .kw-tag button { background: none; border: none; color: var(--ib-muted); cursor: pointer; font-size: 14px; line-height: 1; padding: 0; }
+    .kw-tag button:hover { color: #e07070; }
+    .kw-add-row { display: flex; gap: 6px; }
+    .kw-add-row input { flex: 1; background: var(--ib-panel); border: 1px solid var(--ib-border); border-radius: 4px; color: var(--ib-text); font-family: 'Inter', sans-serif; font-size: 12px; padding: 5px 9px; outline: none; }
+    .kw-add-row input:focus { border-color: var(--ib-blue); }
+    .kw-empty { color: var(--ib-muted); font-size: 13px; text-align: center; padding: 2rem 0; }
+
+    /* Aprovação web */
+    .aprov-card { background: var(--ib-panel); border: 1px solid var(--ib-border); border-radius: 6px; padding: 1rem 1.25rem; margin-bottom: .75rem; }
+    .aprov-card-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: .5rem; }
+    .aprov-card-cat { font-size: 10px; font-weight: 500; color: var(--ib-blue); background: rgba(74,147,168,.12); padding: 2px 8px; border-radius: 3px; text-transform: uppercase; letter-spacing: .05em; }
+    .aprov-card-data { font-size: 11px; color: var(--ib-muted); font-family: 'JetBrains Mono', monospace; }
+    .aprov-card-titulo { font-size: 14px; color: var(--ib-text); font-weight: 500; margin-bottom: .5rem; line-height: 1.4; }
+    .aprov-card-link { font-size: 11px; color: var(--ib-blue); text-decoration: none; font-family: 'JetBrains Mono', monospace; }
+    .aprov-card-link:hover { text-decoration: underline; }
+    .aprov-card-actions { display: flex; gap: 8px; margin-top: .875rem; flex-wrap: wrap; align-items: center; }
+    .aprov-sel-check { width: 18px; height: 18px; border: 1px solid var(--ib-border); border-radius: 3px; background: var(--ib-panel2); flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; transition: all .15s; margin-right: 2px; }
+    .aprov-sel-check.selected { background: var(--ib-blue); border-color: var(--ib-blue); color: #fff; }
+    .aprov-destino { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .aprov-radio-label { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--ib-muted); cursor: pointer; }
+    .aprov-radio-label input { accent-color: var(--ib-blue); }
+    .aprov-empty { color: var(--ib-muted); font-size: 13px; text-align: center; padding: 3rem 0; }
+    .aprov-toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--ib-border); }
+    .aprov-toolbar-label { font-size: 12px; color: var(--ib-muted); }
+
     @media (max-width: 600px) { .ib-content { padding: 1rem; } .ib-header { padding: 0 1rem; } .ib-nav { padding: 0 1rem; } }
   </style>
 </head>
@@ -224,6 +265,7 @@
     <button class="ib-tab-btn" onclick="showPane('whatsapp',this)">WhatsApp</button>
     <button class="ib-tab-btn" onclick="showPane('agendamento',this)">Agendamento</button>
     <button class="ib-tab-btn" onclick="showPane('aprovacao',this)">Aprovação</button>
+    <button class="ib-tab-btn" onclick="showPane('aprovacao-web',this);loadPendentes()">Aprovar agora</button>
     <button class="ib-tab-btn" onclick="showPane('filtros',this)">Filtros</button>
     <button class="ib-tab-btn" onclick="showPane('logs',this)">Logs</button>
     <button class="ib-tab-btn" onclick="showPane('espelho',this);loadEspelho()">Espelho</button>
@@ -272,12 +314,31 @@
         </div>
         <button class="ib-btn primary" onclick="saveIntranet()">Salvar credenciais</button>
       </div>
+      <div class="ib-card">
+        <div class="ib-card-title">Supabase — usado para keywords por policial</div>
+        <div class="ib-row">
+          <div class="ib-field"><label>URL do projeto</label><input type="text" id="supa-url" placeholder="https://xxxx.supabase.co" /></div>
+        </div>
+        <div class="ib-row">
+          <div class="ib-field"><label>Chave anon/pública</label><input type="password" id="supa-key" autocomplete="new-password" /></div>
+        </div>
+        <button class="ib-btn primary" onclick="saveSupabase()">Salvar</button>
+        <div class="ib-hint">Necessário só para a funcionalidade de Keywords. Preencha com a URL e a chave <em>anon</em> do painel Supabase.</div>
+      </div>
     </div>
 
     <!-- WHATSAPP -->
     <div class="ib-pane" id="pane-whatsapp">
       <div class="ib-section-title">WhatsApp</div>
 
+      <div class="ib-subnav">
+        <button class="ib-subtab-btn active" onclick="showSubPane('wa','sessao',this)">Sessão</button>
+        <button class="ib-subtab-btn" onclick="showSubPane('wa','admin',this)">Admin / Grupos</button>
+        <button class="ib-subtab-btn" onclick="showSubPane('wa','keywords',this);loadKeywords()">Keywords</button>
+      </div>
+
+      <!-- sub-aba: Sessão -->
+      <div class="ib-subpane active" id="wa-sub-sessao">
       <div class="ib-card">
         <div class="ib-card-title">Sessão</div>
         <div id="wa-state-disconnected">
@@ -322,6 +383,10 @@
         </div>
       </div>
 
+      </div><!-- /wa-sub-sessao -->
+
+      <!-- sub-aba: Admin / Grupos -->
+      <div class="ib-subpane" id="wa-sub-admin">
       <!-- Admin -->
       <div class="ib-card">
         <div class="ib-card-title">Administrador — recebe as prévias de aprovação</div>
@@ -347,7 +412,26 @@
         </div>
         <div class="ib-hint">Selecione os grupos onde o bot vai publicar as atualizações aprovadas.</div>
       </div>
-    </div>
+      </div><!-- /wa-sub-admin -->
+
+      <!-- sub-aba: Keywords -->
+      <div class="ib-subpane" id="wa-sub-keywords">
+        <div class="ib-approval-info" style="margin-bottom:1rem">
+          Defina palavras-chave por policial. Quando um post novo tiver match, o policial recebe uma mensagem direta via WhatsApp com o link do espelho.
+        </div>
+        <div class="ib-card" style="margin-bottom:1rem">
+          <div class="ib-card-title">Buscar policial</div>
+          <div class="ib-row" style="margin-bottom:0">
+            <div class="ib-field"><input type="text" id="kw-busca" placeholder="Nome ou matrícula..." /></div>
+            <button class="ib-btn" style="flex-shrink:0;align-self:flex-end" onclick="loadKeywords()">Buscar</button>
+          </div>
+        </div>
+        <div id="kw-lista">
+          <div class="kw-empty">Carregando...</div>
+        </div>
+      </div><!-- /wa-sub-keywords -->
+
+    </div><!-- /pane-whatsapp -->
 
     <!-- AGENDAMENTO -->
     <div class="ib-pane" id="pane-agendamento">
@@ -419,6 +503,26 @@ Responda com os números para publicar (ex: "1 2"), "todos" ou "ignorar".</texta
         <div class="ib-hint">Variáveis: {itens}</div>
       </div>
       <button class="ib-btn primary" onclick="saveApproval()">Salvar</button>
+    </div>
+
+    <!-- APROVAÇÃO WEB -->
+    <div class="ib-pane" id="pane-aprovacao-web">
+      <div class="ib-section-title">Aprovar agora</div>
+      <div class="aprov-toolbar">
+        <span class="aprov-toolbar-label">Destino padrão:</span>
+        <label class="aprov-radio-label"><input type="radio" name="aprov-destino-global" value="grupos" checked /> Grupos cadastrados</label>
+        <label class="aprov-radio-label"><input type="radio" name="aprov-destino-global" value="matriculas" /> Policiais específicos</label>
+        <div id="aprov-mats-wrap" style="display:none;flex:1;min-width:200px">
+          <input type="text" id="aprov-mats-input" placeholder="Matrículas separadas por vírgula (ex: 30505913, 30505914)"
+            style="width:100%;background:var(--ib-panel2);border:1px solid var(--ib-border);border-radius:4px;color:var(--ib-text);font-family:'JetBrains Mono',monospace;font-size:12px;padding:6px 10px;outline:none" />
+        </div>
+        <button class="ib-btn" onclick="loadPendentes()">↺ Atualizar</button>
+        <button class="ib-btn primary" onclick="aprovacaoEmLote()">✓ Publicar selecionados</button>
+        <button class="ib-btn danger" onclick="rejeicaoEmLote()">✕ Rejeitar selecionados</button>
+      </div>
+      <div id="aprov-web-lista">
+        <div class="aprov-empty">Carregando...</div>
+      </div>
     </div>
 
     <!-- FILTROS -->
@@ -753,7 +857,8 @@ function removeGroup(id, btn) {
 async function loadConfig() {
   try {
     const cfg = await apiFetch('/api/config');
-    if (cfg.intranet) { setVal('intra-user', cfg.intranet.user); }
+    if (cfg.intranet)    { setVal('intra-user', cfg.intranet.user); }
+    if (cfg.supabase_url) { setVal('supa-url', cfg.supabase_url); }
     if (cfg.schedule) {
       setVal('sched-start', cfg.schedule.start); setVal('sched-end', cfg.schedule.end); setVal('sched-interval', cfg.schedule.interval);
       document.getElementById('sched-force-send').checked    = !!cfg.schedule.force_send;
@@ -778,6 +883,14 @@ async function loadConfig() {
     renderChips('chips-exclude', cfg.keywords_exclude||[]);
     document.getElementById('filter-dedup').checked = cfg.dedup !== false;
   } catch {}
+}
+
+async function saveSupabase() {
+  await apiFetch('/api/config/supabase', { method: 'POST', body: JSON.stringify({
+    supabase_url: getVal('supa-url'),
+    supabase_key: getVal('supa-key') || undefined
+  })});
+  showToast('Config Supabase salva.');
 }
 
 async function saveIntranet() {
@@ -859,6 +972,240 @@ function escHtml(s)    { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').rep
 
 let _toastTimer;
 function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(_toastTimer); _toastTimer=setTimeout(()=>t.classList.remove('show'),2500); }
+
+/* SUB-ABAS */
+function showSubPane(prefix, id, btn) {
+  const scope = btn.closest('.ib-pane') || document;
+  scope.querySelectorAll('.ib-subpane').forEach(p => p.classList.remove('active'));
+  scope.querySelectorAll('.ib-subtab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`${prefix}-sub-${id}`).classList.add('active');
+  btn.classList.add('active');
+}
+
+/* ════════════════════════════════════════
+   KEYWORDS
+════════════════════════════════════════ */
+let _kwContatos = [];
+
+async function loadKeywords() {
+  const q    = document.getElementById('kw-busca')?.value.trim() || '';
+  const lista = document.getElementById('kw-lista');
+  lista.innerHTML = '<div class="kw-empty">Carregando...</div>';
+  try {
+    const params = q ? `?q=${encodeURIComponent(q)}` : '';
+    const data   = await apiFetch(`/api/contatos${params}`);
+    _kwContatos  = data.contatos || [];
+    renderKeywords(_kwContatos);
+  } catch {
+    lista.innerHTML = '<div class="kw-empty" style="color:var(--ib-danger)">Erro ao carregar contatos.</div>';
+  }
+}
+
+function renderKeywords(contatos) {
+  const lista = document.getElementById('kw-lista');
+  if (!contatos.length) {
+    lista.innerHTML = '<div class="kw-empty">Nenhum contato encontrado.</div>';
+    return;
+  }
+  lista.innerHTML = contatos.map(c => {
+    const mat = escHtml(c.matricula || '');
+    const kws = (c.keywords || []).map(kw =>
+      `<div class="kw-tag">${escHtml(kw)}<button onclick="removeKeyword('${mat}','${escHtml(kw)}')">×</button></div>`
+    ).join('');
+    return `<div class="kw-contato-card" id="kwcard-${mat}">
+      <div class="kw-contato-header">
+        <div style="flex:1">
+          <div class="kw-contato-nome">${escHtml(c.nome || '—')}</div>
+          <div style="display:flex;gap:10px;margin-top:2px">
+            <span class="kw-contato-mat">${mat}</span>
+            <span class="kw-contato-tel">${escHtml(c.telefone || '—')}</span>
+          </div>
+        </div>
+      </div>
+      <div class="kw-tags" id="kwtags-${mat}">${kws || '<span style="font-size:11px;color:var(--ib-muted)">sem palavras-chave</span>'}</div>
+      <div class="kw-add-row">
+        <input type="text" id="kwinput-${mat}" placeholder="nova palavra-chave..."
+          onkeydown="if(event.key==='Enter')addKeyword('${mat}')" />
+        <button class="ib-btn ib-btn-sm" onclick="addKeyword('${mat}')">+ Adicionar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function getKeywordsDeCard(mat) {
+  const tags = document.querySelectorAll(`#kwtags-${mat} .kw-tag`);
+  return [...tags].map(t => t.childNodes[0].textContent.trim()).filter(Boolean);
+}
+
+async function addKeyword(mat) {
+  const input = document.getElementById(`kwinput-${mat}`);
+  const kw    = input.value.trim().toLowerCase();
+  if (!kw) return;
+  const atuais = getKeywordsDeCard(mat);
+  if (atuais.includes(kw)) { showToast('Palavra-chave já existe.'); return; }
+  const novas = [...atuais, kw];
+  try {
+    await apiFetch(`/api/contatos/${encodeURIComponent(mat)}/keywords`, {
+      method: 'POST', body: JSON.stringify({ keywords: novas })
+    });
+    input.value = '';
+    // atualiza o card sem recarregar tudo
+    const tagsEl = document.getElementById(`kwtags-${mat}`);
+    const tag = document.createElement('div'); tag.className = 'kw-tag';
+    tag.innerHTML = `${escHtml(kw)}<button onclick="removeKeyword('${mat}','${escHtml(kw)}')">×</button>`;
+    tagsEl.querySelectorAll('span').forEach(s => s.remove()); // remove placeholder
+    tagsEl.appendChild(tag);
+    showToast('Palavra-chave adicionada.');
+  } catch { showToast('Erro ao salvar.'); }
+}
+
+async function removeKeyword(mat, kw) {
+  const atuais = getKeywordsDeCard(mat).filter(k => k !== kw);
+  try {
+    await apiFetch(`/api/contatos/${encodeURIComponent(mat)}/keywords`, {
+      method: 'POST', body: JSON.stringify({ keywords: atuais })
+    });
+    const tagsEl = document.getElementById(`kwtags-${mat}`);
+    tagsEl.querySelectorAll('.kw-tag').forEach(t => {
+      if (t.childNodes[0].textContent.trim() === kw) t.remove();
+    });
+    if (!tagsEl.querySelectorAll('.kw-tag').length) {
+      tagsEl.innerHTML = '<span style="font-size:11px;color:var(--ib-muted)">sem palavras-chave</span>';
+    }
+    showToast('Palavra-chave removida.');
+  } catch { showToast('Erro ao salvar.'); }
+}
+
+/* ════════════════════════════════════════
+   APROVAÇÃO WEB
+════════════════════════════════════════ */
+let _pendentes    = [];
+let _selecionados = new Set();
+
+// mostra/oculta campo de matrículas conforme radio
+document.querySelectorAll('input[name="aprov-destino-global"]').forEach(r => {
+  r.addEventListener('change', () => {
+    const wrap = document.getElementById('aprov-mats-wrap');
+    if (wrap) wrap.style.display = r.value === 'matriculas' ? 'flex' : 'none';
+  });
+});
+
+async function loadPendentes() {
+  const lista = document.getElementById('aprov-web-lista');
+  if (!lista) return;
+  lista.innerHTML = '<div class="aprov-empty">Carregando...</div>';
+  _selecionados.clear();
+  try {
+    const data  = await apiFetch('/api/pendentes');
+    _pendentes  = data.pendentes || [];
+    renderPendentes(_pendentes);
+  } catch {
+    lista.innerHTML = '<div class="aprov-empty" style="color:var(--ib-danger)">Erro ao carregar pendentes.</div>';
+  }
+}
+
+function itemId(item) { return String(item.id || item.link); }
+
+function renderPendentes(itens) {
+  const lista = document.getElementById('aprov-web-lista');
+  if (!itens.length) {
+    lista.innerHTML = '<div class="aprov-empty">Nenhum item aguardando aprovação.</div>';
+    return;
+  }
+  lista.innerHTML = itens.map(item => {
+    const id     = itemId(item);
+    const sel    = _selecionados.has(id);
+    const mirror = item.mirrorId
+      ? `https://diagnose-kvrl.vercel.app/i/${item.mirrorId}`
+      : (item.link || '');
+    const catHtml = item.categoria
+      ? `<span class="aprov-card-cat">${escHtml(item.categoria)}</span>` : '';
+    const dataHtml = item.data
+      ? `<span class="aprov-card-data">${escHtml(item.data)}</span>` : '';
+    return `<div class="aprov-card" id="aprov-${escHtml(id)}">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <div class="aprov-sel-check${sel?' selected':''}" onclick="togglePendente('${escHtml(id)}')" id="check-${escHtml(id)}">${sel?'✓':''}</div>
+        <div style="flex:1">
+          <div class="aprov-card-meta">${catHtml}${dataHtml}</div>
+          <div class="aprov-card-titulo">${escHtml(item.titulo || '(sem título)')}</div>
+          ${mirror ? `<a class="aprov-card-link" href="${escHtml(mirror)}" target="_blank">${escHtml(mirror)} ↗</a>` : ''}
+          <div class="aprov-card-actions">
+            <button class="ib-btn ib-btn-sm primary" onclick="publicarItem('${escHtml(id)}')">✓ Publicar</button>
+            <button class="ib-btn ib-btn-sm danger"  onclick="rejeitarItem('${escHtml(id)}')">✕ Rejeitar</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function togglePendente(id) {
+  if (_selecionados.has(id)) _selecionados.delete(id);
+  else _selecionados.add(id);
+  const el = document.getElementById(`check-${id}`);
+  if (el) { el.classList.toggle('selected', _selecionados.has(id)); el.textContent = _selecionados.has(id) ? '✓' : ''; }
+}
+
+function getDestinoAtual() {
+  const r    = document.querySelector('input[name="aprov-destino-global"]:checked');
+  const dest = r ? r.value : 'grupos';
+  const mats = dest === 'matriculas'
+    ? (document.getElementById('aprov-mats-input')?.value || '').split(',').map(m => m.trim()).filter(Boolean)
+    : [];
+  return { destino: dest, matriculas: mats };
+}
+
+async function publicarItem(id) {
+  const { destino, matriculas } = getDestinoAtual();
+  try {
+    const r = await apiFetch('/api/aprovar', { method: 'POST', body: JSON.stringify({ ids: [id], destino, matriculas }) });
+    if (r.ok) {
+      document.getElementById(`aprov-${id}`)?.remove();
+      _pendentes = _pendentes.filter(i => itemId(i) !== id);
+      showToast(r.erros?.length ? `Publicado com ${r.erros.length} erro(s).` : 'Publicado.');
+    } else { showToast('Erro: ' + (r.erro || '?')); }
+  } catch { showToast('Erro de comunicação.'); }
+}
+
+async function rejeitarItem(id) {
+  try {
+    const r = await apiFetch('/api/rejeitar', { method: 'POST', body: JSON.stringify({ ids: [id] }) });
+    if (r.ok) {
+      document.getElementById(`aprov-${id}`)?.remove();
+      _pendentes = _pendentes.filter(i => itemId(i) !== id);
+      showToast('Item rejeitado.');
+    } else { showToast('Erro: ' + (r.erro || '?')); }
+  } catch { showToast('Erro de comunicação.'); }
+}
+
+async function aprovacaoEmLote() {
+  if (!_selecionados.size) { showToast('Selecione ao menos um item.'); return; }
+  const { destino, matriculas } = getDestinoAtual();
+  const ids = [..._selecionados];
+  try {
+    const r = await apiFetch('/api/aprovar', { method: 'POST', body: JSON.stringify({ ids, destino, matriculas }) });
+    if (r.ok) {
+      ids.forEach(id => { document.getElementById(`aprov-${id}`)?.remove(); });
+      _pendentes = _pendentes.filter(i => !ids.includes(itemId(i)));
+      _selecionados.clear();
+      showToast(r.erros?.length ? `${r.publicados} publicado(s), ${r.erros.length} erro(s).` : `${r.publicados} publicado(s).`);
+    } else { showToast('Erro: ' + (r.erro || '?')); }
+  } catch { showToast('Erro de comunicação.'); }
+}
+
+async function rejeicaoEmLote() {
+  if (!_selecionados.size) { showToast('Selecione ao menos um item.'); return; }
+  const ids = [..._selecionados];
+  try {
+    const r = await apiFetch('/api/rejeitar', { method: 'POST', body: JSON.stringify({ ids }) });
+    if (r.ok) {
+      ids.forEach(id => { document.getElementById(`aprov-${id}`)?.remove(); });
+      _pendentes = _pendentes.filter(i => !ids.includes(itemId(i)));
+      _selecionados.clear();
+      showToast(`${ids.length} item(ns) rejeitado(s).`);
+    } else { showToast('Erro: ' + (r.erro || '?')); }
+  } catch { showToast('Erro de comunicação.'); }
+}
 
 /* Poll automático de status */
 setInterval(loadStatus, 30000);
