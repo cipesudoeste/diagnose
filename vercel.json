@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/intrabot-api/:path*",
+      "destination": "http://191.252.194.97:3001/:path*"
+    }
+  ]
+}
