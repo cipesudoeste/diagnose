@@ -190,7 +190,7 @@ def salvar_vistos(vistos: set[str]) -> None:
 def executar(usuario: str, senha: str, headless: bool = True) -> list[dict]:
     novos = []
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=headless)
+        browser = p.chromium.launch(headless=headless, proxy={"server": "http://proxy.servicos.pm.ba.gov.br:8081"})
         page    = browser.new_page()
         try:
             if not fazer_login(page, usuario, senha):
@@ -225,6 +225,29 @@ def executar(usuario: str, senha: str, headless: bool = True) -> list[dict]:
 # ---------------------------------------------------------------------------
 # Execução direta
 # ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------
+# Modo --json (chamado pelo ciclo.js)
+# ---------------------------------------------------------------------------
+def main_json(usuario: str, senha: str):
+    """Roda o scraper completo e imprime JSON no stdout com TODOS os itens da página."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True, proxy={"server": "http://proxy.servicos.pm.ba.gov.br:8081"})
+        page    = browser.new_page()
+        try:
+            if not fazer_login(page, usuario, senha):
+                print("[]")
+                return
+            itens = extrair_itens(page)
+            print(json.dumps(itens, ensure_ascii=False))
+        except Exception as e:
+            log.error(f"Erro no modo --json: {e}")
+            print("[]")
+        finally:
+            browser.close()
+
+
 if __name__ == "__main__":
     import sys
 
@@ -258,23 +281,3 @@ if __name__ == "__main__":
     else:
         print("Nenhum item novo encontrado.")
 
-
-# ---------------------------------------------------------------------------
-# Modo --json (chamado pelo ciclo.js)
-# ---------------------------------------------------------------------------
-def main_json(usuario: str, senha: str):
-    """Roda o scraper completo e imprime JSON no stdout com TODOS os itens da página."""
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page    = browser.new_page()
-        try:
-            if not fazer_login(page, usuario, senha):
-                print("[]")
-                return
-            itens = extrair_itens(page)
-            print(json.dumps(itens, ensure_ascii=False))
-        except Exception as e:
-            log.error(f"Erro no modo --json: {e}")
-            print("[]")
-        finally:
-            browser.close()

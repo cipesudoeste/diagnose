@@ -636,6 +636,7 @@ async function waConnect() {
     await apiFetch('/api/whatsapp/connect', { method: 'POST' });
     showToast('Iniciando conexão — aguarde o QR...');
     setTimeout(loadStatus, 3000);
+    setInterval(loadStatus, 30000);
   } catch { showToast('Erro ao conectar.'); }
 }
 

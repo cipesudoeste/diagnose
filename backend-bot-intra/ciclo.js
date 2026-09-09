@@ -94,11 +94,13 @@ async function enviarPrevia(novos) {
   const admin  = cfg.admin;
   if (!admin) { log('Admin não configurado — pulando envio.'); return; }
 
-  const linhas = novos.map((item, i) =>
+  const preview = novos.slice(0, 10);
+  const linhas = preview.map((item, i) =>
     `*[${i + 1}]* ${item.categoria ? `_${item.categoria}_` : ''}\n${item.titulo}\n${item.data || ''}\n${item.link}`
   ).join('\n\n');
 
-  const template = (cfg.approval?.template || '📋 *IntraBot* — {itens}').replace('{itens}', linhas);
+  const rodape = novos.length > 10 ? `\n\n_...e mais ${novos.length - 10} item(ns). Responda com números de 1 a ${novos.length}._` : "";
+  const template = (cfg.approval?.template || "📋 *IntraBot* — {itens}").replace("{itens}", linhas + rodape);
 
   await callWA('/send-approval', { to: admin, msg: template });
   log(`Prévia enviada para ${admin}.`);
