@@ -7,21 +7,28 @@ Requer: pip install playwright && playwright install chromium
 import json
 import logging
 import os
+import re
 import time
 import random
-import re
+import hashlib
+import urllib.parse
+import urllib.request
+from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
 # ---------------------------------------------------------------------------
 # Configuração
 # ---------------------------------------------------------------------------
-BASE_URL  = "https://intranet.pm.ba.gov.br"
-LOGIN_URL = f"{BASE_URL}/index.php?option=com_users&view=login"
-HOME_URL  = f"{BASE_URL}/index.php?option=com_content&view=featured&Itemid=101"
+BASE_URL    = "https://intranet.pm.ba.gov.br"
+LOGIN_URL   = f"{BASE_URL}/index.php?option=com_users&view=login"
+HOME_URL    = f"{BASE_URL}/index.php?option=com_content&view=featured&Itemid=101"
+PROXY       = "http://proxy.servicos.pm.ba.gov.br:8081"
 
-ESTADO_FILE = os.path.join(os.path.dirname(__file__), "estado.json")
-LOG_FILE    = os.path.join(os.path.dirname(__file__), "bot.log")
+BASE_DIR    = os.path.dirname(os.path.abspath(__file__))
+ESTADO_FILE = os.path.join(BASE_DIR, "estado.json")
+LOG_FILE    = os.path.join(BASE_DIR, "bot.log")
+MIRROR_DIR  = os.path.join(BASE_DIR, "mirror")
 
 logging.basicConfig(
     filename=LOG_FILE,
@@ -34,26 +41,21 @@ log.addHandler(logging.StreamHandler())
 
 
 # ---------------------------------------------------------------------------
-# Slider captcha — baseado no teste_slider.py que funcionou
+# Slider captcha
 # ---------------------------------------------------------------------------
 def resolver_slider(page) -> bool:
     try:
         handle = page.locator("#cdcaptcha a.ui-slider-handle")
         trilho  = page.locator("#cdcaptcha div.slider")
-
-        # Espera o slider aparecer
         page.wait_for_selector("#cdcaptcha a.ui-slider-handle", timeout=10000)
-
         box_t = trilho.bounding_box()
         box_h = handle.bounding_box()
         if not box_t or not box_h:
             log.error("Slider: não foi possível obter dimensões.")
             return False
-
         start_x = box_h["x"] + box_h["width"] / 2
         start_y = box_h["y"] + box_h["height"] / 2
         end_x   = box_t["x"] + box_t["width"] - 2
-
         page.mouse.move(start_x, start_y)
         page.mouse.down()
         for i in range(1, 21):
@@ -62,17 +64,13 @@ def resolver_slider(page) -> bool:
             time.sleep(0.05)
         page.mouse.up()
         time.sleep(2)
-
-        # Captcha gera token aleatório quando resolvido
         for h in page.locator("input[name^='cdcaptcha']").all():
             val = h.get_attribute("value") or ""
             if val and val != "0":
                 log.info(f"Slider resolvido. Token: {val}")
                 return True
-
         log.warning("Slider arrastado mas captcha não validado.")
         return False
-
     except Exception as e:
         log.error(f"Erro no slider: {e}")
         return False
@@ -86,81 +84,304 @@ def fazer_login(page, usuario: str, senha: str) -> bool:
         log.info("Acessando login...")
         page.goto(LOGIN_URL, wait_until="domcontentloaded")
         page.wait_for_selector("#username", timeout=15000)
-
         page.fill("#username", usuario)
         page.fill("#password", senha)
         log.info("Credenciais preenchidas.")
-
         if not resolver_slider(page):
             log.error("Captcha falhou.")
             return False
-
         page.click("button[type='submit']")
         time.sleep(3)
-
-        # Se saiu da tela de login, navega pra home
         if "view=login" not in page.url:
             page.goto(HOME_URL, wait_until="domcontentloaded")
             time.sleep(3)
             log.info(f"Login OK. URL: {page.url}")
             return True
-
         log.warning("Ainda na tela de login após submit.")
         return False
-
     except Exception as e:
         log.error(f"Erro no login: {e}")
         return False
 
 
 # ---------------------------------------------------------------------------
-# Extração
+# Extração da home
 # ---------------------------------------------------------------------------
 def extrair_itens(page) -> list[dict]:
     try:
         if "view=login" in page.url:
             log.warning("Sessão expirada.")
             return []
-
         itens = []
         for el in page.locator("ul.category-module li").all():
             try:
                 a      = el.locator("a.mod-articles-category-title").first
                 titulo = re.sub(r'\s*\(\d+\)\s*$', '', a.inner_text().strip()).strip()
-
-                link = a.get_attribute("href") or ""
+                link   = a.get_attribute("href") or ""
                 if link and not link.startswith("http"):
                     link = BASE_URL + link
-
                 try:
-                    categoria = el.locator(
-                        "span.mod-articles-category-category a"
-                    ).inner_text().strip()
+                    categoria = el.locator("span.mod-articles-category-category a").inner_text().strip()
                 except Exception:
                     categoria = ""
-
                 try:
-                    data = el.locator(
-                        "span.mod-articles-category-date"
-                    ).inner_text().strip()
+                    data = el.locator("span.mod-articles-category-date").inner_text().strip()
                 except Exception:
                     data = ""
-
-                itens.append({
-                    "titulo": titulo,
-                    "link": link,
-                    "categoria": categoria,
-                    "data": data,
-                })
+                itens.append({"titulo": titulo, "link": link, "categoria": categoria, "data": data})
             except Exception as e:
                 log.warning(f"Erro no item: {e}")
-
         log.info(f"{len(itens)} itens extraídos.")
         return itens
-
     except Exception as e:
         log.error(f"Erro na extração: {e}")
         return []
+
+
+# ---------------------------------------------------------------------------
+# Mirror — captura página de artigo dentro da sessão autenticada
+# ---------------------------------------------------------------------------
+def slugify(texto: str) -> str:
+    import unicodedata
+    texto = unicodedata.normalize("NFD", texto)
+    texto = "".join(c for c in texto if unicodedata.category(c) != "Mn")
+    texto = texto.lower()
+    texto = re.sub(r"[^a-z0-9]+", "-", texto)
+    return texto.strip("-")[:40]
+
+def gerar_id(link: str, titulo: str) -> str:
+    base = f"{titulo}-{link}"
+    return hashlib.sha1(base.encode()).hexdigest()[:8]
+
+def baixar_arquivo(url: str, dest: Path, proxy: str) -> bool:
+    """Download via urllib com proxy — reutiliza o mesmo proxy do Playwright."""
+    try:
+        proxy_handler = urllib.request.ProxyHandler({"http": proxy, "https": proxy})
+        opener = urllib.request.build_opener(proxy_handler)
+        opener.addheaders = [("User-Agent", "IntraBot-Mirror/1.0")]
+        with opener.open(url, timeout=30) as resp, open(dest, "wb") as f:
+            f.write(resp.read())
+        return True
+    except Exception as e:
+        log.warning(f"[mirror] Falha ao baixar {url}: {e}")
+        return False
+
+def gerar_html_mirror(titulo: str, conteudo_html: str, anexos: list[dict], mirror_id: str, data_captura: str) -> str:
+    from datetime import datetime
+    try:
+        dt = datetime.fromisoformat(data_captura)
+        data_fmt = dt.strftime("%d/%m/%Y %H:%M")
+    except Exception:
+        data_fmt = data_captura
+
+    pdfs = [a for a in anexos if a["tipo"] == "link"]
+
+    anexos_html = ""
+    if pdfs:
+        itens_html = "\n".join(
+            f'<li class="anexo-item">'
+            f'<span class="anexo-icone">📄</span>'
+            f'<a href="{a["local"]}" target="_blank" class="anexo-link">{a["nome"]}</a>'
+            f'</li>'
+            for a in pdfs
+        )
+        anexos_html = f"""
+    <section class="anexos">
+      <h2 class="anexos-titulo">Anexos</h2>
+      <ul class="anexos-lista">{itens_html}</ul>
+    </section>"""
+
+    return f"""<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{escape_html(titulo)} · CIPE Sudoeste</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+  <style>
+    :root {{
+      --bg:#211f1c; --bg-panel:#2f3326; --bg-panel-2:#3a4030;
+      --cipe-brown:#8a5a35; --cipe-brown-l:#c08a55;
+      --accent:#bfae8c; --t-velhochico:#4a93a8;
+      --text:#d4cfc7; --text-dim:#8a8578; --border:#4a4e40;
+    }}
+    *,*::before,*::after{{box-sizing:border-box;margin:0;padding:0}}
+    body{{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:15px;line-height:1.7;min-height:100vh}}
+    .cabecalho{{background:var(--bg-panel);border-bottom:2px solid var(--cipe-brown);padding:14px 20px;display:flex;align-items:center;gap:14px}}
+    .cabecalho-logo{{font-family:'Oswald',sans-serif;font-size:13px;font-weight:600;letter-spacing:.04em;color:var(--accent);text-transform:uppercase;line-height:1.2}}
+    .cabecalho-logo span{{display:block;font-size:10px;color:var(--text-dim);font-weight:400;letter-spacing:.06em}}
+    .cabecalho-sep{{flex:1}}
+    .badge{{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t-velhochico);border:1px solid var(--t-velhochico);padding:2px 8px;border-radius:2px;letter-spacing:.06em}}
+    .wrapper{{max-width:820px;margin:0 auto;padding:28px 20px 60px}}
+    .meta{{margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--border)}}
+    .meta-id{{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);margin-bottom:10px}}
+    .meta-titulo{{font-family:'Oswald',sans-serif;font-size:26px;font-weight:600;color:var(--accent);line-height:1.25;margin-bottom:10px}}
+    .meta-data{{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim)}}
+    .conteudo{{background:var(--bg-panel);border:1px solid var(--border);border-radius:4px;padding:24px;margin-bottom:28px}}
+    .conteudo h1,.conteudo h2,.conteudo h3{{font-family:'Oswald',sans-serif;color:var(--accent);margin:20px 0 8px;line-height:1.25}}
+    .conteudo h1{{font-size:22px}}.conteudo h2{{font-size:18px}}.conteudo h3{{font-size:15px}}
+    .conteudo p{{margin-bottom:14px}}
+    .conteudo a{{color:var(--t-velhochico);text-decoration:underline}}
+    .conteudo img{{max-width:100%;height:auto;border-radius:3px;margin:12px 0;border:1px solid var(--border)}}
+    .conteudo ul,.conteudo ol{{padding-left:22px;margin-bottom:14px}}
+    .conteudo li{{margin-bottom:6px}}
+    .conteudo table{{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:13px}}
+    .conteudo th{{background:var(--bg-panel-2);color:var(--accent);font-family:'Oswald',sans-serif;padding:8px 10px;text-align:left;border-bottom:2px solid var(--border)}}
+    .conteudo td{{padding:7px 10px;border-bottom:1px solid var(--border)}}
+    .anexos{{background:var(--bg-panel);border:1px solid var(--border);border-top:2px solid var(--cipe-brown);border-radius:4px;padding:20px 24px}}
+    .anexos-titulo{{font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;color:var(--cipe-brown-l);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px}}
+    .anexos-lista{{list-style:none;display:flex;flex-direction:column;gap:8px}}
+    .anexo-item{{display:flex;align-items:center;gap:10px}}
+    .anexo-link{{color:var(--t-velhochico);text-decoration:none;font-size:14px;word-break:break-all}}
+    .aviso{{margin-top:32px;padding:12px 16px;background:var(--bg-panel-2);border-left:3px solid var(--text-dim);font-size:12px;color:var(--text-dim)}}
+    @media(max-width:600px){{.meta-titulo{{font-size:20px}}.conteudo{{padding:16px}}.anexos{{padding:16px}}}}
+  </style>
+</head>
+<body>
+  <header class="cabecalho">
+    <div class="cabecalho-logo">CIPE Sudoeste<span>Polícia Militar da Bahia</span></div>
+    <div class="cabecalho-sep"></div>
+    <div class="badge">INTRANET · ESPELHO</div>
+  </header>
+  <main class="wrapper">
+    <div class="meta">
+      <div class="meta-id"># {escape_html(mirror_id)}</div>
+      <h1 class="meta-titulo">{escape_html(titulo)}</h1>
+      <div class="meta-data">Capturado em {data_fmt}</div>
+    </div>
+    <article class="conteudo">{conteudo_html}</article>
+    {anexos_html}
+    <div class="aviso">Conteúdo capturado automaticamente da intranet PM-BA pelo IntraBot. Esta é uma cópia estática.</div>
+  </main>
+</body>
+</html>"""
+
+def escape_html(s: str) -> str:
+    return str(s).replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace('"',"&quot;")
+
+def espelhar_item(page, item: dict) -> str | None:
+    """
+    Abre a página do artigo na sessão já autenticada, extrai div.item-page,
+    baixa PDFs/imagens e salva mirror/<id>/. Retorna o mirror_id ou None.
+    """
+    link   = item.get("link", "")
+    titulo = item.get("titulo", "Sem título")
+    if not link:
+        return None
+
+    mirror_id = gerar_id(link, titulo)
+    item_dir  = Path(MIRROR_DIR) / mirror_id
+    files_dir = item_dir / "files"
+
+    # Idempotente
+    if (item_dir / "index.html").exists():
+        log.info(f"[mirror] {mirror_id} já existe — pulando.")
+        return mirror_id
+
+    item_dir.mkdir(parents=True, exist_ok=True)
+    files_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        log.info(f"[mirror] Abrindo artigo: {link}")
+        page.goto(link, wait_until="domcontentloaded", timeout=60000)
+        time.sleep(2)
+
+        # Verificar sessão
+        if "view=login" in page.url:
+            log.warning("[mirror] Sessão expirada ao tentar abrir artigo.")
+            return None
+
+        resultado = page.evaluate("""() => {
+            const c = document.querySelector('div.item-page');
+            if (!c) return null;
+            const links = [];
+            document.querySelectorAll('a[href]').forEach(a => {
+                const h = a.href;
+                if (h && !h.startsWith('javascript') && !h.startsWith('#'))
+                    links.push({ href: h, texto: a.textContent.trim() });
+            });
+            const imgs = [];
+            c.querySelectorAll('img[src]').forEach(img => {
+                imgs.push({ src: img.src, alt: img.alt || '' });
+            });
+            return { html: c.innerHTML, links, imgs };
+        }""")
+
+        if not resultado:
+            log.warning(f"[mirror] div.item-page não encontrada em {link}")
+            item_dir.rmdir() if not any(item_dir.iterdir()) else None
+            return None
+
+        # Extensões a baixar
+        ext_re = re.compile(r'\.(pdf|doc|docx|xls|xlsx|ppt|pptx|zip|rar)$', re.I)
+        img_re = re.compile(r'\.(jpg|jpeg|png|gif|webp|svg)$', re.I)
+
+        anexos = []
+
+        # Links (PDFs, docs)
+        for lnk in resultado["links"]:
+            href = lnk["href"]
+            if not ext_re.search(href.split("?")[0]):
+                continue
+            try:
+                ext  = re.search(r'\.\w+$', href.split("?")[0])
+                ext  = ext.group(0) if ext else ".bin"
+                nome = slugify(lnk["texto"] or os.path.basename(href)) + ext
+                dest = files_dir / nome
+                if not dest.exists():
+                    baixar_arquivo(href, dest, PROXY)
+                if dest.exists():
+                    anexos.append({"original": href, "local": f"files/{nome}", "nome": nome, "tipo": "link"})
+            except Exception as e:
+                log.warning(f"[mirror] Erro ao baixar link {href}: {e}")
+
+        # Imagens do conteúdo
+        html_final = resultado["html"]
+        for img in resultado["imgs"]:
+            src = img["src"]
+            if not src or src.startswith("data:") or not img_re.search(src.split("?")[0]):
+                continue
+            try:
+                ext  = re.search(r'\.\w+$', src.split("?")[0])
+                ext  = ext.group(0) if ext else ".jpg"
+                nome = slugify(img["alt"] or os.path.basename(src) or "imagem") + ext
+                dest = files_dir / nome
+                if not dest.exists():
+                    baixar_arquivo(src, dest, PROXY)
+                if dest.exists():
+                    html_final = html_final.replace(src, f"files/{nome}")
+                    anexos.append({"original": src, "local": f"files/{nome}", "nome": nome, "tipo": "imagem"})
+            except Exception as e:
+                log.warning(f"[mirror] Erro ao baixar imagem {src}: {e}")
+
+        from datetime import datetime, timezone
+        data_captura = datetime.now(timezone.utc).isoformat()
+
+        html = gerar_html_mirror(titulo, html_final, anexos, mirror_id, data_captura)
+        (item_dir / "index.html").write_text(html, encoding="utf-8")
+        log.info(f"[mirror] Salvo: mirror/{mirror_id}/ ({len(anexos)} anexo(s))")
+
+        # Atualizar índice
+        index_path = Path(MIRROR_DIR) / "index.json"
+        try:
+            indice = json.loads(index_path.read_text(encoding="utf-8")) if index_path.exists() else []
+        except Exception:
+            indice = []
+        indice.insert(0, {
+            "id": mirror_id,
+            "titulo": titulo,
+            "url": link,
+            "dataCaptura": data_captura,
+            "anexos": len(anexos),
+        })
+        index_path.write_text(json.dumps(indice, ensure_ascii=False, indent=2), encoding="utf-8")
+
+        return mirror_id
+
+    except Exception as e:
+        log.error(f"[mirror] Erro ao espelhar {link}: {e}")
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -174,7 +395,6 @@ def carregar_vistos() -> set[str]:
             return set(json.load(f).get("vistos", []))
     except Exception:
         return set()
-
 
 def salvar_vistos(vistos: set[str]) -> None:
     try:
@@ -190,7 +410,7 @@ def salvar_vistos(vistos: set[str]) -> None:
 def executar(usuario: str, senha: str, headless: bool = True) -> list[dict]:
     novos = []
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=headless, proxy={"server": "http://proxy.servicos.pm.ba.gov.br:8081"})
+        browser = p.chromium.launch(headless=headless, proxy={"server": PROXY})
         page    = browser.new_page()
         try:
             if not fazer_login(page, usuario, senha):
@@ -205,8 +425,17 @@ def executar(usuario: str, senha: str, headless: bool = True) -> list[dict]:
             vistos = carregar_vistos()
             for item in itens:
                 if item["link"] not in vistos:
+                    # Espelha dentro da sessão autenticada
+                    mirror_id = espelhar_item(page, item)
+                    item["mirrorId"] = mirror_id
                     novos.append(item)
                     vistos.add(item["link"])
+                    # Voltar à home para manter contexto
+                    try:
+                        page.goto(HOME_URL, wait_until="domcontentloaded", timeout=30000)
+                        time.sleep(1)
+                    except Exception:
+                        pass
 
             if novos:
                 salvar_vistos(vistos)
@@ -223,24 +452,38 @@ def executar(usuario: str, senha: str, headless: bool = True) -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
-# Execução direta
-# ---------------------------------------------------------------------------
-
-
-# ---------------------------------------------------------------------------
-# Modo --json (chamado pelo ciclo.js)
+# Modo --json (chamado pelo ciclo.js) — inclui mirrorId
 # ---------------------------------------------------------------------------
 def main_json(usuario: str, senha: str):
-    """Roda o scraper completo e imprime JSON no stdout com TODOS os itens da página."""
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True, proxy={"server": "http://proxy.servicos.pm.ba.gov.br:8081"})
+        browser = p.chromium.launch(headless=True, proxy={"server": PROXY})
         page    = browser.new_page()
         try:
             if not fazer_login(page, usuario, senha):
                 print("[]")
                 return
-            itens = extrair_itens(page)
+
+            itens  = extrair_itens(page)
+            vistos = carregar_vistos()
+            novos  = []
+
+            for item in itens:
+                if item["link"] not in vistos:
+                    mirror_id = espelhar_item(page, item)
+                    item["mirrorId"] = mirror_id
+                    novos.append(item)
+                    vistos.add(item["link"])
+                    try:
+                        page.goto(HOME_URL, wait_until="domcontentloaded", timeout=30000)
+                        time.sleep(1)
+                    except Exception:
+                        pass
+
+            if novos:
+                salvar_vistos(vistos)
+
             print(json.dumps(itens, ensure_ascii=False))
+
         except Exception as e:
             log.error(f"Erro no modo --json: {e}")
             print("[]")
@@ -248,12 +491,14 @@ def main_json(usuario: str, senha: str):
             browser.close()
 
 
+# ---------------------------------------------------------------------------
+# Execução direta
+# ---------------------------------------------------------------------------
 if __name__ == "__main__":
     import sys
 
     args = sys.argv[1:]
 
-    # Modo --json: chamado pelo ciclo.js para obter metadados completos
     if args and args[0] == "--json":
         if len(args) < 3:
             print("[]")
@@ -261,7 +506,6 @@ if __name__ == "__main__":
         main_json(args[1], args[2])
         sys.exit(0)
 
-    # Modo normal
     if len(args) < 2:
         print("Uso: python scraper.py <usuario> <senha> [1=headless]")
         sys.exit(1)
@@ -276,8 +520,9 @@ if __name__ == "__main__":
     if novos:
         print(f"\n{len(novos)} item(ns) novo(s):")
         for item in novos:
+            mid = item.get("mirrorId")
+            link_exibir = f"https://cipesudoeste.vercel.app/i/{mid}" if mid else item["link"]
             print(f"  [{item['categoria']}] {item['titulo']}")
-            print(f"    {item['data']} — {item['link']}")
+            print(f"    {item['data']} — {link_exibir}")
     else:
         print("Nenhum item novo encontrado.")
-

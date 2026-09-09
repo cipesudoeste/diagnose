@@ -6,8 +6,6 @@ const path = require('path');
 const http = require('http');
 const vpn  = require('./vpn');
 
-const MIRROR_SCRIPT = path.join(__dirname, 'mirror.js');
-
 const BASE       = __dirname;
 const LOG_FILE   = path.join(BASE, 'bot.log');
 const CFG_FILE   = path.join(BASE, 'config.json');
@@ -170,35 +168,6 @@ async function publicar(novos, resposta) {
   log(`${itensPublicar.length} item(ns) publicado(s).`);
 }
 
-// ── Mirror ────────────────────────────────────────────────────
-// Chama mirror.js para um item; retorna o ID gerado ou null se falhar.
-// Não lança exceção — falha de mirror não bloqueia o fluxo principal.
-function espelharItem(item) {
-  return new Promise((resolve) => {
-    const args = [MIRROR_SCRIPT, '--url', item.link, '--titulo', item.titulo || item.link];
-    execFile('node', args, { timeout: 120_000 }, (err, stdout, stderr) => {
-      if (err) {
-        log(`[mirror] Falha em "${item.titulo}": ${err.message}`);
-        return resolve(null);
-      }
-      if (stderr) {
-        const linhasRelevantes = stderr.split('\n').filter(l => l.includes('[mirror]') || l.includes('ERRO'));
-        if (linhasRelevantes.length) log(`[mirror] stderr: ${linhasRelevantes.join(' | ')}`);
-      }
-      try {
-        // mirror.js imprime JSON na última linha
-        const ultimaLinha = stdout.trim().split('\n').pop();
-        const resultado   = JSON.parse(ultimaLinha);
-        log(`[mirror] /i/${resultado.id} — "${resultado.titulo}"`);
-        resolve(resultado.id);
-      } catch {
-        log(`[mirror] Saída inesperada: ${stdout.slice(0, 200)}`);
-        resolve(null);
-      }
-    });
-  });
-}
-
 // ── Ciclo completo ────────────────────────────────────────────
 let ciclando = false;
 
@@ -227,13 +196,6 @@ async function executar() {
     if (!novos.length) { ciclando = false; log('=== Fim do ciclo (sem novidades) ==='); return; }
 
     saveState({ updates_today: (hoje.updates_today || 0) + novos.length });
-
-    // Espelhar cada item novo antes de qualquer envio
-    log(`Espelhando ${novos.length} item(ns)...`);
-    for (const item of novos) {
-      const mirrorId = await espelharItem(item);
-      if (mirrorId) item.mirrorId = mirrorId;
-    }
 
     const manual = cfg.approval?.manual !== false;
     if (manual) {
