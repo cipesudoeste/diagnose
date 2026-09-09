@@ -317,17 +317,50 @@ def espelhar_item(page, item: dict) -> str | None:
         resultado = page.evaluate("""() => {
             const c = document.querySelector('div.item-page');
             if (!c) return null;
+
+            // Clonar para não modificar o DOM original
+            const clone = c.cloneNode(true);
+
+            // Remover elementos de lixo da intranet
+            const seletoresLixo = [
+                '.print-link', '.email-link', 'ul.actions', 'dl.article-info',
+                '.article-info', '.article-footer', '.pagination', '.pager',
+                'a[href*="tmpl=component"]',  // links imprimir
+                'a[href*="mailto"]',           // links e-mail
+                'a[href*="pop=1"]',            // popups
+            ];
+            seletoresLixo.forEach(sel => {
+                clone.querySelectorAll(sel).forEach(el => el.remove());
+            });
+
+            // Remover atributos de estilo e classe que vazam CSS da intranet
+            clone.querySelectorAll('*').forEach(el => {
+                el.removeAttribute('style');
+                el.removeAttribute('class');
+                el.removeAttribute('align');
+                el.removeAttribute('valign');
+                el.removeAttribute('bgcolor');
+                el.removeAttribute('width');
+                el.removeAttribute('height');
+                el.removeAttribute('cellpadding');
+                el.removeAttribute('cellspacing');
+                el.removeAttribute('border');
+            });
+
+            // Coletar links antes de remover atributos de âncoras
             const links = [];
-            document.querySelectorAll('a[href]').forEach(a => {
+            c.querySelectorAll('a[href]').forEach(a => {
                 const h = a.href;
                 if (h && !h.startsWith('javascript') && !h.startsWith('#'))
                     links.push({href: h, texto: a.textContent.trim()});
             });
+
             const imgs = [];
             c.querySelectorAll('img[src]').forEach(img => {
                 imgs.push({src: img.src, alt: img.alt || ''});
             });
-            return {html: c.innerHTML, links, imgs};
+
+            return {html: clone.innerHTML, links, imgs};
         }""")
 
         if not resultado:
