@@ -271,6 +271,59 @@ app.get('/api/logs', authRequired, (req, res) => {
 });
 
 /* ════════════════════════════════════════
+   MIRROR
+════════════════════════════════════════ */
+const MIRROR_DIR = path.join(__dirname, 'mirror');
+
+// Índice de itens espelhados — consumido pelo painel
+app.get('/i/index.json', authRequired, (req, res) => {
+  const indexPath = path.join(MIRROR_DIR, 'index.json');
+  if (!fs.existsSync(indexPath)) return res.json([]);
+  try {
+    res.json(JSON.parse(fs.readFileSync(indexPath, 'utf8')));
+  } catch {
+    res.status(500).json({ erro: 'Falha ao ler índice.' });
+  }
+});
+
+// Serve páginas e arquivos espelhados — /i/<id>[/files/arquivo.pdf]
+app.use('/i', (req, res) => {
+  const reqPath  = decodeURIComponent(req.path);
+  const resolved = path.resolve(MIRROR_DIR, '.' + reqPath);
+
+  // Guard path traversal
+  if (!resolved.startsWith(path.resolve(MIRROR_DIR))) {
+    return res.status(403).send('Acesso negado.');
+  }
+
+  let filePath = resolved;
+  if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
+    filePath = path.join(filePath, 'index.html');
+  }
+
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send('Item não encontrado no espelho.');
+  }
+
+  const mimeTypes = {
+    '.html': 'text/html; charset=utf-8',
+    '.pdf':  'application/pdf',
+    '.jpg':  'image/jpeg', '.jpeg': 'image/jpeg',
+    '.png':  'image/png',  '.gif':  'image/gif',
+    '.svg':  'image/svg+xml', '.webp': 'image/webp',
+    '.doc':  'application/msword',
+    '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    '.xls':  'application/vnd.ms-excel',
+    '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    '.zip':  'application/zip',
+  };
+  const ext = path.extname(filePath).toLowerCase();
+  res.setHeader('Content-Type', mimeTypes[ext] || 'application/octet-stream');
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  fs.createReadStream(filePath).pipe(res);
+});
+
+/* ════════════════════════════════════════
    INICIA
 ════════════════════════════════════════ */
 app.listen(PORT, () => {

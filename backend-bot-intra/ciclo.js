@@ -6,6 +6,8 @@ const path = require('path');
 const http = require('http');
 const vpn  = require('./vpn');
 
+const MIRROR_SCRIPT = path.join(__dirname, 'mirror.js');
+
 const BASE       = __dirname;
 const LOG_FILE   = path.join(BASE, 'bot.log');
 const CFG_FILE   = path.join(BASE, 'config.json');
@@ -95,9 +97,12 @@ async function enviarPrevia(novos) {
   if (!admin) { log('Admin não configurado — pulando envio.'); return; }
 
   const preview = novos.slice(0, 10);
-  const linhas = preview.map((item, i) =>
-    `*[${i + 1}]* ${item.categoria ? `_${item.categoria}_` : ''}\n${item.titulo}\n${item.data || ''}\n${item.link}`
-  ).join('\n\n');
+  const linhas = preview.map((item, i) => {
+    const linkExibir = item.mirrorId
+      ? `https://cipesudoeste.vercel.app/i/${item.mirrorId}`
+      : item.link;
+    return `*[${i + 1}]* ${item.categoria ? `_${item.categoria}_` : ''}\n${item.titulo}\n${item.data || ''}\n${linkExibir}`;
+  }).join('\n\n');
 
   const rodape = novos.length > 10 ? `\n\n_...e mais ${novos.length - 10} item(ns). Responda com números de 1 a ${novos.length}._` : "";
   const template = (cfg.approval?.template || "📋 *IntraBot* — {itens}").replace("{itens}", linhas + rodape);
@@ -146,7 +151,10 @@ async function publicar(novos, resposta) {
   }
 
   for (const item of itensPublicar) {
-    const msg = `📌 *${item.titulo}*\n${item.categoria ? `_${item.categoria}_\n` : ''}${item.data ? `${item.data}\n` : ''}${item.link}`;
+    const linkExibir = item.mirrorId
+      ? `https://cipesudoeste.vercel.app/i/${item.mirrorId}`
+      : item.link;
+    const msg = `📌 *${item.titulo}*\n${item.categoria ? `_${item.categoria}_\n` : ''}${item.data ? `${item.data}\n` : ''}${linkExibir}`;
     for (const grupo of grupos) {
       try { await callWA('/send', { to: grupo, msg }); } catch (e) { log(`Erro ao enviar p/ ${grupo}: ${e.message}`); }
     }
@@ -160,6 +168,35 @@ async function publicar(novos, resposta) {
     approval_response: null,
   });
   log(`${itensPublicar.length} item(ns) publicado(s).`);
+}
+
+// ── Mirror ────────────────────────────────────────────────────
+// Chama mirror.js para um item; retorna o ID gerado ou null se falhar.
+// Não lança exceção — falha de mirror não bloqueia o fluxo principal.
+function espelharItem(item) {
+  return new Promise((resolve) => {
+    const args = [MIRROR_SCRIPT, '--url', item.link, '--titulo', item.titulo || item.link];
+    execFile('node', args, { timeout: 120_000 }, (err, stdout, stderr) => {
+      if (err) {
+        log(`[mirror] Falha em "${item.titulo}": ${err.message}`);
+        return resolve(null);
+      }
+      if (stderr) {
+        const linhasRelevantes = stderr.split('\n').filter(l => l.includes('[mirror]') || l.includes('ERRO'));
+        if (linhasRelevantes.length) log(`[mirror] stderr: ${linhasRelevantes.join(' | ')}`);
+      }
+      try {
+        // mirror.js imprime JSON na última linha
+        const ultimaLinha = stdout.trim().split('\n').pop();
+        const resultado   = JSON.parse(ultimaLinha);
+        log(`[mirror] /i/${resultado.id} — "${resultado.titulo}"`);
+        resolve(resultado.id);
+      } catch {
+        log(`[mirror] Saída inesperada: ${stdout.slice(0, 200)}`);
+        resolve(null);
+      }
+    });
+  });
 }
 
 // ── Ciclo completo ────────────────────────────────────────────
@@ -190,6 +227,13 @@ async function executar() {
     if (!novos.length) { ciclando = false; log('=== Fim do ciclo (sem novidades) ==='); return; }
 
     saveState({ updates_today: (hoje.updates_today || 0) + novos.length });
+
+    // Espelhar cada item novo antes de qualquer envio
+    log(`Espelhando ${novos.length} item(ns)...`);
+    for (const item of novos) {
+      const mirrorId = await espelharItem(item);
+      if (mirrorId) item.mirrorId = mirrorId;
+    }
 
     const manual = cfg.approval?.manual !== false;
     if (manual) {
