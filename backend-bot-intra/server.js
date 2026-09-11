@@ -8,6 +8,7 @@ const express = require('express');
 const cors    = require('cors');
 const jwt     = require('jsonwebtoken');
 
+const vpn  = require('./vpn');
 const app  = express();
 const PORT = process.env.PORT || 3001;
 
@@ -257,6 +258,31 @@ app.get('/api/whatsapp/groups', authRequired, async (req, res) => {
   } catch (e) {
     appendLog('err', `Erro ao listar grupos: ${e.message}`);
     res.status(500).json({ error: e.message });
+  }
+});
+
+/* ════════════════════════════════════════
+   VPN
+════════════════════════════════════════ */
+app.post('/api/vpn/connect', authRequired, async (req, res) => {
+  try {
+    await vpn.connect();
+    appendLog('ok', 'VPN conectada pelo painel');
+    res.json({ ok: true, connected: true });
+  } catch (e) {
+    appendLog('err', `Erro ao conectar VPN: ${e.message}`);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+app.post('/api/vpn/disconnect', authRequired, async (req, res) => {
+  try {
+    await vpn.disconnect();
+    appendLog('ok', 'VPN desconectada pelo painel');
+    res.json({ ok: true, connected: false });
+  } catch (e) {
+    appendLog('err', `Erro ao desconectar VPN: ${e.message}`);
+    res.status(500).json({ ok: false, error: e.message });
   }
 });
 

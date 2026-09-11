@@ -236,11 +236,20 @@ async function executar() {
 
   try {
     const vpnAtiva = cfg.vpn?.host;
-    if (vpnAtiva) await vpn.connect();
+    if (vpnAtiva) {
+      // Garante que a VPN esteja ativa — reconecta se caiu entre ciclos
+      if (!vpn.isUp()) {
+        log('VPN inativa — tentando reconectar antes do scraper...');
+        await vpn.connect();
+      } else {
+        log('VPN já ativa — reutilizando.');
+      }
+    }
 
     const novos = await rodarScraper(user, pass);
 
-    if (vpnAtiva) await vpn.disconnect();
+    // Não desconecta a VPN após o scraper — o watchdog do vpn.js mantém
+    // a conexão viva entre ciclos; desconexão manual via painel quando necessário.
 
     if (!novos.length) { ciclando = false; log('=== Fim do ciclo (sem novidades) ==='); return; }
 

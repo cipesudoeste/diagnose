@@ -303,6 +303,13 @@
       <div class="ib-card">
         <div class="ib-card-title">Status dos serviços</div>
         <div class="ib-toggle-row">
+          <div class="ib-toggle-info"><div class="ib-toggle-label">VPN</div><div class="ib-toggle-desc" id="vpn-status-desc">—</div></div>
+          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+            <span class="ib-badge" id="vpn-badge">—</span>
+            <button class="ib-btn ib-btn-sm" id="btn-vpn-toggle" onclick="vpnToggle()">—</button>
+          </div>
+        </div>
+        <div class="ib-toggle-row">
           <div class="ib-toggle-info"><div class="ib-toggle-label">WhatsApp</div><div class="ib-toggle-desc" id="wa-status-desc">—</div></div>
           <span class="ib-badge" id="wa-badge">—</span>
         </div>
@@ -758,17 +765,51 @@ async function loadStatus() {
     setEl('m-updates', d.updates_today ?? '—');
     setEl('m-pending', d.pending       ?? '—');
     setEl('m-sent',    d.sent_today    ?? '—');
+    // VPN
+    const vpnOk = !!d.vpn_connected;
+    setBadge('vpn-badge', vpnOk ? 'ok' : 'err', vpnOk ? 'Ativa' : 'Inativa');
+    setEl('vpn-status-desc', vpnOk ? (d.vpn_ip && d.vpn_ip !== '—' ? `Túnel ativo · ${d.vpn_ip}` : 'Túnel ativo') : 'Túnel inativo — intranet inacessível');
+    const btnVpn = document.getElementById('btn-vpn-toggle');
+    if (btnVpn) {
+      btnVpn.textContent = vpnOk ? '⏹ Desconectar' : '▶ Conectar';
+      btnVpn.className   = 'ib-btn ib-btn-sm' + (vpnOk ? ' danger' : ' primary');
+      btnVpn.dataset.vpnState = vpnOk ? 'on' : 'off';
+    }
+    // WhatsApp
     setBadge('wa-badge', d.wa_connected ? 'ok':'err', d.wa_connected ? 'Online':'Offline');
     setEl('wa-status-desc', d.wa_connected ? (d.wa_phone ? `+${d.wa_phone}` : 'Sessão ativa') : 'Sessão inativa');
     setBadge('next-check-badge', 'warn', 'Aguardando');
     setEl('next-check-desc', d.next_check ? `Em ${d.next_check}` : '—');
-    document.getElementById('status-dot').className = 'ib-status-dot' + (d.wa_connected ? '' : ' offline');
-    setEl('status-label', d.wa_connected ? 'operacional' : 'atenção necessária');
+    document.getElementById('status-dot').className = 'ib-status-dot' + (d.wa_connected && vpnOk ? '' : ' offline');
+    setEl('status-label', d.wa_connected && vpnOk ? 'operacional' : 'atenção necessária');
     renderWaState(d);
   } catch {
     setEl('status-label', 'sem conexão com o backend');
     document.getElementById('status-dot').className = 'ib-status-dot offline';
   }
+}
+
+/* VPN */
+async function vpnToggle() {
+  const btn = document.getElementById('btn-vpn-toggle');
+  if (!btn) return;
+  const ligando = btn.dataset.vpnState !== 'on';
+  btn.disabled = true;
+  btn.textContent = ligando ? 'Conectando...' : 'Desconectando...';
+  try {
+    const endpoint = ligando ? '/api/vpn/connect' : '/api/vpn/disconnect';
+    if (!ligando && !confirm('Desconectar a VPN? O scraper não conseguirá acessar a intranet até a próxima reconexão.')) {
+      btn.disabled = false;
+      await loadStatus();
+      return;
+    }
+    await apiFetch(endpoint, { method: 'POST' });
+    showToast(ligando ? 'VPN conectada.' : 'VPN desconectada.');
+  } catch {
+    showToast('Erro ao alterar estado da VPN.');
+  }
+  btn.disabled = false;
+  setTimeout(loadStatus, 2000);
 }
 
 /* WHATSAPP — estado visual */
